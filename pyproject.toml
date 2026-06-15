@@ -1,0 +1,32 @@
+[build-system]
+requires = ["setuptools>=65", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "opc-foundation"
+version = "0.1.0"
+description = "Reusable foundation modules for OPC AI product projects"
+requires-python = ">=3.11"
+dependencies = [
+  "pydantic>=2",
+  "PyYAML>=6",
+  "httpx>=0.27",
+  "trafilatura>=1.8",
+  "feedparser>=6",
+  "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest",
+  "ruff",
+]
+
+[project.scripts]
+opc-foundation = "opc_foundation.cli:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100

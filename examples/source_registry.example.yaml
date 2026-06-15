@@ -1,0 +1,38 @@
+﻿sources:
+  - source_id: hacker_news
+    source_name: Hacker News
+    source_type: community_discussion
+    connector: hacker_news
+    enabled: true
+    trust_weight: 0.85
+    default_queries:
+      - AI startup tracking
+      - VC deal sourcing tools
+      - investment research workflow
+
+  - source_id: github_issues
+    source_name: GitHub Issues
+    source_type: github_issue
+    connector: github_issues
+    enabled: true
+    trust_weight: 0.85
+    default_queries:
+      - research automation
+      - market intelligence
+      - AI monitoring
+
+  - source_id: rss_ai_research
+    source_name: AI Research RSS
+    source_type: rss
+    connector: rss
+    enabled: true
+    trust_weight: 0.60
+    base_url: https://feeds.feedburner.com/oreilly/radar
+    default_queries: []
+
+  - source_id: manual_urls
+    source_name: Manual URL Batch
+    source_type: manual_url
+    connector: manual_url
+    enabled: true
+    trust_weight: 0.80
