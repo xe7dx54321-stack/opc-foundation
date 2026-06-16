@@ -1,4 +1,4 @@
-﻿from .markdown_builder import MarkdownBuilder
+from .markdown_builder import MarkdownBuilder
 from .report_sections import ReportSection
 from .table_builder import build_table
 

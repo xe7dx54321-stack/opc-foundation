@@ -1,4 +1,4 @@
-﻿# OPC Foundation
+# OPC Foundation
 
 > **Standardize the pipeline, specialize the judgment.**
 > 标准化管道，项目化判断。
@@ -8,20 +8,22 @@
 **Foundation provides infrastructure. Project owns judgment.**
 公共库提供基础设施，具体项目保留判断力。
 
+Current version: **v0.1.1**
+
 ---
 
 ## What it is
 
-A single installable Python package that provides cross-project reusable capabilities:
+A single installable Python package providing cross-project reusable capabilities:
 
 - **Config** – YAML/JSON loaders, typed config schema
 - **Storage** – JSONL and CSV read/write helpers
-- **Run** – RunContext, RunLog, Checkpoints, ID generator, time utils
+- **Run** – RunContext, RunLog, Checkpoints, ArtifactManifest
 - **Sources** – Source registry, SourceConnector protocol, FetchResult/RawSignal contracts
-- **Connectors** – Hacker News, GitHub Issues, RSS, Manual URL batch
+- **Connectors** – Hacker News, GitHub Issues, RSS, Manual URL batch (all with timeout/retry/backoff)
 - **Web** – Trafilatura-based URL text extraction
-- **Signals** – RawSignal schema, deduplication, quality gate
-- **LLM** – OpenAI-compatible and Anthropic client wrappers, cache, prompt metadata
+- **Signals** – RawSignal schema, deduplication, SeenStore (incremental dedupe), QualityGate
+- **LLM** – OpenAI-compatible and Anthropic clients, LLMCache (keyed by provider/model/prompt_version/input_hash/config_version/run_scope), StructuredRunner (with JSON repair and retry)
 - **Reports** – Markdown builder, table builder
 
 ## What it does NOT do
@@ -30,27 +32,25 @@ A single installable Python package that provides cross-project reusable capabil
 - No domain-specific prompts or rubrics
 - No project-specific data models (DemandCandidate, PainPoint, etc.)
 - No Reddit / G2 / Capterra / social media connectors
-- No scheduling system
-- No vector database / embedding / MinHash
-- No UI
+- No scheduling system, no vector database, no UI
 
 ---
 
-## Products using opc-foundation
+## Versioning
 
-```
-Demand Radar       需求雷达
-Content Agent      内容生产系统
-Stock Research Agent  投研系统
-WorldCup Strategy Agent  策略系统
-```
+This library uses [Semantic Versioning](https://semver.org/).
+
+- **v0.1.0** – Initial Phase 0-1 release (all core modules)
+- **v0.1.1** – Phase 1.1-1.2: versioning, public API stabilization, connector reliability hardening, SeenStore, ArtifactManifest, StructuredRunner hardening
+
+Projects should **pin** `opc-foundation` at a specific version.
+Before upgrading, run your project-level integration tests.
 
 ---
 
 ## Installation
 
 ```bash
-# development install
 git clone https://github.com/xe7dx54321-stack/opc-foundation
 cd opc-foundation
 pip install -e ".[dev]"
@@ -60,9 +60,143 @@ Requires Python 3.11+.
 
 ---
 
-## Defining a source registry
+## Public API
 
-Create a YAML file (see `examples/source_registry.example.yaml`):
+```python
+from opc_foundation import __version__
+
+from opc_foundation.config import load_config
+from opc_foundation.storage import JsonlStore, CsvStore
+from opc_foundation.run import RunContext, RunLog, create_run_id, ArtifactManifestBuilder
+from opc_foundation.sources import (
+    SourceDefinition, SourceQuery, FetchResult, SourceRegistry,
+)
+from opc_foundation.sources.connectors import (
+    ManualURLConnector, HackerNewsConnector,
+    GitHubIssuesConnector, RSSConnector,
+)
+from opc_foundation.signals import (
+    RawSignal, dedupe_raw_signals, DedupeResult, SeenStore,
+)
+from opc_foundation.web import TrafilaturaExtractor, ExtractedPage
+from opc_foundation.llm import (
+    LLMRequest, LLMResponse, LLMCache, PromptMetadata, StructuredRunner,
+)
+from opc_foundation.reports import MarkdownBuilder, ReportSection
+```
+
+---
+
+## Quickstart
+
+### Load source registry
+
+```python
+from opc_foundation.sources import SourceRegistry
+
+registry = SourceRegistry.from_yaml("config/sources.yaml")
+enabled = registry.get_enabled_sources()
+print(f"{len(enabled)} enabled sources")
+```
+
+### Fetch HN signals
+
+```python
+from opc_foundation.sources.connectors import HackerNewsConnector
+from opc_foundation.sources import SourceQuery
+from opc_foundation.run import RunContext, new_id
+
+ctx = RunContext(project_id="my_project", pipeline_name="acquisition")
+source = registry.get_source("hacker_news")
+connector = HackerNewsConnector(timeout=15, max_retries=2)
+query = SourceQuery(query_id=new_id(), source_id="hacker_news", query="AI tools", max_items=20)
+result = connector.fetch(query, source, ctx)
+print(f"{len(result.raw_signals)} signals, {len(result.warnings)} warnings")
+```
+
+### Write JSONL
+
+```python
+from opc_foundation.storage import JsonlStore
+
+JsonlStore.write_records("outputs/signals.jsonl", result.raw_signals)
+signals = JsonlStore.load_records("outputs/signals.jsonl", model=RawSignal)
+```
+
+### Dedupe RawSignals
+
+```python
+from opc_foundation.signals import dedupe_raw_signals
+
+deduped = dedupe_raw_signals(signals, by="both")
+print(f"{deduped.duplicate_count} duplicates removed")
+```
+
+### Incremental dedupe with SeenStore
+
+```python
+from opc_foundation.signals import SeenStore
+
+store = SeenStore(".seen/signals.jsonl")
+new_signals, already_seen = store.filter_new(result.raw_signals, run_id=ctx.run_id)
+print(f"{len(new_signals)} new, {len(already_seen)} already seen")
+```
+
+### Track artifacts with ArtifactManifest
+
+```python
+from opc_foundation.run import ArtifactManifestBuilder
+
+builder = ArtifactManifestBuilder(run_id=ctx.run_id, pipeline_name="acquisition")
+builder.add_artifact("raw_signals", "outputs/signals.jsonl", artifact_type="jsonl", count=len(new_signals))
+builder.add_artifact("report", "outputs/report.md", artifact_type="markdown")
+builder.write("outputs/manifest.json")
+```
+
+### Build markdown report
+
+```python
+from opc_foundation.reports import MarkdownBuilder
+
+md = MarkdownBuilder()
+md.heading(1, "Acquisition Report")
+md.bullet_list([f"{s.title or s.source_url}" for s in new_signals[:5]])
+md.write_report("outputs/report.md")
+```
+
+### Use LLM with cache
+
+```python
+from opc_foundation.llm import LLMCache, LLMRequest, LLMMessage, OpenAICompatibleClient, StructuredRunner
+
+cache = LLMCache(".llm_cache")
+client = OpenAICompatibleClient()
+runner = StructuredRunner(client)
+
+request = LLMRequest(
+    model="gpt-4o",
+    messages=[LLMMessage(role="user", content="Summarize: " + signals[0].raw_text)],
+)
+result = runner.run_safe(request, MyOutputModel)
+if result.success:
+    print(result.parsed)
+```
+
+---
+
+## Connector reliability
+
+All connectors support:
+- `timeout` (default 15s)
+- `max_retries` (default 2, with exponential backoff)
+- 403/429 captured in `FetchResult.warnings` as `rate_limit` / `access_denied`
+- Network failures captured in `FetchResult.errors` — never raise
+
+See `docs/contracts/connector_reliability_policy.md`.
+
+---
+
+## Defining a source registry
 
 ```yaml
 sources:
@@ -74,35 +208,6 @@ sources:
     trust_weight: 0.85
     default_queries:
       - AI startup tracking
-
-  - source_id: rss_ai
-    source_name: AI Research RSS
-    source_type: rss
-    connector: rss
-    enabled: true
-    base_url: https://your-feed-url.com/rss
-    trust_weight: 0.60
-```
-
----
-
-## Running a connector
-
-```python
-from opc_foundation.sources import SourceRegistry, SourceQuery
-from opc_foundation.sources.connectors import HackerNewsConnector
-from opc_foundation.run import RunContext, new_id
-
-registry = SourceRegistry.from_yaml("config/sources.yaml")
-source = registry.get_source("hacker_news")
-
-connector = HackerNewsConnector()
-ctx = RunContext(project_id="my_project", pipeline_name="acquisition")
-
-query = SourceQuery(query_id=new_id(), source_id="hacker_news", query="AI tools", max_items=20)
-result = connector.fetch(query, source, ctx)
-
-print(f"{len(result.raw_signals)} signals fetched")
 ```
 
 ---
@@ -110,17 +215,12 @@ print(f"{len(result.raw_signals)} signals fetched")
 ## Using the CLI
 
 ```bash
-# Validate source registry
+opc-foundation version
 opc-foundation validate-source-registry --path examples/source_registry.example.yaml
-
-# Fetch from a single source
 opc-foundation fetch-source hacker_news --query "AI tools" --max-items 10
-
-# Extract text from a URL
 opc-foundation extract-url https://example.com/article
-
-# Deduplicate a JSONL file
 opc-foundation dedupe-signals inputs.jsonl outputs.jsonl --by url
+opc-foundation seen-store-stats .seen/signals.jsonl
 ```
 
 ---
@@ -130,7 +230,6 @@ opc-foundation dedupe-signals inputs.jsonl outputs.jsonl --by url
 ```python
 from opc_foundation.signals import RawSignal
 
-# Map to your project-specific model:
 def to_my_evidence(signal: RawSignal) -> MyEvidenceItem:
     return MyEvidenceItem(
         source=signal.source_id,
@@ -140,7 +239,7 @@ def to_my_evidence(signal: RawSignal) -> MyEvidenceItem:
     )
 ```
 
-See `docs/integration/demand_radar_integration_guide.md` for the full Demand Radar walkthrough.
+See `docs/integration/demand_radar_integration_guide.md`.
 
 ---
 
@@ -148,9 +247,10 @@ See `docs/integration/demand_radar_integration_guide.md` for the full Demand Rad
 
 1. Import acquisition connectors from `opc_foundation.sources.connectors`
 2. Use `JsonlStore` for raw signal persistence
-3. Use `LLMCache` with `prompt_version` + `run_scope` to avoid stale cache
-4. Use `RunLog` for step-level logging
-5. **Keep** all TruthScore / FitScore / EvidenceRubric / DemandCandidate in Demand Radar
+3. Use `SeenStore` for incremental dedupe across runs
+4. Use `LLMCache` with `prompt_version` + `run_scope` to prevent stale-cache cross-contamination
+5. Use `ArtifactManifestBuilder` to record every output file
+6. **Keep** all TruthScore / FitScore / EvidenceRubric / DemandCandidate in Demand Radar
 
 ---
 
@@ -159,6 +259,7 @@ See `docs/integration/demand_radar_integration_guide.md` for the full Demand Rad
 - `RawSignal` – `docs/contracts/raw_signal_contract.md`
 - `SourceConnector` – `docs/contracts/source_connector_contract.md`
 - `ProjectAdapter` – `docs/contracts/project_adapter_contract.md`
+- `Connector Reliability` – `docs/contracts/connector_reliability_policy.md`
 
 ---
 

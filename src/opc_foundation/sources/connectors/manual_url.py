@@ -1,8 +1,4 @@
-﻿"""Manual URL batch connector.
-
-Reads a CSV with columns: url, source_type, source_name, title, collection_query, notes
-Extracts text from each URL using the provided extractor and returns RawSignal objects.
-"""
+"""Manual URL batch connector – hardened for robustness."""
 from __future__ import annotations
 
 from pathlib import Path
@@ -19,7 +15,7 @@ from ..source_schema import FetchResult, SourceDefinition, SourceQuery
 
 
 class ManualUrlConnector:
-    """Fetches and extracts text from a CSV list of URLs."""
+    """Fetch and extract text from a CSV list of URLs."""
 
     connector_id = "manual_url"
 
@@ -32,25 +28,37 @@ class ManualUrlConnector:
         source: SourceDefinition,
         context: RunContext,
     ) -> FetchResult:
-        csv_path = query.url or query.metadata.get("csv_path")
         errors: list[str] = []
+        warnings: list[str] = []
         raw_signals: list[RawSignal] = []
+        now = utcnow_iso()
 
-        if not csv_path or not Path(str(csv_path)).exists():
+        csv_path = query.url or query.metadata.get("csv_path")
+
+        if not csv_path:
+            warnings.append("ManualURL connector: no csv_path provided – returning empty result")
             return FetchResult(
                 source_id=source.source_id,
                 connector=self.connector_id,
-                raw_signals=[],
-                errors=[f"CSV path not found: {csv_path}"],
-                fetched_at=utcnow_iso(),
+                warnings=warnings,
+                fetched_at=now,
+            )
+
+        if not Path(str(csv_path)).exists():
+            errors.append(f"ManualURL connector: CSV not found: {csv_path}")
+            return FetchResult(
+                source_id=source.source_id,
+                connector=self.connector_id,
+                errors=errors,
+                fetched_at=now,
             )
 
         rows = CsvStore.load_csv_dicts(csv_path)
 
-        for i, row in enumerate(rows[: query.max_items]):
+        for row_idx, row in enumerate(rows[: query.max_items]):
             url = (row.get("url") or "").strip()
             if not url:
-                errors.append(f"Row {i}: missing url")
+                warnings.append(f"Row {row_idx}: missing url – skipping")
                 continue
 
             title = row.get("title") or None
@@ -60,23 +68,20 @@ class ManualUrlConnector:
             notes = row.get("notes") or None
 
             text = ""
-            page_errors: list[str] = []
             if self._extractor is not None:
                 try:
                     page: ExtractedPage = self._extractor.extract(url)
                     text = page.text
                     if not title:
                         title = page.title
-                    page_errors = page.errors
+                    for err in page.errors:
+                        errors.append(f"Row {row_idx} [{url}]: {err}")
                 except Exception as exc:
-                    page_errors = [f"extractor error for {url}: {exc}"]
-            else:
-                text = notes or url
+                    errors.append(f"Row {row_idx} [{url}]: extractor error: {exc}")
 
+            # Fallback chain: extractor text -> notes -> url
             if not text.strip():
                 text = notes or url
-
-            errors.extend(page_errors)
 
             sig = RawSignal(
                 signal_id=new_id("sig_"),
@@ -87,11 +92,12 @@ class ManualUrlConnector:
                 source_note=notes,
                 title=title,
                 raw_text=text,
-                fetched_at=utcnow_iso(),
+                fetched_at=now,
                 collection_query=collection_query,
                 collector=self.connector_id,
                 url_hash=hash_url(url),
                 content_hash=hash_text(text),
+                metadata={"csv_row_index": row_idx},
             )
             raw_signals.append(sig)
 
@@ -100,5 +106,6 @@ class ManualUrlConnector:
             connector=self.connector_id,
             raw_signals=raw_signals,
             errors=errors,
-            fetched_at=utcnow_iso(),
+            warnings=warnings,
+            fetched_at=now,
         )

@@ -1,0 +1,17 @@
+{
+  "total_count": 1,
+  "incomplete_results": false,
+  "items": [
+    {
+      "id": 12345,
+      "html_url": "https://github.com/org/repo/issues/1",
+      "title": "Feature: AI integration for research pipeline",
+      "body": "We need better AI integration to automate research workflows.",
+      "user": {"login": "carol"},
+      "created_at": "2026-01-01T00:00:00Z",
+      "state": "open",
+      "comments": 7,
+      "labels": [{"name": "enhancement"}, {"name": "AI"}]
+    }
+  ]
+}

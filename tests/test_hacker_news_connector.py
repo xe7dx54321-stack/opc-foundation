@@ -1,4 +1,4 @@
-﻿"""Test HackerNews connector with mocked HTTP."""
+"""Test HackerNews connector with mocked HTTP."""
 from unittest.mock import MagicMock
 import httpx
 import pytest
@@ -53,11 +53,11 @@ def test_fetch_returns_signals():
     assert result.errors == []
 
 
-def test_no_query_returns_error():
+def test_no_query_returns_warning():
     connector = HackerNewsConnector()
     q = SourceQuery(query_id="q1", source_id="hn", query=None, max_items=5)
     result = connector.fetch(q, _source(), _ctx())
-    assert len(result.errors) > 0
+    assert len(result.warnings) > 0
     assert len(result.raw_signals) == 0
 
 

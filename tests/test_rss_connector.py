@@ -1,4 +1,4 @@
-﻿"""Test RSS connector with a sample feed string."""
+"""Test RSS connector with a sample feed string."""
 from unittest.mock import patch
 from opc_foundation.sources.connectors.rss import RssConnector
 from opc_foundation.sources.source_schema import SourceQuery, SourceDefinition
@@ -47,11 +47,11 @@ def test_fetch_from_feed_string():
     assert result.raw_signals[1].title == "Entry Two"
 
 
-def test_no_url_returns_error():
+def test_no_url_returns_warning():
     connector = RssConnector()
     q = SourceQuery(query_id="q1", source_id="rss1", max_items=5)
     result = connector.fetch(q, _source(), _ctx())
-    assert len(result.errors) > 0
+    assert len(result.warnings) > 0
     assert len(result.raw_signals) == 0
 
 

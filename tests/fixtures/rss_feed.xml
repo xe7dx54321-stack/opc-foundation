@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Test Research Feed</title>
+    <link>https://example.com</link>
+    <description>A test RSS feed</description>
+    <item>
+      <title>Entry: AI in Research Workflows</title>
+      <link>https://example.com/ai-research</link>
+      <description>Summary of how AI transforms research.</description>
+      <pubDate>Mon, 01 Jan 2026 00:00:00 GMT</pubDate>
+    </item>
+    <item>
+      <title>Entry: Market Intelligence Tools</title>
+      <link>https://example.com/market-tools</link>
+      <description>A review of market intelligence tools.</description>
+    </item>
+    <item>
+      <title>Entry: No Link Item</title>
+      <description>An entry without a link URL.</description>
+    </item>
+  </channel>
+</rss>

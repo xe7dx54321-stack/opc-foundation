@@ -1,4 +1,4 @@
-﻿"""Test GitHub Issues connector with mocked HTTP."""
+"""Test GitHub Issues connector with mocked HTTP."""
 from unittest.mock import MagicMock
 from opc_foundation.sources.connectors.github_issues import GitHubIssuesConnector
 from opc_foundation.sources.source_schema import SourceQuery, SourceDefinition
@@ -50,11 +50,11 @@ def test_fetch_returns_signals():
     assert result.errors == []
 
 
-def test_no_query_returns_error():
+def test_no_query_returns_warning():
     connector = GitHubIssuesConnector()
     q = SourceQuery(query_id="q1", source_id="gh", query=None, max_items=5)
     result = connector.fetch(q, _source(), _ctx())
-    assert len(result.errors) > 0
+    assert len(result.warnings) > 0
 
 
 def test_http_failure_does_not_raise():

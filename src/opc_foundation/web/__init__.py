@@ -1,4 +1,4 @@
-﻿from .url_text_extractor import ExtractedPage, URLTextExtractor
+from .url_text_extractor import ExtractedPage, URLTextExtractor
 from .trafilatura_extractor import TrafilaturaExtractor
 from .html_cleaner import clean_html
 

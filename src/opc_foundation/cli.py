@@ -1,13 +1,19 @@
-﻿"""OPC Foundation CLI – quick validation and fetch utilities."""
+"""OPC Foundation CLI – quick validation and fetch utilities."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
 from typing import Optional
 
 import typer
 
 app = typer.Typer(name="opc-foundation", help="OPC Foundation infrastructure CLI.")
+
+
+@app.command("version")
+def show_version() -> None:
+    """Print the installed opc-foundation version."""
+    from opc_foundation import __version__
+    typer.echo(f"opc-foundation {__version__}")
 
 
 @app.command("validate-source-registry")
@@ -67,10 +73,11 @@ def fetch_source(
     ctx = RunContext(pipeline_name="cli-fetch")
     result = connector.fetch(sq, source_def, ctx)
 
-    typer.echo(f"Fetched {len(result.raw_signals)} signal(s), {len(result.errors)} error(s).")
-    if result.errors:
-        for e in result.errors:
-            typer.echo(f"  [ERR] {e}", err=True)
+    typer.echo(f"Fetched {len(result.raw_signals)} signal(s), {len(result.errors)} error(s), {len(result.warnings)} warning(s).")
+    for w in result.warnings:
+        typer.echo(f"  [WARN] {w}")
+    for e in result.errors:
+        typer.echo(f"  [ERR] {e}", err=True)
 
     if output:
         JsonlStore.write_records(output, result.raw_signals)
@@ -157,6 +164,41 @@ def dedupe_signals(
     result = dedupe_raw_signals(signals, by=by)
     JsonlStore.write_records(output_path, result.unique_signals)
     typer.echo(f"Unique: {len(result.unique_signals)}, Duplicates removed: {result.duplicate_count}")
+
+
+@app.command("seen-store-stats")
+def seen_store_stats(
+    path: str = typer.Argument(..., help="Path to seen store JSONL file"),
+) -> None:
+    """Show statistics for a SeenStore JSONL file."""
+    from opc_foundation.signals.seen_store import SeenStore
+
+    store = SeenStore(path)
+    records = store.load()
+    if not records:
+        typer.echo("SeenStore is empty.")
+        return
+    seen_once = sum(1 for r in records if r.seen_count == 1)
+    seen_multi = sum(1 for r in records if r.seen_count > 1)
+    sources = set(r.source_id for r in records)
+    typer.echo(f"Total records : {len(records)}")
+    typer.echo(f"Seen once     : {seen_once}")
+    typer.echo(f"Seen multiple : {seen_multi}")
+    typer.echo(f"Sources       : {', '.join(sorted(sources))}")
+
+
+@app.command("build-artifact-manifest")
+def build_artifact_manifest(
+    run_id: str = typer.Option(..., help="Run ID"),
+    pipeline: str = typer.Option("default", help="Pipeline name"),
+    output: str = typer.Option("artifact_manifest.json", help="Output JSON path"),
+) -> None:
+    """Build an empty artifact manifest skeleton for a run."""
+    from opc_foundation.run.artifact_manifest import ArtifactManifestBuilder
+
+    builder = ArtifactManifestBuilder(run_id=run_id, pipeline_name=pipeline)
+    p = builder.write(output)
+    typer.echo(f"Manifest written to {p}")
 
 
 if __name__ == "__main__":
