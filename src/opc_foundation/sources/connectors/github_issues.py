@@ -15,7 +15,7 @@ from ...run.run_context import RunContext
 from ...run.time_utils import utcnow_iso
 from ...signals.dedupe import hash_url, hash_text
 from ...signals.raw_signal_schema import RawSignal
-from ..http_utils import http_get_with_retry, HTTPFetchError
+from ..http_utils import http_get_with_retry, HTTPFetchError, _classify_error
 from ..source_schema import FetchResult, SourceDefinition, SourceQuery
 
 _GH_SEARCH = "https://api.github.com/search/issues"
@@ -93,7 +93,7 @@ class GitHubIssuesConnector:
                 code = getattr(getattr(exc, "response", None), "status_code", None)
                 fe = HTTPFetchError(
                     status_code=code,
-                    error_type="timeout" if isinstance(exc, httpx.TimeoutException) else "network",
+                    error_type=_classify_error(exc, code),
                     message=str(exc),
                 )
                 if attempt < self._max_retries:

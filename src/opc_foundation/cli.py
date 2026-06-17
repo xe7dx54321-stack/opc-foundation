@@ -10,7 +10,7 @@ provider_app = typer.Typer(help="Provider detection and health commands.")
 app.add_typer(provider_app, name="provider")
 
 
-# 鈹€鈹€ version 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- version ------------------------------------------------------------------
 @app.command("version")
 def show_version() -> None:
     """Print the opc-foundation version."""
@@ -18,7 +18,7 @@ def show_version() -> None:
     typer.echo(f"opc-foundation {__version__}")
 
 
-# 鈹€鈹€ provider doctor 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- provider doctor -----------------------------------------------------------
 @provider_app.command("doctor")
 def provider_doctor(
     test_query: bool = typer.Option(False, help="Run a live test query per provider"),
@@ -40,7 +40,7 @@ def provider_doctor(
             typer.echo(f"       test query   : {tq}")
 
 
-# 鈹€鈹€ provider detect-search 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- provider detect-search ----------------------------------------------------
 @provider_app.command("detect-search")
 def detect_search() -> None:
     """Detect the preferred available search provider."""
@@ -54,7 +54,7 @@ def detect_search() -> None:
         raise typer.Exit(1)
 
 
-# 鈹€鈹€ search 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- search --------------------------------------------------------------------
 @app.command("search")
 def search_cmd(
     query: str = typer.Argument(..., help="Search query"),
@@ -84,7 +84,7 @@ def search_cmd(
             typer.echo(f"       {r.snippet[:120]}")
 
 
-# 鈹€鈹€ source-registry validate 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- source-registry validate --------------------------------------------------
 @app.command("source-registry-validate")
 def source_registry_validate(
     path: str = typer.Argument(..., help="Path to source registry YAML (v1 or v2)"),
@@ -117,7 +117,7 @@ def source_registry_validate(
             typer.echo(f"  鈥?{s.source_id} ({s.connector})")
 
 
-# 鈹€鈹€ validate-source-registry (original command kept for compat) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- validate-source-registry (original command kept for compat) ---------------
 @app.command("validate-source-registry")
 def validate_source_registry(
     path: str = typer.Option("examples/source_registry.example.yaml"),
@@ -135,7 +135,7 @@ def validate_source_registry(
         typer.echo(f"  鈥?{s.source_id} ({s.connector})")
 
 
-# 鈹€鈹€ source-run diagnose 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- source-run diagnose -------------------------------------------------------
 @app.command("source-run-diagnose")
 def source_run_diagnose(
     source_id: str = typer.Argument(..., help="Source ID"),
@@ -154,7 +154,7 @@ def source_run_diagnose(
     typer.echo(report.model_dump_json(indent=2))
 
 
-# 鈹€鈹€ original commands (kept for backward compat) 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
+# -- original commands (kept for backward compat) -----------------------------
 @app.command("fetch-source")
 def fetch_source(
     source_id: str = typer.Argument(...),

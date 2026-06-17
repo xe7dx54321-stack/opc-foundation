@@ -8,7 +8,7 @@ This guide shows how Demand Radar uses `opc-foundation` for its acquisition pipe
 
 ```
 # In Demand Radar pyproject.toml or requirements.txt:
-opc-foundation @ git+https://github.com/xe7dx54321-stack/opc-foundation@v0.1.1
+opc-foundation @ git+https://github.com/xe7dx54321-stack/opc-foundation@v0.1.3
 ```
 
 Before upgrading to a new Foundation version (e.g. v0.1.2), run the Demand Radar

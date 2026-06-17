@@ -1,8 +1,9 @@
 """Normalize, de-duplicate, and clean SearchResult lists."""
 from __future__ import annotations
 import hashlib
-from urllib.parse import urlparse, urlunparse
+from urllib.parse import urlparse
 from .search_schema import SearchResult
+from ..web.url_utils import canonicalize_url as _canonicalize_url
 
 _EXAMPLE_DOMAINS = {"example.com", "example.org", "example.net"}
 
@@ -15,12 +16,8 @@ def extract_domain(url: str) -> str | None:
 
 
 def canonicalize_url(url: str) -> str:
-    try:
-        p = urlparse(url.strip())
-        norm = p._replace(fragment="", scheme=p.scheme.lower())
-        return urlunparse(norm).rstrip("/")
-    except Exception:
-        return url.strip()
+    """规范化 URL，委托给 web.url_utils 统一处理。"""
+    return _canonicalize_url(url)
 
 
 def result_hash(url: str) -> str:

@@ -119,11 +119,19 @@ def test_rss_no_feed_url_returns_warning():
 
 
 def test_rss_parse_exception_does_not_raise():
-    with patch("opc_foundation.sources.connectors.rss.feedparser.parse",
-               side_effect=Exception("fatal parse error")):
-        connector = RssConnector()
-        q = SourceQuery(query_id="q1", source_id="rss1", url="https://bad.feed/rss", max_items=5)
-        result = connector.fetch(q, _rss_source(), _ctx())
+    mock_resp = MagicMock()
+    mock_resp.content = b"<rss></rss>"
+    mock_resp.raise_for_status = MagicMock()
+    mock_client = MagicMock()
+    mock_client.__enter__ = MagicMock(return_value=mock_client)
+    mock_client.__exit__ = MagicMock(return_value=False)
+    mock_client.get.return_value = mock_resp
+    with patch("opc_foundation.sources.connectors.rss.httpx.Client", return_value=mock_client):
+        with patch("opc_foundation.sources.connectors.rss.feedparser.parse",
+                   side_effect=Exception("fatal parse error")):
+            connector = RssConnector()
+            q = SourceQuery(query_id="q1", source_id="rss1", url="https://bad.feed/rss", max_items=5)
+            result = connector.fetch(q, _rss_source(), _ctx())
     assert len(result.errors) > 0
     assert len(result.raw_signals) == 0
 

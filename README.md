@@ -8,7 +8,7 @@
 **Foundation provides infrastructure. Project owns judgment.**
 公共库提供基础设施，具体项目保留判断力。
 
-Current version: **v0.1.1**
+Current version: **v0.1.3**
 
 ---
 

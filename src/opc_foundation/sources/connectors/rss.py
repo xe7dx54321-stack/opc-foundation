@@ -4,12 +4,14 @@ from __future__ import annotations
 from typing import Any
 
 import feedparser
+import httpx
 
 from ...run.id_generator import new_id
 from ...run.run_context import RunContext
 from ...run.time_utils import utcnow_iso
 from ...signals.dedupe import hash_url, hash_text
 from ...signals.raw_signal_schema import RawSignal
+from ...web.url_validator import validate_url, URLValidationError
 from ..source_schema import FetchResult, SourceDefinition, SourceQuery
 
 
@@ -17,6 +19,10 @@ class RssConnector:
     """Fetch entries from an RSS/Atom feed."""
 
     connector_id = "rss"
+
+    def __init__(self, timeout: int = 15, max_retries: int = 2) -> None:
+        self._timeout = timeout
+        self._max_retries = max_retries
 
     def fetch(
         self,
@@ -43,8 +49,28 @@ class RssConnector:
                 fetched_at=now,
             )
 
+        # 校验 feed URL 安全性（SSRF 防护）
         try:
-            parsed = feedparser.parse(feed_url)
+            validate_url(feed_url)
+        except URLValidationError as exc:
+            errors.append(f"RSS feed URL validation failed: {exc}")
+            return FetchResult(
+                source_id=source.source_id,
+                connector=self.connector_id,
+                errors=errors,
+                warnings=warnings,
+                fetched_at=now,
+            )
+
+        try:
+            # 用 httpx 先下载 feed 内容（带 timeout），再传给 feedparser 解析
+            # 避免 feedparser.parse(url) 无 timeout 的问题
+            with httpx.Client(timeout=self._timeout, follow_redirects=True) as client:
+                resp = client.get(feed_url)
+                resp.raise_for_status()
+                feed_content = resp.content
+
+            parsed = feedparser.parse(feed_content)
             if parsed.get("bozo"):
                 bozo_exc = parsed.get("bozo_exception")
                 if bozo_exc:

@@ -3,19 +3,16 @@ from __future__ import annotations
 
 import hashlib
 import re
-from urllib.parse import urlparse, urlunparse
 
 from pydantic import BaseModel
 
 from .raw_signal_schema import RawSignal
+from ..web.url_utils import canonicalize_url
 
 
 def normalize_url(url: str) -> str:
-    """Strip fragment and trailing slash for comparison."""
-    parsed = urlparse(url.strip().lower())
-    normalized = parsed._replace(fragment="")
-    result = urlunparse(normalized)
-    return result.rstrip("/")
+    """规范化 URL，委托给 web.url_utils.canonicalize_url 统一处理。"""
+    return canonicalize_url(url)
 
 
 def hash_url(url: str) -> str:

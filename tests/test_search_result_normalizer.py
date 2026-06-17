@@ -17,7 +17,7 @@ def test_extract_domain():
 
 
 def test_canonicalize_url():
-    assert canonicalize_url("HTTPS://Example.COM/page/") == "https://Example.COM/page"
+    assert canonicalize_url("HTTPS://Example.COM/page/") == "https://example.com/page"
 
 
 def test_example_domain_filtered():

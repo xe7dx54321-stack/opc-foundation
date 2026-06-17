@@ -11,6 +11,7 @@ from ...signals.dedupe import hash_url, hash_text
 from ...signals.raw_signal_schema import RawSignal
 from ...storage.csv_store import CsvStore
 from ...web.url_text_extractor import URLTextExtractor, ExtractedPage
+from ...web.url_validator import validate_url, URLValidationError
 from ..source_schema import FetchResult, SourceDefinition, SourceQuery
 
 
@@ -66,6 +67,13 @@ class ManualUrlConnector:
             source_name = row.get("source_name") or source.source_name
             collection_query = row.get("collection_query") or query.query
             notes = row.get("notes") or None
+
+            # 校验 URL 安全性（SSRF 防护）
+            try:
+                validate_url(url)
+            except URLValidationError as exc:
+                errors.append(f"Row {row_idx} [{url}]: URL validation failed: {exc}")
+                continue
 
             text = ""
             if self._extractor is not None:
