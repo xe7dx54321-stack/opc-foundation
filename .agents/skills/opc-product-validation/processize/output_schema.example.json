@@ -1,0 +1,21 @@
+{
+  "theme_id": "theme__001",
+  "step_by_step_sop": [
+    {"step": 1, "action": "接收用户输入，确认研究范围", "type": "human", "input": "用户邮件/表单", "output": "研究需求确认清单", "quality_check": "公司名、研究目的、核心指标均已填写"},
+    {"step": 2, "action": "抓取公司基本面数据", "type": "automatable", "input": "公司名称", "output": "结构化JSON数据", "quality_check": "核心财务指标不为空"},
+    {"step": 3, "action": "检索行业背景资料", "type": "automatable", "input": "行业关键词", "output": "行业摘要段落", "quality_check": "来源可靠，不晚于12个月"},
+    {"step": 4, "action": "整理竞品简况", "type": "human", "input": "竞品名单", "output": "竞品对比表", "quality_check": "至少3家竞品，有核心指标对比"},
+    {"step": 5, "action": "填写 Notion 模板报告", "type": "human", "input": "所有数据", "output": "完整 Notion 报告", "quality_check": "所有模板字段已填写"},
+    {"step": 6, "action": "发送报告，收集反馈", "type": "human", "input": "报告链接 + 用户邮件", "output": "用户反馈评分", "quality_check": "用户在24小时内回复"}
+  ],
+  "human_steps": ["接收用户输入，确认研究范围", "整理竞品简况", "填写 Notion 模板报告", "发送报告，收集反馈"],
+  "automation_candidates": [
+    {"step_id": 2, "action": "抓取公司基本面数据", "automation_approach": "财务数据API（如 Yahoo Finance / SEC EDGAR）", "priority": "high"},
+    {"step_id": 3, "action": "检索行业背景资料", "automation_approach": "搜索API + 摘要生成", "priority": "medium"}
+  ],
+  "inputs": ["公司名称", "研究目的", "核心指标偏好"],
+  "outputs": ["Notion 格式结构化研究报告"],
+  "quality_checks": ["所有模板字段已填写", "用户确认内容可用", "核心财务指标数据来源可靠"],
+  "failure_points": ["数据来源质量不稳定", "用户需求描述不清晰导致返工", "Notion模板字段定义模糊"],
+  "next_process_iteration": "下次交付前先发标准化需求问卷，减少需求确认来回，目标把交付时间压缩到3小时内"
+}

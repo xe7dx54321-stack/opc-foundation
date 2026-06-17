@@ -1,0 +1,153 @@
+library_id: opc-product-validation
+library_name: OPC Product Validation Skills
+version: "0.1.0"
+description: >
+  Optional decision-aid skills for OPC product validation.
+  These skills are NOT pipeline stages. They must be explicitly invoked
+  by a downstream project or user. They are never run automatically.
+
+default_enabled: false
+requires_explicit_invocation: true
+
+principles:
+  - Skills are optional decision aids, not mandatory pipeline stages.
+  - Evidence first, solution later.
+  - Manual service before software product.
+  - Do not run unused skills automatically.
+  - Downstream projects decide when to invoke each skill.
+  - No skill should modify another project's data automatically.
+  - Foundation provides the toolbox; projects decide how to use it.
+
+skills:
+  - skill_id: theme-validation
+    name: Theme Validation
+    name_zh: 需求主题验证
+    path: theme-validation/SKILL.md
+    stage: post_theme_grouping
+    default_enabled: false
+    requires_user_trigger: true
+    input_types:
+      - demand_theme
+      - evidence_summary
+      - human_review_summary
+    output_types:
+      - validation_verdict
+      - evidence_gaps
+      - next_action
+    recommended_for:
+      - demand_radar
+      - opc_product_discovery
+    description: >
+      Evaluate whether a demand theme has sufficient first-hand evidence
+      to justify further validation effort.
+
+  - skill_id: concierge-mvp
+    name: Concierge MVP
+    name_zh: 礼宾式 MVP
+    path: concierge-mvp/SKILL.md
+    stage: post_theme_validation
+    default_enabled: false
+    requires_user_trigger: true
+    input_types:
+      - validated_demand_theme
+      - user_persona
+      - evidence_summary
+    output_types:
+      - manual_service_plan
+      - delivery_steps
+      - success_criteria
+    recommended_for:
+      - demand_radar
+      - opc_product_discovery
+    description: >
+      Convert a validated demand theme into a manual, code-free service
+      that can be delivered to real users immediately.
+
+  - skill_id: processize
+    name: Processize Before Productize
+    name_zh: 流程化先于产品化
+    path: processize/SKILL.md
+    stage: post_concierge_plan
+    default_enabled: false
+    requires_user_trigger: true
+    input_types:
+      - manual_service_plan
+      - delivery_steps
+    output_types:
+      - sop
+      - automation_candidates
+      - human_in_loop_steps
+    recommended_for:
+      - demand_radar
+      - opc_product_discovery
+    description: >
+      Break a concierge MVP delivery plan into a repeatable SOP,
+      and identify future automation candidates.
+
+  - skill_id: first-customers
+    name: First Customers
+    name_zh: 第一批客户触达
+    path: first-customers/SKILL.md
+    stage: post_validation_or_concierge_plan
+    default_enabled: false
+    requires_user_trigger: true
+    input_types:
+      - demand_theme
+      - target_persona
+      - evidence_summary
+    output_types:
+      - customer_segments
+      - outreach_channels
+      - outreach_messages
+    recommended_for:
+      - demand_radar
+      - opc_product_discovery
+    description: >
+      Identify and approach the first 3-10 potential users for a
+      concierge MVP offer.
+
+  - skill_id: pricing-smoke-test
+    name: Pricing Smoke Test
+    name_zh: 付费烟雾测试
+    path: pricing-smoke-test/SKILL.md
+    stage: pre_pilot
+    default_enabled: false
+    requires_user_trigger: true
+    input_types:
+      - concierge_mvp_plan
+      - target_persona
+      - value_proposition
+    output_types:
+      - pricing_hypotheses
+      - smoke_test_offer
+      - payment_signal_criteria
+    recommended_for:
+      - demand_radar
+      - opc_product_discovery
+    description: >
+      Design the minimal paid validation for a concierge MVP.
+      Distinguish strong signals (willingness to pay) from weak ones
+      (likes, saves, verbal interest).
+
+  - skill_id: minimalist-review
+    name: Minimalist Review
+    name_zh: 极简创业审查
+    path: minimalist-review/SKILL.md
+    stage: decision_checkpoint
+    default_enabled: false
+    requires_user_trigger: true
+    input_types:
+      - demand_theme
+      - validation_summary
+      - concierge_mvp_plan
+      - customer_outreach_plan
+    output_types:
+      - final_verdict
+      - red_flags
+      - next_smallest_step
+    recommended_for:
+      - demand_radar
+      - opc_product_discovery
+    description: >
+      Run a structured minimalist startup checklist before committing
+      to building any product. Forces explicit answers to 8 key questions.

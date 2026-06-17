@@ -3,8 +3,26 @@
 All notable changes to `opc-foundation` are documented here.
 Versions follow [Semantic Versioning](https://semver.org/).
 
----
+## v0.1.3 (Phase 1.4) — 2026-06-17
 
+### Added
+- `.agents/skills/opc-product-validation/` – OPC Product Validation Skill Library
+  - `skill_manifest.yaml` (all skills default_enabled=false, requires_user_trigger=true)
+  - 6 skills: theme-validation, concierge-mvp, processize, first-customers, pricing-smoke-test, minimalist-review
+  - Each skill: `SKILL.md`, `input_schema.example.json`, `output_schema.example.json`
+- `src/opc_foundation/skills/` – manifest schema, loader, and file validator
+- CLI: `skills list`, `skills validate`, `skills show <skill_id>`
+- `docs/skills/opc_skill_library.md`
+- `docs/skills/downstream_usage.md`
+- `docs/skills/demand_radar_integration_note.md`
+
+### Fixed
+- `version.py` bumped to `0.1.3` – CLI `version` output now matches tag
+
+### No breaking changes
+All v0.1.2 / v0.1.1 / v0.1.0 imports remain valid.
+
+---
 ## v0.1.2 (Phase 1.3) — 2026-06-17
 
 ### Added

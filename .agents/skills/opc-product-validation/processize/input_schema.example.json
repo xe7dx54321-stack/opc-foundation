@@ -1,0 +1,14 @@
+{
+  "theme_id": "theme__001",
+  "manual_service_offer": "为投资分析师提供结构化公司研究报告，48小时交付",
+  "human_delivery_steps": [
+    "接收用户输入（公司名 + 研究目的）",
+    "用公开数据源整理公司基本面",
+    "检索行业背景资料",
+    "整理竞品简况",
+    "填写 Notion 模板报告",
+    "发送报告，收集反馈"
+  ],
+  "tools_needed": ["Notion", "Google", "SEC EDGAR", "电子邮件"],
+  "delivery_notes": "第一次交付花了5小时，主要时间在整理数据格式"
+}

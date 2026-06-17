@@ -1,0 +1,24 @@
+{
+  "theme_id": "theme__001",
+  "theme_title_zh": "投资研究工作流碎片化",
+  "core_pain_zh": "投资研究人员需要在多个工具之间手动整理公司、行业、竞品和 memo，导致研究流程低效且难复用。",
+  "persona_group": "投资分析师 / 投资经理",
+  "workflow_group": "投资研究与尽调",
+  "evidence_summary": {
+    "evidence_count": 8,
+    "unique_domain_count": 4,
+    "first_hand_evidence_count": 1,
+    "marketing_or_vendor_evidence_count": 3,
+    "reviewed_pursue_count": 1,
+    "reviewed_watch_count": 2,
+    "reviewed_reject_count": 0
+  },
+  "representative_quotes": [
+    "What is the most painful part in your research workflow when it comes to stocks?",
+    "The biggest pain point: Information is scattered across too many places."
+  ],
+  "representative_source_urls": [
+    "https://www.reddit.com/r/ValueInvesting/comments/1tsgt5o/for_people_who_seriously_research_individual"
+  ],
+  "human_review_summary": "1条高质量Reddit讨论，7条为行业资讯或厂商内容，一手证据偏少"
+}

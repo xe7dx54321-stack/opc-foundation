@@ -1,0 +1,39 @@
+{
+  "theme_id": "theme__001",
+  "target_customer_segments": [
+    "初级投资分析师（1-3年经验），在小型VC或私募股权基金工作",
+    "独立投资研究人员，没有专职研究支持团队"
+  ],
+  "where_to_find_them": [
+    "LinkedIn 投资分析相关群组和帖子",
+    "Reddit r/ValueInvesting, r/FinancialCareers",
+    "国内VC从业者微信群",
+    "CFA考生/持证人社群"
+  ],
+  "community_or_channel_list": [
+    "r/ValueInvesting",
+    "r/FinancialCareers",
+    "LinkedIn群组：Venture Capital & Private Equity",
+    "国内VC微信群（通过共同认识人介绍进入）"
+  ],
+  "warm_outreach_angles": [
+    "你之前在 r/ValueInvesting 提到研究工作流的痛点 — 我正在研究这个问题，能否聊15分钟？",
+    "我看到你在XX公司做研究工作 — 我在做一个帮分析师整理研究资料的服务，想了解你的真实工作流程"
+  ],
+  "cold_outreach_messages": [
+    "Hi，我是李少博。我在研究投资分析师的工作流程痛点，特别是研究资料整理这块。你有没有遇到过相关问题？能否给我15分钟讲讲你的工作流程？"
+  ],
+  "interview_questions": [
+    "你最近一次做公司研究时，从开始到产出可用的研究结论，大概花了多少时间？",
+    "哪个环节最费时间或最让你头疼？",
+    "你现在是怎么解决这个问题的？有没有用什么临时方法？",
+    "如果有人帮你在48小时内整理好一份结构化的公司研究报告，你会用吗？"
+  ],
+  "offer_message": "我可以帮你在48小时内整理一份结构化的公司研究报告（Notion格式，包含基本面、行业背景、竞品简况）。你只需要告诉我目标公司名和研究目的。第一份免费，如果有用再谈合作。",
+  "disqualification_criteria": [
+    "不做个股研究的人（如指数投资者、量化策略师）",
+    "已经有完整研究团队的大型机构（不是目标用户）",
+    "对研究工作流没有痛点感知的人",
+    "只是好奇但没有真实需求的人"
+  ]
+}

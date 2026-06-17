@@ -17,7 +17,7 @@ def _run(args, extra_env=None):
 def test_version_command():
     r = _run(["version"])
     assert r.returncode == 0
-    assert "0.1.2" in r.stdout
+    assert "0.1.3" in r.stdout
 
 
 def test_provider_doctor_no_keys():

@@ -1,0 +1,19 @@
+{
+  "theme_id": "theme__001",
+  "validation_verdict": "needs_more_evidence",
+  "verdict_reason_zh": "当前证据以资讯类内容为主，只有1条第一手社区讨论，缺少用户具体工作流描述和变通行为记录。",
+  "evidence_strength": "weak",
+  "commercial_potential": "unclear",
+  "first_hand_evidence_gap": true,
+  "evidence_gaps": [
+    "缺少真实用户描述自己工作流程的第一手内容（只有1条）",
+    "没有发现用户变通方案（workaround）的具体记录",
+    "现有证据来源域名数量偏少（4个），可信度有限"
+  ],
+  "recommended_next_step": "在 Reddit r/ValueInvesting、r/FinancialCareers 或相关微信群寻找真实用户描述，目标：找到3条以上第一手工作流描述或访谈2-3名目标用户",
+  "do_not_do": [
+    "不要在证据不足时直接设计产品",
+    "不要把厂商博客内容当作主要验证依据",
+    "不要跳过访谈直接进入开发"
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "theme_id": "theme__001",
+  "manual_service_offer": "为投资分析师提供结构化公司研究报告，48小时交付，首份免费",
+  "target_user": "早期阶段投资分析师（1-3年经验）",
+  "persona_group": "投资分析师 / 投资经理",
+  "evidence_summary": {
+    "evidence_count": 8,
+    "community_evidence_count": 1,
+    "community_names": ["Reddit r/ValueInvesting"]
+  },
+  "representative_quotes": [
+    "The biggest pain point: Information is scattered across too many places."
+  ]
+}

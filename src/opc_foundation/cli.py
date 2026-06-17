@@ -270,5 +270,94 @@ def build_artifact_manifest(
     typer.echo(f"Manifest written to {p}")
 
 
+# skills sub-app
+skills_app = typer.Typer(help="OPC Skill Library commands.")
+app.add_typer(skills_app, name="skills")
+
+_DEFAULT_MANIFEST = ".agents/skills/opc-product-validation/skill_manifest.yaml"
+
+
+@skills_app.command("list")
+def skills_list(
+    manifest: str = typer.Option(_DEFAULT_MANIFEST, help="Path to skill_manifest.yaml"),
+) -> None:
+    """List all skills in the manifest."""
+    from opc_foundation.skills import list_skills
+    try:
+        skill_list = list_skills(manifest)
+    except FileNotFoundError as e:
+        typer.echo(f"[ERROR] {e}", err=True); raise typer.Exit(1)
+
+    typer.echo(f"\nOPC Skill Library  ({len(skill_list)} skills)\n")
+    for s in skill_list:
+        enabled = "[OFF]" if not s.default_enabled else "[ON] "
+        typer.echo(f"  {enabled} {s.skill_id}")
+        typer.echo(f"         name  : {s.name}")
+        typer.echo(f"         stage : {s.stage}")
+        typer.echo(f"         trigger: user_required={s.requires_user_trigger}")
+
+
+@skills_app.command("validate")
+def skills_validate(
+    manifest: str = typer.Option(_DEFAULT_MANIFEST, help="Path to skill_manifest.yaml"),
+) -> None:
+    """Validate the skill manifest and check all skill files exist."""
+    from opc_foundation.skills import validate_skill_manifest, skill_files_exist
+    try:
+        errors = validate_skill_manifest(manifest)
+        file_status = skill_files_exist(manifest)
+    except FileNotFoundError as e:
+        typer.echo(f"[ERROR] {e}", err=True); raise typer.Exit(1)
+
+    if errors:
+        for e in errors:
+            typer.echo(f"[MANIFEST ERROR] {e}", err=True)
+        raise typer.Exit(1)
+
+    all_ok = True
+    for skill_id, files in file_status.items():
+        for fname, exists in files.items():
+            if not exists:
+                typer.echo(f"[MISSING] {skill_id}: {fname}")
+                all_ok = False
+
+    if all_ok:
+        typer.echo(f"OK – manifest valid, all {len(file_status)} skill file sets present.")
+    else:
+        raise typer.Exit(1)
+
+
+@skills_app.command("show")
+def skills_show(
+    skill_id: str = typer.Argument(..., help="Skill ID"),
+    manifest: str = typer.Option(_DEFAULT_MANIFEST, help="Path to skill_manifest.yaml"),
+) -> None:
+    """Show details for a specific skill."""
+    from opc_foundation.skills import get_skill_by_id
+    try:
+        skill = get_skill_by_id(manifest, skill_id)
+    except FileNotFoundError as e:
+        typer.echo(f"[ERROR] {e}", err=True); raise typer.Exit(1)
+
+    if skill is None:
+        typer.echo(f"Skill '{skill_id}' not found in manifest.", err=True)
+        raise typer.Exit(1)
+
+    typer.echo(f"\nSkill: {skill.name}")
+    if skill.name_zh:
+        typer.echo(f"       {skill.name_zh}")
+    typer.echo(f"  skill_id            : {skill.skill_id}")
+    typer.echo(f"  path                : {skill.path}")
+    typer.echo(f"  stage               : {skill.stage}")
+    typer.echo(f"  default_enabled     : {skill.default_enabled}")
+    typer.echo(f"  requires_user_trigger: {skill.requires_user_trigger}")
+    typer.echo(f"  input_types         : {', '.join(skill.input_types)}")
+    typer.echo(f"  output_types        : {', '.join(skill.output_types)}")
+    if skill.description:
+        typer.echo(f"  description         : {skill.description.strip()}")
+
+
 if __name__ == "__main__":
     app()
+
+#

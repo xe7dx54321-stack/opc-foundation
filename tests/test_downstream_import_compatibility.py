@@ -3,7 +3,7 @@
 
 def test_version():
     from opc_foundation import __version__
-    assert __version__ == "0.1.2"
+    assert __version__ == "0.1.3"
 
 
 def test_config():

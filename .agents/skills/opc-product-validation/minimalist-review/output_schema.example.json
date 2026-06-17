@@ -1,0 +1,30 @@
+{
+  "theme_id": "theme__001",
+  "checklist": {
+    "has_clear_user": {"answer": "yes", "evidence": "目标用户为初级投资分析师，有具体工作场景：在多工具间整理研究资料"},
+    "has_real_pain": {"answer": "yes", "evidence": "用户描述研究流程碎片化，有具体低效行为描述"},
+    "has_first_hand_evidence": {"answer": "unclear", "evidence": "仅1条第一手社区帖子，其余为资讯内容，数量不足"},
+    "has_workaround_behavior": {"answer": "no", "evidence": "未找到用户描述自己应对流程碎片化的具体变通方案"},
+    "has_manual_delivery_plan": {"answer": "yes", "evidence": "已设计48小时人工研究报告交付方案，工具和步骤明确"},
+    "has_reachable_first_users": {"answer": "yes", "evidence": "已识别Reddit和微信VC群为主要触达渠道，有具体外联消息"},
+    "has_payment_validation_path": {"answer": "yes", "evidence": "已设计¥99试用定价和明确的付费验证标准"},
+    "no_premature_productization_risk": {"answer": "yes", "evidence": "当前计划为人工交付，未启动软件开发"}
+  },
+  "final_verdict": "needs_more_evidence",
+  "reason": "第一手证据数量不足（仅1条），且未发现用户变通行为记录。在推进 concierge 交付的同时，需要补充2-3条第一手用户痛点描述。",
+  "red_flags": [
+    "第一手证据只有1条，可信度偏低",
+    "没有发现用户变通行为记录（workaround）"
+  ],
+  "evidence_gaps": [
+    "缺少用户描述自己工作流变通方案的记录",
+    "第一手社区内容数量偏少，需要补充"
+  ],
+  "next_smallest_step": "在Reddit r/ValueInvesting 或相关微信群找2-3名投资分析师进行15分钟访谈，重点了解他们的实际工作流程和变通方案",
+  "do_not_build_list": [
+    "自动化研究报告生成系统",
+    "数据抓取平台",
+    "用户账户管理系统",
+    "订阅管理后台"
+  ]
+}
