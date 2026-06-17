@@ -1,0 +1,30 @@
+# Search provider configuration example
+# Provider priority: tavily > brave > serpapi > bing > google_cse
+
+providers:
+  tavily:
+    env_var: TAVILY_API_KEY
+    description: General web search with structured results
+    priority: 1
+
+  brave:
+    env_var: BRAVE_SEARCH_API_KEY
+    description: Privacy-focused web search
+    priority: 2
+
+  serpapi:
+    env_var: SERPAPI_API_KEY
+    description: Google results via SerpAPI proxy
+    priority: 3
+
+  bing:
+    env_var: BING_SEARCH_API_KEY
+    description: Microsoft Bing web search
+    priority: 4
+
+  google_cse:
+    env_vars:
+      - GOOGLE_CSE_API_KEY
+      - GOOGLE_CSE_ID
+    description: Google Custom Search Engine
+    priority: 5

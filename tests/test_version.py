@@ -11,7 +11,7 @@ def test_version_importable():
 
 def test_version_module():
     from opc_foundation.version import __version__
-    assert __version__ == "0.1.0"
+    assert __version__ == "0.1.2"
 
 
 def test_version_cli():

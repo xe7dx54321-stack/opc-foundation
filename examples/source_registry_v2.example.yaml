@@ -1,0 +1,65 @@
+registry_id: example_source_registry_v2
+version: "0.1"
+created_at: "2026-06-17T00:00:00+00:00"
+sources:
+  - source_id: tavily_search_discovery
+    source_name: Tavily Search Discovery
+    source_type: search
+    source_category: search_discovery
+    fetch_method: search_provider
+    provider: tavily
+    trust_tier: medium
+    signal_fit:
+      pain_evidence: 0.4
+      market_context: 0.7
+    expected_signal_types:
+      - market_context
+      - pain
+      - workaround
+    requires_key: true
+    required_env_vars:
+      - TAVILY_API_KEY
+    compliance_note: "Use according to Tavily provider terms."
+    enabled: true
+    metadata:
+      queries:
+        - investment research workflow spreadsheet
+        - VC deal sourcing automation
+
+  - source_id: brave_search_discovery
+    source_name: Brave Search Discovery
+    source_type: search
+    source_category: search_discovery
+    fetch_method: search_provider
+    provider: brave
+    trust_tier: medium
+    signal_fit:
+      pain_evidence: 0.35
+      market_context: 0.65
+    expected_signal_types:
+      - market_context
+      - pain
+    requires_key: true
+    required_env_vars:
+      - BRAVE_SEARCH_API_KEY
+    enabled: true
+    metadata:
+      queries:
+        - research automation tools 2026
+
+  - source_id: manual_seed_urls
+    source_name: Manual Seed URLs
+    source_type: webpage
+    source_category: manual_seed
+    fetch_method: url_extraction
+    trust_tier: high
+    signal_fit:
+      pain_evidence: 0.8
+    expected_signal_types:
+      - pain
+      - workaround
+    requires_key: false
+    enabled: true
+    metadata:
+      urls:
+        - https://example.com/research-tools
