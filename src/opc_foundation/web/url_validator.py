@@ -92,17 +92,29 @@ def _check_hostname(hostname: str, allow_private: bool, check_dns: bool) -> None
 
     # DNS 解析检查：解析域名，看解析出的 IP 是否落在私网
     if check_dns:
+        # DNS 解析可能阻塞，设置 5 秒 timeout 防止恶意慢响应 DNS 服务器导致 DoS
+        # socket.getaddrinfo 本身不接受 timeout 参数，用 setdefaulttimeout 临时设置
+        old_timeout = socket.getdefaulttimeout()
         try:
-            infos = socket.getaddrinfo(hostname, None)
+            socket.setdefaulttimeout(5)
+            try:
+                infos = socket.getaddrinfo(hostname, None)
+            except (socket.gaierror, socket.timeout, OSError) as exc:
+                # fail-closed：DNS 解析失败视为不安全
+                # 小白解读：如果连域名都解析不出来，说明这个域名可能有问题，
+                # 直接拒绝比放行更安全（放行的话请求发出去也会失败，还可能被利用）
+                raise URLValidationError(
+                    f"DNS resolution failed for {hostname}: {exc}"
+                ) from exc
             for _family, _type, _proto, _canon, sockaddr in infos:
                 ip_str = sockaddr[0]
                 if _is_ip_private_or_blocked(ip_str):
                     raise URLValidationError(
                         f"Hostname {hostname} resolves to blocked IP: {ip_str}"
                     )
-        except socket.gaierror:
-            # DNS 解析失败，允许继续（后续 HTTP 请求会自然失败）
-            pass
+        finally:
+            # 恢复原来的全局 timeout 设置
+            socket.setdefaulttimeout(old_timeout)
 
 
 def validate_url(

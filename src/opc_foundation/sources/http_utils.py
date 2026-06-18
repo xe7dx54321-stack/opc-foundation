@@ -24,7 +24,7 @@ class HTTPFetchError(BaseModel):
     message: str
 
 
-def _classify_error(exc: Exception, status_code: int | None = None) -> str:
+def classify_http_error(exc: Exception, status_code: int | None = None) -> str:
     """根据异常和状态码分类错误类型。
 
     参数：
@@ -58,10 +58,8 @@ def _make_safety_hook(allow_private: bool = False):
     """
 
     def hook(request: httpx.Request) -> None:
-        try:
-            validate_url(str(request.url), allow_private=allow_private)
-        except URLValidationError:
-            raise
+        # 校验 URL 安全性，不通过会抛 URLValidationError，httpx 会中断请求
+        validate_url(str(request.url), allow_private=allow_private)
 
     return hook
 
@@ -141,7 +139,7 @@ def http_get_with_retry(
                 if resp.status_code in (429, 403):
                     err = HTTPFetchError(
                         status_code=resp.status_code,
-                        error_type=_classify_error(Exception(), resp.status_code),
+                        error_type=classify_http_error(Exception(), resp.status_code),
                         message=f"HTTP {resp.status_code} from {url}",
                     )
                     errors.append(err)
@@ -157,7 +155,7 @@ def http_get_with_retry(
                 code = getattr(getattr(exc, "response", None), "status_code", None)
                 err = HTTPFetchError(
                     status_code=code,
-                    error_type=_classify_error(exc, code),
+                    error_type=classify_http_error(exc, code),
                     message=f"{type(exc).__name__}: {exc}",
                 )
                 errors.append(err)

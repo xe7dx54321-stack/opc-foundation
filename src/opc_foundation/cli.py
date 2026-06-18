@@ -100,9 +100,9 @@ def source_registry_validate(
             for e in errors:
                 typer.echo(f"[ERROR] {e}", err=True)
             raise typer.Exit(1)
-        typer.echo(f"OK (v2) 鈥?{len(enabled)} enabled source(s):")
+        typer.echo(f"OK (v2) -> {len(enabled)} enabled source(s):")
         for s in enabled:
-            typer.echo(f"  鈥?{s.source_id} [{s.source_type}] trust={s.trust_tier}")
+            typer.echo(f"  - {s.source_id} [{s.source_type}] trust={s.trust_tier}")
     else:
         from opc_foundation.sources import SourceRegistry
         reg = SourceRegistry.from_yaml(path)
@@ -112,9 +112,9 @@ def source_registry_validate(
                 typer.echo(f"[ERROR] {e}", err=True)
             raise typer.Exit(1)
         sources = reg.get_enabled_sources()
-        typer.echo(f"OK 鈥?{len(sources)} enabled source(s):")
+        typer.echo(f"OK -> {len(sources)} enabled source(s):")
         for s in sources:
-            typer.echo(f"  鈥?{s.source_id} ({s.connector})")
+            typer.echo(f"  - {s.source_id} ({s.connector})")
 
 
 # -- validate-source-registry (original command kept for compat) ---------------
@@ -130,9 +130,9 @@ def validate_source_registry(
     if errors:
         typer.echo(f"[ERRORS] {errors}", err=True)
         raise typer.Exit(1)
-    typer.echo(f"OK 鈥?{len(sources)} enabled source(s):")
+    typer.echo(f"OK -> {len(sources)} enabled source(s):")
     for s in sources:
-        typer.echo(f"  鈥?{s.source_id} ({s.connector})")
+        typer.echo(f"  - {s.source_id} ({s.connector})")
 
 
 # -- source-run diagnose -------------------------------------------------------

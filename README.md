@@ -42,6 +42,8 @@ This library uses [Semantic Versioning](https://semver.org/).
 
 - **v0.1.0** – Initial Phase 0-1 release (all core modules)
 - **v0.1.1** – Phase 1.1-1.2: versioning, public API stabilization, connector reliability hardening, SeenStore, ArtifactManifest, StructuredRunner hardening
+- **v0.1.2** – Phase 1.3: providers module, search module, sources_v2, web extraction interface
+- **v0.1.3** – Phase 1.4: OPC Skill Library, network safety (SSRF protection, URL validation, unified timeout), StructuredRunner retry fix
 
 Projects should **pin** `opc-foundation` at a specific version.
 Before upgrading, run your project-level integration tests.

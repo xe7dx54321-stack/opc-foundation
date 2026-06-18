@@ -1,6 +1,7 @@
 """RSS connector via feedparser – hardened for robustness."""
 from __future__ import annotations
 
+import time
 from typing import Any
 
 import feedparser
@@ -30,6 +31,20 @@ class RssConnector:
         source: SourceDefinition,
         context: RunContext,
     ) -> FetchResult:
+        """从 RSS/Atom feed 拉取条目并转为 RawSignal。
+
+        小白解读：这个函数先下载 RSS 源（一个 XML 格式的文件），然后用
+        feedparser 解析出每条文章的标题、摘要、链接，最后转成统一的
+        RawSignal 格式返回。下载失败会自动重试（最多 max_retries 次）。
+
+        参数:
+            query: 查询参数，包含 url 或 metadata.feed_url
+            source: 数据源定义，包含 source_id、source_name 等
+            context: 运行上下文
+
+        返回:
+            FetchResult: 包含 raw_signals 列表、errors、warnings
+        """
         errors: list[str] = []
         warnings: list[str] = []
         raw_signals: list[RawSignal] = []
@@ -62,14 +77,60 @@ class RssConnector:
                 fetched_at=now,
             )
 
-        try:
-            # 用 httpx 先下载 feed 内容（带 timeout），再传给 feedparser 解析
-            # 避免 feedparser.parse(url) 无 timeout 的问题
-            with httpx.Client(timeout=self._timeout, follow_redirects=True) as client:
-                resp = client.get(feed_url)
-                resp.raise_for_status()
-                feed_content = resp.content
+        # 下载 feed 内容，带 retry（仅对网络错误和 429/5xx 重试）
+        feed_content: bytes | None = None
+        last_exc: Exception | None = None
+        for attempt in range(self._max_retries + 1):
+            try:
+                with httpx.Client(timeout=self._timeout, follow_redirects=True) as client:
+                    resp = client.get(feed_url)
+                    resp.raise_for_status()
+                    feed_content = resp.content
+                break  # 下载成功，跳出重试循环
+            except httpx.HTTPStatusError as exc:
+                status = exc.response.status_code
+                # 429 (Too Many Requests) 和 5xx (Server Error) 值得重试
+                if status == 429 or status >= 500:
+                    last_exc = exc
+                    if attempt < self._max_retries:
+                        time.sleep(1.5 ** attempt)  # 指数退避
+                        continue
+                # 4xx (非 429) 不重试，直接报错
+                errors.append(f"RSS fetch HTTP error {status}: {feed_url}")
+                return FetchResult(
+                    source_id=source.source_id,
+                    connector=self.connector_id,
+                    errors=errors,
+                    warnings=warnings,
+                    fetched_at=now,
+                )
+            except (httpx.RequestError, httpx.TimeoutException) as exc:
+                last_exc = exc
+                if attempt < self._max_retries:
+                    time.sleep(1.5 ** attempt)  # 指数退避
+                    continue
+                # 重试耗尽，报错返回
+                errors.append(f"RSS fetch error after {self._max_retries + 1} attempts: {exc}")
+                return FetchResult(
+                    source_id=source.source_id,
+                    connector=self.connector_id,
+                    errors=errors,
+                    warnings=warnings,
+                    fetched_at=now,
+                )
 
+        if feed_content is None:
+            # 理论上不会走到这里，但防御性编程
+            errors.append(f"RSS fetch failed: {last_exc or 'unknown error'}")
+            return FetchResult(
+                source_id=source.source_id,
+                connector=self.connector_id,
+                errors=errors,
+                warnings=warnings,
+                fetched_at=now,
+            )
+
+        try:
             parsed = feedparser.parse(feed_content)
             if parsed.get("bozo"):
                 bozo_exc = parsed.get("bozo_exception")
@@ -80,7 +141,7 @@ class RssConnector:
                     errors.append(f"RSS feed parse failed (no entries): {feed_url}")
                 # Empty feed is not a failure
         except Exception as exc:
-            errors.append(f"RSS fetch error: {exc}")
+            errors.append(f"RSS parse error: {exc}")
             return FetchResult(
                 source_id=source.source_id,
                 connector=self.connector_id,
