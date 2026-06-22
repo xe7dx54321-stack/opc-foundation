@@ -1,0 +1,53 @@
+# 微信公众号归档 Live Smoke 配置样例
+#
+# 用途：
+#   Phase 1.6 验证用。本文件不保证直接可用，你需要根据本地 we-mp-rss /
+#   WeRSS 的实际 feed 地址修改 feed_url 等字段。
+#
+# 使用方式：
+#   cp configs/wechat_live_smoke.example.yaml configs/wechat_live_smoke.local.yaml
+#   # 编辑 wechat_live_smoke.local.yaml，填入真实的 feed_url
+#   python -m opc_foundation.wechat.cli run --config configs/wechat_live_smoke.local.yaml
+#
+# 重要提醒：
+#   - 本文件是模板，不要直接提交真实账号数据
+#   - wechat_live_smoke.local.yaml 已在 .gitignore 中，不会被提交
+#   - archive_root 下的 data/ 目录也不会被提交
+
+archive_root: "./data/wechat_live_smoke_archive"
+
+defaults:
+  fetch_timeout_seconds: 20
+  max_articles_per_account: 10
+  download_images: true
+  save_html: true
+  save_markdown: true
+  user_agent: "Mozilla/5.0 (compatible; opc-foundation-wechat/1.0)"
+  # 如果你有手工 URL 投喂文件，取消下面这行注释并填入路径：
+  # manual_urls_file: "./data/wechat_archive/manual_urls.txt"
+
+accounts:
+  # --------------------------------------------------------------
+  # 请把下面的 feed_url 替换为你在 we-mp-rss / WeRSS 中实际生成的 feed 地址
+  # --------------------------------------------------------------
+
+  - account_name: "你的公众号A"
+    account_id: "your_account_a"
+    source_type: "werss"
+    feed_url: "http://localhost:8000/feed/your_account_a.xml"
+    enabled: true
+    tags: ["live_smoke"]
+
+  - account_name: "你的公众号B"
+    account_id: "your_account_b"
+    source_type: "werss"
+    feed_url: "http://localhost:8000/feed/your_account_b.xml"
+    enabled: true
+    tags: ["live_smoke"]
+
+  - account_name: "你的公众号C"
+    account_id: "your_account_c"
+    source_type: "werss"
+    feed_url: "http://localhost:8000/feed/your_account_c.xml"
+    enabled: false  # 设为 true 启用
+    tags: ["live_smoke"]
