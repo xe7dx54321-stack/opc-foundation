@@ -15,9 +15,15 @@ outputs/
 # WeChat Live Smoke 归档数据（包含真实公众号文章，严禁提交）
 data/wechat_live_smoke_archive/
 
+# WeChat 生产归档数据（包含真实公众号文章，严禁提交）
+data/wechat_archive/
+
 # Live Smoke 本地配置（包含用户实际的 feed 地址，严禁提交）
 configs/wechat_live_smoke.local.yaml
 configs/wechat_accounts.local.yaml
+
+# WeChat 生产本地配置（包含真实 feed_url，严禁提交）
+configs/wechat_archive.production.local.yaml
 
 # Research Source Foundation 归档数据（包含真实抓取的文章正文，严禁提交）
 data/research_archive/

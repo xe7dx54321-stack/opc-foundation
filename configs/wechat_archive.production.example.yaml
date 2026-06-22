@@ -1,0 +1,54 @@
+# 微信公众号归档生产配置模板
+#
+# 用途：
+#   Phase 1.8A 生产化运行模板。本文件是模板，不含真实 feed_url。
+#   使用前请复制为 wechat_archive.production.local.yaml 并填入真实地址。
+#
+# 使用方式：
+#   Copy-Item configs/wechat_archive.production.example.yaml configs/wechat_archive.production.local.yaml
+#   # 编辑 wechat_archive.production.local.yaml，把 <mac-mini-ip> 和 <feed_id> 替换为真实值
+#   powershell -ExecutionPolicy Bypass -File scripts/run_wechat_archive.ps1
+#
+# 重要提醒：
+#   - 本文件是模板，不要直接提交真实账号数据
+#   - wechat_archive.production.local.yaml 已在 .gitignore 中，不会被提交
+#   - data/wechat_archive/ 下的归档数据也不会被提交
+#
+# 生产参数说明：
+#   max_articles_per_account=300：适配每日可能 200 篇文章的吞吐量
+#   download_images=false：生产初期先保证正文和 metadata 稳定归档，图片后续再补
+#   save_html=true：保留原始 HTML，便于后续重新抽取
+#   save_markdown=true：提供下游最直接可读正文
+#   fetch_timeout_seconds=30：网络抖动留余量
+
+archive_root: "./data/wechat_archive"
+
+defaults:
+  fetch_timeout_seconds: 30
+  max_articles_per_account: 300
+  download_images: false
+  save_html: true
+  save_markdown: true
+  user_agent: "Mozilla/5.0 (compatible; opc-foundation-wechat/1.0)"
+  # 如果你有手工 URL 投喂文件，取消下面这行注释并填入路径：
+  # manual_urls_file: "./data/wechat_archive/manual_urls.txt"
+
+accounts:
+  # --------------------------------------------------------------
+  # 请把下面的 feed_url 替换为你 WeRSS 服务中实际生成的 feed 地址
+  # 格式通常是：http://<mac-mini-ip>:8001/rss/<feed_id>
+  # --------------------------------------------------------------
+  - account_name: "第四维的梦想"
+    account_id: "disiweidemengxiang"
+    source_type: "werss"
+    feed_url: "http://<mac-mini-ip>:8001/rss/<feed_id>"
+    enabled: true
+    tags: ["wechat", "rss", "production"]
+
+  # 你可以继续添加更多公众号，复制上面这段并修改 account_name / account_id / feed_url
+  # - account_name: "另一个公众号"
+  #   account_id: "another_account"
+  #   source_type: "werss"
+  #   feed_url: "http://<mac-mini-ip>:8001/rss/<another_feed_id>"
+  #   enabled: true
+  #   tags: ["wechat", "rss", "production"]
