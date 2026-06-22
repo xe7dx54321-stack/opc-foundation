@@ -256,6 +256,199 @@ def cmd_report(
     return None
 
 
+@app.command("list-articles")
+def cmd_list_articles(
+    archive_root: str = typer.Option(
+        ..., "--archive-root", help="归档根目录（包含 index/articles.jsonl）"
+    ),
+    status: Optional[str] = typer.Option(
+        None, "--status", help="按状态过滤（saved / partial / duplicate / failed）"
+    ),
+    account_name: Optional[str] = typer.Option(
+        None, "--account-name", help="按公众号名过滤（精确匹配）"
+    ),
+    tag: Optional[str] = typer.Option(None, "--tag", help="按标签过滤"),
+    captured_since: Optional[str] = typer.Option(
+        None, "--captured-since", help="captured_at 起始日期（YYYY-MM-DD）"
+    ),
+    captured_until: Optional[str] = typer.Option(
+        None, "--captured-until", help="captured_at 结束日期（YYYY-MM-DD）"
+    ),
+    limit: int = typer.Option(
+        50, "--limit", help="最多返回多少条（默认 50）"
+    ),
+) -> None:
+    """列出归档中的文章（只读，不访问网络）。
+
+    默认只打印 article_id / account_name / title / captured_at / status 五个字段。
+    用于快速查看归档内容，不做任何业务判断。
+    """
+
+    from .consumer import WeChatArchiveReader
+
+    reader = WeChatArchiveReader(archive_root)
+    articles = reader.list_articles(
+        status=status,
+        account_name=account_name,
+        tag=tag,
+        captured_since=captured_since,
+        captured_until=captured_until,
+        limit=limit,
+    )
+
+    typer.echo(f"共 {len(articles)} 篇文章（limit={limit}）")
+    typer.echo("")
+    typer.echo(f"{'article_id':<32} {'account_name':<20} {'status':<10} {'captured_at':<12} title")
+    typer.echo("-" * 100)
+    for a in articles:
+        account = (a.account_name or "-")[:20]
+        captured = (a.captured_at or "")[:10]
+        title = a.title[:40]
+        typer.echo(f"{a.article_id:<32} {account:<20} {a.status:<10} {captured:<12} {title}")
+    return None
+
+
+@app.command("list-unconsumed")
+def cmd_list_unconsumed(
+    archive_root: str = typer.Option(
+        ..., "--archive-root", help="归档根目录"
+    ),
+    consumer: str = typer.Option(
+        ..., "--consumer", help="业务消费者名称（如 content_agent）"
+    ),
+    status: Optional[str] = typer.Option(
+        "saved", "--status", help="按状态过滤（默认 saved）"
+    ),
+    account_name: Optional[str] = typer.Option(
+        None, "--account-name", help="按公众号名过滤"
+    ),
+    tag: Optional[str] = typer.Option(None, "--tag", help="按标签过滤"),
+    captured_since: Optional[str] = typer.Option(
+        None, "--captured-since", help="captured_at 起始日期（YYYY-MM-DD）"
+    ),
+    captured_until: Optional[str] = typer.Option(
+        None, "--captured-until", help="captured_at 结束日期（YYYY-MM-DD）"
+    ),
+    limit: int = typer.Option(
+        50, "--limit", help="最多返回多少条（默认 50）"
+    ),
+) -> None:
+    """列出某个 consumer 还没消费过的文章。
+
+    按 consumer 隔离：content_agent 消费过的文章不影响 demand_radar。
+    foundation 不做业务判断，只返回"该 consumer 还没有回执"的文章。
+    """
+
+    from .consumer import ConsumerReceiptStore, WeChatArchiveReader, list_unconsumed_articles
+
+    try:
+        reader = WeChatArchiveReader(archive_root)
+        store = ConsumerReceiptStore(archive_root, consumer=consumer)
+        articles = list_unconsumed_articles(
+            reader,
+            store,
+            status=status,
+            account_name=account_name,
+            tag=tag,
+            captured_since=captured_since,
+            captured_until=captured_until,
+            limit=limit,
+        )
+    except ValueError as exc:
+        typer.echo(f"[参数错误] {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(f"consumer={consumer} 共 {len(articles)} 篇未消费文章")
+    typer.echo("")
+    typer.echo(f"{'article_id':<32} {'account_name':<20} {'captured_at':<12} title")
+    typer.echo("-" * 100)
+    for a in articles:
+        account = (a.account_name or "-")[:20]
+        captured = (a.captured_at or "")[:10]
+        title = a.title[:40]
+        typer.echo(f"{a.article_id:<32} {account:<20} {captured:<12} {title}")
+    return None
+
+
+@app.command("mark-consumed")
+def cmd_mark_consumed(
+    archive_root: str = typer.Option(
+        ..., "--archive-root", help="归档根目录"
+    ),
+    consumer: str = typer.Option(
+        ..., "--consumer", help="业务消费者名称（如 content_agent）"
+    ),
+    article_id: str = typer.Option(
+        ..., "--article-id", help="要标记的文章 ID"
+    ),
+    decision: Optional[str] = typer.Option(
+        None, "--decision", help="业务判断（opaque，foundation 不解释）"
+    ),
+    reason: Optional[str] = typer.Option(
+        None, "--reason", help="可读原因"
+    ),
+    status: str = typer.Option(
+        "consumed",
+        "--status",
+        help="回执状态（consumed / skipped / failed，默认 consumed）",
+    ),
+) -> None:
+    """给某篇文章打上 consumer 回执。
+
+    只写该 consumer 的 receipt 文件，不影响其他 consumer。
+    不做业务判断，decision 字段对 foundation 是 opaque。
+    """
+
+    from .consumer import ConsumerReceiptStore, WeChatArchiveReader
+
+    try:
+        store = ConsumerReceiptStore(archive_root, consumer=consumer)
+    except ValueError as exc:
+        typer.echo(f"[参数错误] {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    # 查找文章（用于自动填充 canonical_url / content_hash）
+    reader = WeChatArchiveReader(archive_root)
+    article = reader.get_article(article_id)
+    if article is None:
+        typer.echo(f"[错误] 未找到 article_id={article_id}", err=True)
+        raise typer.Exit(code=1)
+
+    try:
+        if status == "consumed":
+            receipt = store.mark_consumed(
+                article, decision=decision, reason=reason
+            )
+        elif status == "skipped":
+            receipt = store.mark_skipped(
+                article, decision=decision, reason=reason
+            )
+        elif status == "failed":
+            receipt = store.mark_failed(
+                article, decision=decision, reason=reason
+            )
+        else:
+            typer.echo(
+                f"[参数错误] --status 只允许 consumed / skipped / failed，收到: {status}",
+                err=True,
+            )
+            raise typer.Exit(code=1)
+    except ValueError as exc:
+        typer.echo(f"[参数错误] {exc}", err=True)
+        raise typer.Exit(code=1)
+
+    typer.echo(
+        f"已写入回执：consumer={receipt.consumer} article_id={receipt.article_id} "
+        f"status={receipt.status} received_at={receipt.received_at}"
+    )
+    if receipt.decision:
+        typer.echo(f"  decision: {receipt.decision}")
+    if receipt.reason:
+        typer.echo(f"  reason: {receipt.reason}")
+    typer.echo(f"  receipt 文件: {store._receipts_path}")
+    return None
+
+
 def main() -> None:
     app()
 
