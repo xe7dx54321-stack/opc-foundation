@@ -18,3 +18,9 @@ data/wechat_live_smoke_archive/
 # Live Smoke 本地配置（包含用户实际的 feed 地址，严禁提交）
 configs/wechat_live_smoke.local.yaml
 configs/wechat_accounts.local.yaml
+
+# Research Source Foundation 归档数据（包含真实抓取的文章正文，严禁提交）
+data/research_archive/
+
+# Research Source Foundation 本地配置（包含真实 feed_url，严禁提交）
+configs/research_sources.local.yaml

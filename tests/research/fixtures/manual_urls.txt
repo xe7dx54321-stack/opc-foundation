@@ -1,0 +1,9 @@
+# 手工 URL 测试文件
+# 每行一个 URL，以 # 开头的行是注释
+
+https://example.com/manual-article-1
+https://example.com/manual-article-2
+
+# 下面是第三条
+https://example.com/manual-article-3
+https://example.com/manual-article-1

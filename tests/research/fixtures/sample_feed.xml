@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Sample Research Feed</title>
+    <link>https://example.com</link>
+    <description>Sample RSS feed for testing</description>
+    <language>zh-cn</language>
+    <item>
+      <title>第一篇测试文章</title>
+      <link>https://example.com/article-1?utm_source=feed</link>
+      <description>这是第一篇测试文章的摘要内容。</description>
+      <author>author1@example.com (张三)</author>
+      <pubDate>Mon, 15 Jan 2026 09:00:00 +0800</pubDate>
+      <guid>https://example.com/article-1</guid>
+    </item>
+    <item>
+      <title>第二篇测试文章</title>
+      <link>https://example.com/article-2</link>
+      <description>这是第二篇测试文章的摘要内容。</description>
+      <author>author2@example.com (李四)</author>
+      <pubDate>Tue, 16 Jan 2026 10:30:00 +0800</pubDate>
+      <guid>https://example.com/article-2</guid>
+    </item>
+    <item>
+      <title>第三篇测试文章（无 link，应被跳过）</title>
+      <description>这篇没有 link，应该被跳过。</description>
+      <pubDate>Wed, 17 Jan 2026 11:00:00 +0800</pubDate>
+    </item>
+    <item>
+      <title>第四篇测试文章</title>
+      <link>https://example.com/article-4</link>
+      <description>第四篇文章摘要。</description>
+      <pubDate>Thu, 18 Jan 2026 14:00:00 +0800</pubDate>
+    </item>
+  </channel>
+</rss>

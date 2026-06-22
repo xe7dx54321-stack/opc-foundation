@@ -1,0 +1,169 @@
+# Research Source Foundation - 示例配置
+#
+# 功能说明（小白解读）：
+#     这个文件是 Research Source Foundation 的 source registry 示例配置。
+#     它只负责声明"从哪里抓、怎么抓、抓到的东西归到哪类"，不包含任何投研评分规则。
+#
+# 使用方式：
+#     1. 复制本文件为 configs/research_sources.local.yaml
+#     2. 根据实际情况修改 archive_root、sources 列表
+#     3. 用 `python -m opc_foundation.research.cli validate-config --config configs/research_sources.local.yaml` 校验
+#
+# 注意：
+#     - 所有 example source 默认 enabled: false，不会真实访问网络
+#     - legal_profile 必填，取值必须合法
+#     - source_id 必须全局唯一
+#     - 该配置只是 source registry，不包含任何投研评分规则
+#     - Phase 1 已实现：rss_feed / wechat_archive / manual_url
+#     - 其他 source_type 在模型中预留，CLI run 时会标记 skipped/failed
+
+archive_root: "./data/research_archive"
+
+# 全局默认参数（每个 source 可以通过 max_items 覆盖）
+defaults:
+  fetch_timeout_seconds: 20
+  max_items_per_source: 20
+  save_html: true
+  save_markdown: true
+  save_raw: true
+  download_assets: false
+  user_agent: "Mozilla/5.0 (compatible; opc-foundation-research/0.1)"
+
+# fetch_profile 定义（可被 source 通过 fetch_profile 字段引用，Phase 1 仅作记录）
+fetch_profiles:
+  default_web:
+    timeout_seconds: 20
+    max_retries: 2
+    backoff_seconds: 2
+    rate_limit_seconds: 1
+  default_rss:
+    timeout_seconds: 20
+    max_retries: 2
+    backoff_seconds: 2
+    rate_limit_seconds: 1
+  local_index:
+    timeout_seconds: 5
+    max_retries: 0
+    backoff_seconds: 0
+    rate_limit_seconds: 0
+
+# extraction_profile 定义（可被 source 通过 extraction_profile 字段引用，Phase 1 仅作记录）
+extraction_profiles:
+  article_page:
+    extractor: "trafilatura"
+    output_format: "markdown"
+  rss_summary:
+    extractor: "trafilatura"
+    output_format: "markdown"
+  metadata_passthrough:
+    extractor: "passthrough"
+    output_format: "markdown"
+
+# ---------------------------------------------------------------------------
+# sources: 信息源列表
+# ---------------------------------------------------------------------------
+
+sources:
+  # -------------------------------------------------------------------------
+  # Phase 1 已实现：rss_feed
+  # -------------------------------------------------------------------------
+  - source_id: "sample_rss_feed"
+    source_name: "Sample RSS Feed"
+    source_type: "rss_feed"
+    feed_url: "https://example.com/feed.xml"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_rss"
+    extraction_profile: "rss_summary"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "rss"]
+    notes: "示例 RSS feed，实际使用时替换为真实研究博客 feed"
+
+  # -------------------------------------------------------------------------
+  # Phase 1 已实现：wechat_archive（复用现有 wechat 模块归档结果）
+  # -------------------------------------------------------------------------
+  - source_id: "wechat_archive_sample"
+    source_name: "WeChat Archive Sample"
+    source_type: "wechat_archive"
+    url: "./data/wechat_archive/index/articles.jsonl"
+    enabled: false
+    legal_profile: "rebroadcast"
+    fetch_profile: "local_index"
+    extraction_profile: "metadata_passthrough"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["wechat", "rebroadcast", "chinese"]
+    notes: "读取 wechat 模块归档的微信公众号文章索引，不重新抓微信"
+
+  - source_id: "wechat_live_smoke_archive_sample"
+    source_name: "WeChat Live Smoke Archive Sample"
+    source_type: "wechat_archive"
+    url: "./data/wechat_live_smoke_archive/index/articles.jsonl"
+    enabled: false
+    legal_profile: "rebroadcast"
+    fetch_profile: "local_index"
+    extraction_profile: "metadata_passthrough"
+    update_frequency: "daily"
+    priority: "low"
+    tags: ["wechat", "rebroadcast", "chinese", "smoke"]
+    notes: "读取 wechat live smoke 归档索引，默认禁用"
+
+  # -------------------------------------------------------------------------
+  # Phase 1 已实现：manual_url（手工投喂 URL）
+  # -------------------------------------------------------------------------
+  - source_id: "manual_url_sample"
+    source_name: "Manual URL Sample"
+    source_type: "manual_url"
+    manual_urls_path: "./data/research_archive/manual_urls.txt"
+    enabled: false
+    legal_profile: "user_provided"
+    fetch_profile: "default_web"
+    extraction_profile: "article_page"
+    update_frequency: "manual"
+    priority: "medium"
+    tags: ["manual", "user_provided"]
+    notes: "用户手工投喂的 URL 列表，每行一个 URL，# 开头为注释"
+
+  # -------------------------------------------------------------------------
+  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # -------------------------------------------------------------------------
+  - source_id: "official_public_research_sample"
+    source_name: "Official Public Research Sample"
+    source_type: "official_public_research"
+    url: "https://example.com/research"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "article_page"
+    update_frequency: "daily"
+    priority: "high"
+    tags: ["official", "research"]
+    notes: "Phase 1 未实现，预留 source_type"
+
+  - source_id: "podcast_transcript_sample"
+    source_name: "Podcast Transcript Sample"
+    source_type: "podcast_transcript"
+    url: "https://example.com/podcast"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "article_page"
+    update_frequency: "weekly"
+    priority: "medium"
+    tags: ["podcast", "transcript"]
+    notes: "Phase 1 未实现，预留 source_type"
+
+  - source_id: "local_document_sample"
+    source_name: "Local Document Sample"
+    source_type: "local_document"
+    url: "./data/research_archive/local_documents"
+    enabled: false
+    legal_profile: "user_provided"
+    fetch_profile: "local_index"
+    extraction_profile: "metadata_passthrough"
+    update_frequency: "weekly"
+    priority: "low"
+    tags: ["local", "user_provided"]
+    notes: "Phase 1 未实现，预留 source_type"
