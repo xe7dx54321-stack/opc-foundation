@@ -4,7 +4,7 @@
 > 英文名：Research Source Foundation
 > 所属项目：`opc-foundation`
 > 规划模块路径：`src/opc_foundation/research/`
-> 文档版本：v0.4（Phase 2B 已实现）
+> 文档版本：v0.5（Phase 2C 已实现）
 
 ---
 
@@ -47,10 +47,21 @@ Phase 2B implemented:
 - fixture-based tests
 ```
 
-Phase 2B 暂未实现（已在模型中预留）：
+### Phase 2C 已实现
 
 ```text
-- conference_transcript
+Phase 2C implemented:
+- conference_transcript connector
+- 支持 extraction_profile: conference_event_list / event_cards / transcript_page / presentation_page / webcast_event_page
+- 三种入口：event list page / single transcript page / presentation / webcast event page
+- conference / transcript / presentation 容器识别（extractor.py 增强）
+- presentation / PDF 链接只保存 metadata，不下载 PDF
+- fixture-based tests
+```
+
+Phase 2C 暂未实现（已在模型中预留）：
+
+```text
 - analyst_action
 - media_mention
 - local_document

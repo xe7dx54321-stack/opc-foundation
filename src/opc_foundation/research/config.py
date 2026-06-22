@@ -44,11 +44,11 @@ IMPLEMENTED_SOURCE_TYPES = {
     "manual_url",
     "official_public_research",  # Phase 2A 新增
     "podcast_transcript",  # Phase 2B 新增
+    "conference_transcript",  # Phase 2C 新增
 }
 
 # 模型中预留但尚未实现的 source_type（CLI run 时会标记 skipped）
 RESERVED_SOURCE_TYPES = {
-    "conference_transcript",
     "analyst_action",
     "media_mention",
     "local_document",
@@ -211,5 +211,12 @@ def validate_research_config(config: ResearchArchiveConfig) -> list[str]:
                     errors.append(
                         f"source [{src.source_id}] podcast_transcript ({profile}) 需要 url 或 base_url"
                     )
+        # conference_transcript：所有 profile 都需要 url 或 base_url
+        if src.source_type == "conference_transcript":
+            profile = src.extraction_profile or "conference_event_list"
+            if not src.url and not src.base_url:
+                errors.append(
+                    f"source [{src.source_id}] conference_transcript ({profile}) 需要 url 或 base_url"
+                )
 
     return errors

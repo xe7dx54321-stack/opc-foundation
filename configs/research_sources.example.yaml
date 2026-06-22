@@ -203,17 +203,53 @@ sources:
     notes: "示例播客 RSS feed，extraction_profile=podcast_feed"
 
   # -------------------------------------------------------------------------
-  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # Phase 2C 已实现：conference_transcript（会议 transcript / webcast / presentation）
   # -------------------------------------------------------------------------
-  - source_id: "conference_transcript_sample"
-    source_name: "Conference Transcript Sample"
+  - source_id: "sample_conference_event_list"
+    source_name: "Sample Conference Event List"
     source_type: "conference_transcript"
-    url: "https://example.com/conference"
+    url: "https://example.com/events"
+    base_url: "https://example.com"
     enabled: false
-    legal_profile: "official_public"
+    legal_profile: "public_ir"
     fetch_profile: "default_web"
-    extraction_profile: "article_page"
+    extraction_profile: "conference_event_list"
+    update_frequency: "weekly"
+    priority: "medium"
+    tags: ["sample", "conference", "transcript", "ir"]
+    max_items: 10
+    notes: "示例会议 event 列表页，extraction_profile=conference_event_list"
+
+  - source_id: "sample_conference_transcript_page"
+    source_name: "Sample Conference Transcript Page"
+    source_type: "conference_transcript"
+    url: "https://example.com/conference/transcript"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "public_ir"
+    fetch_profile: "default_web"
+    extraction_profile: "transcript_page"
+    update_frequency: "weekly"
+    priority: "medium"
+    tags: ["sample", "conference", "transcript"]
+    max_items: 1
+    notes: "示例单篇 transcript 页面，extraction_profile=transcript_page"
+
+  - source_id: "sample_conference_presentation_page"
+    source_name: "Sample Conference Presentation Page"
+    source_type: "conference_transcript"
+    url: "https://example.com/conference/presentation"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "public_ir"
+    fetch_profile: "default_web"
+    extraction_profile: "presentation_page"
     update_frequency: "weekly"
     priority: "low"
-    tags: ["conference", "transcript"]
-    notes: "Phase 1 未实现，预留 source_type"
+    tags: ["sample", "conference", "presentation"]
+    max_items: 1
+    notes: "示例 presentation 页面，extraction_profile=presentation_page；Phase 2C 不下载 PDF，只保存 metadata"
+
+  # -------------------------------------------------------------------------
+  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # -------------------------------------------------------------------------

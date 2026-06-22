@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Malformed Conference Event List</title>
+</head>
+<body>
+    <h1>Malformed Conference Events</h1>
+
+    <article>
+        <h2><a href="/events/malformed-1">损坏 Event 1: Unclosed Time Tag</a></h2>
+        <time datetime="2026-03-15T09:00:00+08:00">2026-03-15
+        <p class="summary">This article has an unclosed time tag.</p>
+        <p class="company">Malformed Bank</p>
+    </article>
+
+    <article>
+        <!-- 缺 href -->
+        <h2><a>损坏 Event 2: Missing Href</a></h2>
+        <time datetime="2026-04-20T10:00:00+08:00">2026-04-20</time>
+        <p class="summary">This article has a link without href.</p>
+    </article>
+
+    <article>
+        <h2><a href="">损坏 Event 3: Empty Href</a></h2>
+        <time datetime="2026-05-10T14:00:00+08:00">2026-05-10</time>
+        <p class="summary">This article has an empty href.</p>
+    </article>
+
+    <article>
+        <h2><a href="/events/malformed-4">损坏 Event 4: Normal Entry</a></h2>
+        <time datetime="2026-06-05T11:00:00+08:00">2026-06-05</time>
+        <p class="summary">This is a normal entry that should be parsed successfully.</p>
+        <p class="company">Normal Bank</p>
+    </article>
+
+</body>
+</html>

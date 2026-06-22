@@ -103,6 +103,47 @@ def sample_podcast_malformed_html() -> str:
     return (FIXTURES_DIR / "sample_podcast_malformed.html").read_text(encoding="utf-8")
 
 
+# ---------------------------------------------------------------------------
+# Phase 2C：conference_transcript fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def sample_conference_event_list_html() -> str:
+    """读取 sample_conference_event_list.html 内容（conference event 列表页）。"""
+    return (FIXTURES_DIR / "sample_conference_event_list.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_conference_event_detail_html() -> str:
+    """读取 sample_conference_event_detail.html 内容（event detail 页面，含 transcript/webcast/presentation 链接）。"""
+    return (FIXTURES_DIR / "sample_conference_event_detail.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_conference_transcript_html() -> str:
+    """读取 sample_conference_transcript.html 内容（单篇 transcript 页面）。"""
+    return (FIXTURES_DIR / "sample_conference_transcript.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_conference_presentation_page_html() -> str:
+    """读取 sample_conference_presentation_page.html 内容（presentation 页面，含 PDF 链接）。"""
+    return (FIXTURES_DIR / "sample_conference_presentation_page.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_conference_empty_html() -> str:
+    """读取 sample_conference_empty.html 内容（空列表页，用于 fail-soft 测试）。"""
+    return (FIXTURES_DIR / "sample_conference_empty.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_conference_malformed_html() -> str:
+    """读取 sample_conference_malformed.html 内容（畸形 HTML，用于 fail-soft 测试）。"""
+    return (FIXTURES_DIR / "sample_conference_malformed.html").read_text(encoding="utf-8")
+
+
 @pytest.fixture
 def temp_archive_root(tmp_path: Path) -> Path:
     """临时归档根目录（每个测试独立，测试结束自动清理）。"""

@@ -14,10 +14,14 @@ Phase 2A 已实现：
 
 Phase 2B 已实现：
     - PodcastTranscriptConnector 处理 podcast_transcript
+
+Phase 2C 已实现：
+    - ConferenceTranscriptConnector 处理 conference_transcript
 """
 from __future__ import annotations
 
 from .base import BaseResearchConnector, get_connector
+from .conference_transcript import ConferenceTranscriptConnector
 from .manual_url import ManualURLConnector
 from .official_public import OfficialPublicResearchConnector
 from .podcast_transcript import PodcastTranscriptConnector
@@ -32,4 +36,5 @@ __all__ = [
     "ManualURLConnector",
     "OfficialPublicResearchConnector",
     "PodcastTranscriptConnector",
+    "ConferenceTranscriptConnector",
 ]

@@ -63,12 +63,14 @@ class ResearchInjectors:
         feed_content_by_url: 按 feed_url 注入 RSS 内容（用于 RSS connector 测试）
         list_html_by_url:    按 list page URL 注入列表页 HTML（用于 official_public_research 测试）
         podcast_html_by_url: 按 URL 注入 podcast HTML/XML（用于 podcast_transcript 测试）
+        conference_html_by_url: 按 URL 注入 conference HTML（用于 conference_transcript 测试）
     """
     http_html: HttpHtmlInjector | None = None
     now_str: Callable[[], str] | None = None
     feed_content_by_url: Callable[[str], str | None] | None = None
     list_html_by_url: Callable[[str], str | None] | None = None
     podcast_html_by_url: Callable[[str], str | None] | None = None
+    conference_html_by_url: Callable[[str], str | None] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -174,6 +176,14 @@ class ResearchArchiver:
 
             connector = PodcastTranscriptConnector(
                 html_by_url=self.injectors.podcast_html_by_url
+            )
+
+        # conference_transcript connector 支持注入 HTML
+        if source.source_type == "conference_transcript" and self.injectors.conference_html_by_url:
+            from .connectors.conference_transcript import ConferenceTranscriptConnector
+
+            connector = ConferenceTranscriptConnector(
+                html_by_url=self.injectors.conference_html_by_url
             )
 
         try:
