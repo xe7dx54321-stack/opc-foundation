@@ -1,0 +1,7 @@
+# 手工 URL 投喂示例。
+# 每行一个 URL，以 # 开头的行是注释，空行会被忽略。
+# 注意：示例链接都不是真实公众号文章，仅用于演示模块行为。
+
+https://mp.weixin.qq.com/s/example_article_001
+https://mp.weixin.qq.com/s/example_article_002
+# https://mp.weixin.qq.com/s/example_article_003_commented_out

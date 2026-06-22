@@ -1,0 +1,41 @@
+# 微信公众号归档配置示例。
+#
+# 字段说明：
+#   archive_root: 归档根目录，所有文章/索引/状态/日报都会写在它下面
+#   defaults:     全局默认参数（可被每个账号覆盖）
+#   accounts:     要监控的公众号 / feed 列表
+#
+# 运行方式：
+#   python -m opc_foundation.wechat.cli run --config configs/wechat_accounts.example.yaml
+
+archive_root: "./data/wechat_archive"
+
+defaults:
+  fetch_timeout_seconds: 20          # 抓取单篇文章正文的超时秒数
+  max_articles_per_account: 20       # 每个账号一次最多处理多少篇
+  download_images: true              # 是否下载正文内联图片
+  save_html: true                    # 是否保存原始 HTML
+  save_markdown: true                # 是否保存 Markdown
+  user_agent: "Mozilla/5.0 (compatible; opc-foundation-wechat/1.0)"
+  # manual_urls_file: "./data/wechat_archive/manual_urls.txt"
+
+accounts:
+  - account_name: "示例公众号A"
+    account_id: "example_a"
+    source_type: "rss"
+    feed_url: "http://localhost:8000/feed/example_a.xml"
+    enabled: true
+    tags: ["ai", "industry"]
+
+  - account_name: "示例公众号B"
+    account_id: "example_b"
+    source_type: "werss"
+    feed_url: "http://localhost:8000/feed/example_b.xml"
+    enabled: true
+    tags: ["investment"]
+
+  - account_name: "示例公众号C（已禁用）"
+    account_id: "example_c"
+    source_type: "manual"
+    enabled: false
+    tags: ["disabled-demo"]
