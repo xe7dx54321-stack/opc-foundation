@@ -170,30 +170,50 @@ sources:
     notes: "纯链接列表页示例，extraction_profile=link_list"
 
   # -------------------------------------------------------------------------
-  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # Phase 2B 已实现：podcast_transcript（播客 transcript）
   # -------------------------------------------------------------------------
-  - source_id: "podcast_transcript_sample"
-    source_name: "Podcast Transcript Sample"
+  - source_id: "sample_podcast_transcript_page"
+    source_name: "Sample Podcast Transcript Page"
     source_type: "podcast_transcript"
     url: "https://example.com/podcast"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "podcast_episode_list"
+    update_frequency: "weekday"
+    priority: "medium"
+    tags: ["sample", "podcast", "transcript"]
+    max_items: 10
+    notes: "示例播客 episode 列表页，extraction_profile=podcast_episode_list"
+
+  - source_id: "sample_podcast_transcript_feed"
+    source_name: "Sample Podcast Transcript Feed"
+    source_type: "podcast_transcript"
+    feed_url: "https://example.com/podcast/feed.xml"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "podcast_feed"
+    update_frequency: "weekday"
+    priority: "medium"
+    tags: ["sample", "podcast", "feed"]
+    max_items: 10
+    notes: "示例播客 RSS feed，extraction_profile=podcast_feed"
+
+  # -------------------------------------------------------------------------
+  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # -------------------------------------------------------------------------
+  - source_id: "conference_transcript_sample"
+    source_name: "Conference Transcript Sample"
+    source_type: "conference_transcript"
+    url: "https://example.com/conference"
     enabled: false
     legal_profile: "official_public"
     fetch_profile: "default_web"
     extraction_profile: "article_page"
     update_frequency: "weekly"
-    priority: "medium"
-    tags: ["podcast", "transcript"]
-    notes: "Phase 1 未实现，预留 source_type"
-
-  - source_id: "local_document_sample"
-    source_name: "Local Document Sample"
-    source_type: "local_document"
-    url: "./data/research_archive/local_documents"
-    enabled: false
-    legal_profile: "user_provided"
-    fetch_profile: "local_index"
-    extraction_profile: "metadata_passthrough"
-    update_frequency: "weekly"
     priority: "low"
-    tags: ["local", "user_provided"]
+    tags: ["conference", "transcript"]
     notes: "Phase 1 未实现，预留 source_type"

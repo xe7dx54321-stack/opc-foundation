@@ -4,13 +4,13 @@
 > 英文名：Research Source Foundation
 > 所属项目：`opc-foundation`
 > 规划模块路径：`src/opc_foundation/research/`
-> 文档版本：v0.2（Phase 1 MVP 已实现）
+> 文档版本：v0.4（Phase 2B 已实现）
 
 ---
 
-## 0. Phase 1 MVP 实现状态
+## 0. 实现状态
 
-Phase 1 MVP 已实现以下能力：
+### Phase 1 MVP 已实现
 
 ```text
 Phase 1 MVP implemented:
@@ -26,11 +26,30 @@ Phase 1 MVP implemented:
 - CLI：validate-config / dry-run / run / retry-failed / report / source-health
 ```
 
-Phase 1 暂未实现（已在模型中预留）：
+### Phase 2A 已实现
 
 ```text
-- official_public_research
-- podcast_transcript
+Phase 2A implemented:
+- official_public_research connector
+- 支持 extraction_profile: generic_article_list / simple_card_list / link_list
+- 两段式流程：list page → article detail page
+- fixture-based tests
+```
+
+### Phase 2B 已实现
+
+```text
+Phase 2B implemented:
+- podcast_transcript connector
+- 支持 extraction_profile: podcast_episode_list / simple_episode_cards / podcast_feed / transcript_page
+- 两种入口：HTML 页面 / RSS feed
+- transcript 容器识别（extractor.py 增强）
+- fixture-based tests
+```
+
+Phase 2B 暂未实现（已在模型中预留）：
+
+```text
 - conference_transcript
 - analyst_action
 - media_mention

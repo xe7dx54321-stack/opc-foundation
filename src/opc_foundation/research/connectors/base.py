@@ -61,4 +61,7 @@ def get_connector(source_type: str) -> BaseResearchConnector | None:
     if source_type == "official_public_research":
         from .official_public import OfficialPublicResearchConnector
         return OfficialPublicResearchConnector()
+    if source_type == "podcast_transcript":
+        from .podcast_transcript import PodcastTranscriptConnector
+        return PodcastTranscriptConnector()
     return None

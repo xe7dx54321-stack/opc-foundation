@@ -11,12 +11,16 @@ Phase 1 已实现：
 
 Phase 2A 已实现：
     - OfficialPublicResearchConnector 处理 official_public_research
+
+Phase 2B 已实现：
+    - PodcastTranscriptConnector 处理 podcast_transcript
 """
 from __future__ import annotations
 
 from .base import BaseResearchConnector, get_connector
 from .manual_url import ManualURLConnector
 from .official_public import OfficialPublicResearchConnector
+from .podcast_transcript import PodcastTranscriptConnector
 from .rss import RSSConnector
 from .wechat_archive import WeChatArchiveConnector
 
@@ -27,4 +31,5 @@ __all__ = [
     "WeChatArchiveConnector",
     "ManualURLConnector",
     "OfficialPublicResearchConnector",
+    "PodcastTranscriptConnector",
 ]

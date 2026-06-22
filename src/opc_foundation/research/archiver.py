@@ -62,11 +62,13 @@ class ResearchInjectors:
         now_str:    注入当前时间函数（默认用 utcnow_iso）
         feed_content_by_url: 按 feed_url 注入 RSS 内容（用于 RSS connector 测试）
         list_html_by_url:    按 list page URL 注入列表页 HTML（用于 official_public_research 测试）
+        podcast_html_by_url: 按 URL 注入 podcast HTML/XML（用于 podcast_transcript 测试）
     """
     http_html: HttpHtmlInjector | None = None
     now_str: Callable[[], str] | None = None
     feed_content_by_url: Callable[[str], str | None] | None = None
     list_html_by_url: Callable[[str], str | None] | None = None
+    podcast_html_by_url: Callable[[str], str | None] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -164,6 +166,14 @@ class ResearchArchiver:
 
             connector = OfficialPublicResearchConnector(
                 list_html_by_url=self.injectors.list_html_by_url
+            )
+
+        # podcast_transcript connector 支持注入 HTML/XML
+        if source.source_type == "podcast_transcript" and self.injectors.podcast_html_by_url:
+            from .connectors.podcast_transcript import PodcastTranscriptConnector
+
+            connector = PodcastTranscriptConnector(
+                html_by_url=self.injectors.podcast_html_by_url
             )
 
         try:

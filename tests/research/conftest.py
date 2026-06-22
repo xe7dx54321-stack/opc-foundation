@@ -68,6 +68,41 @@ def sample_official_research_malformed_html() -> str:
     return (FIXTURES_DIR / "sample_official_research_malformed.html").read_text(encoding="utf-8")
 
 
+# ---------------------------------------------------------------------------
+# Phase 2B：podcast_transcript fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def sample_podcast_episode_list_html() -> str:
+    """读取 sample_podcast_episode_list.html 内容（podcast episode 列表页）。"""
+    return (FIXTURES_DIR / "sample_podcast_episode_list.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_podcast_episode_detail_html() -> str:
+    """读取 sample_podcast_episode_detail.html 内容（单篇 transcript 详情页）。"""
+    return (FIXTURES_DIR / "sample_podcast_episode_detail.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_podcast_feed_xml() -> str:
+    """读取 sample_podcast_feed.xml 内容（podcast RSS feed）。"""
+    return (FIXTURES_DIR / "sample_podcast_feed.xml").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_podcast_empty_html() -> str:
+    """读取 sample_podcast_empty.html 内容（空列表页，用于 fail-soft 测试）。"""
+    return (FIXTURES_DIR / "sample_podcast_empty.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_podcast_malformed_html() -> str:
+    """读取 sample_podcast_malformed.html 内容（畸形 HTML，用于 fail-soft 测试）。"""
+    return (FIXTURES_DIR / "sample_podcast_malformed.html").read_text(encoding="utf-8")
+
+
 @pytest.fixture
 def temp_archive_root(tmp_path: Path) -> Path:
     """临时归档根目录（每个测试独立，测试结束自动清理）。"""

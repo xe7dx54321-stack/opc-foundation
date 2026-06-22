@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+    <channel>
+        <title>示例播客</title>
+        <link>https://example.com/podcast</link>
+        <description>示例播客频道</description>
+        <language>en-us</language>
+
+        <item>
+            <title>Episode 1: 2026 宏观经济展望</title>
+            <link>https://example.com/podcast/episode-1</link>
+            <guid isPermaLink="false">episode-001</guid>
+            <pubDate>Wed, 15 Jan 2026 09:00:00 +0800</pubDate>
+            <description>本期讨论 2026 年宏观经济走势，涵盖 GDP、CPI、就业等核心指标。</description>
+            <author>主持人：张三</author>
+            <enclosure url="https://example.com/podcast/audio/episode-1.mp3" length="28150000" type="audio/mpeg"/>
+        </item>
+
+        <item>
+            <title>Episode 2: 新能源行业深度研究</title>
+            <link>https://example.com/podcast/episode-2</link>
+            <guid isPermaLink="false">episode-002</guid>
+            <pubDate>Thu, 16 Jan 2026 10:30:00 +0800</pubDate>
+            <description>新能源行业深度研究，覆盖光伏、风电、储能三大细分领域。</description>
+            <author>主持人：李四</author>
+            <enclosure url="https://example.com/podcast/audio/episode-2.mp3" length="35420000" type="audio/mpeg"/>
+        </item>
+
+        <item>
+            <title>Episode 3: 货币政策跟踪与展望</title>
+            <link>https://example.com/podcast/episode-3</link>
+            <guid isPermaLink="false">episode-003</guid>
+            <pubDate>Fri, 17 Jan 2026 14:00:00 +0800</pubDate>
+            <description>本期跟踪主要央行货币政策动向，并展望下一阶段利率走势。</description>
+            <enclosure url="https://example.com/podcast/audio/episode-3.mp3" length="22080000" type="audio/mpeg"/>
+        </item>
+
+        <item>
+            <title>Episode 4: 区域经济专题</title>
+            <link>https://example.com/podcast/episode-4</link>
+            <guid isPermaLink="false">episode-004</guid>
+            <pubDate>Sat, 18 Jan 2026 09:00:00 +0800</pubDate>
+            <description>粤港澳大湾区作为国家战略区域，本期从产业结构、科技创新、金融市场三个维度展开分析。</description>
+        </item>
+    </channel>
+</rss>

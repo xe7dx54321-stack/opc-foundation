@@ -169,10 +169,43 @@ def _extract_meta_with_bs4(html: str) -> dict[str, Any]:
 def _extract_body_html(html: str) -> str:
     """简单提取正文 HTML 片段。
 
-    优先级：<article> → <main> → <body> → 原 HTML。
+    优先级（Phase 2B 增强：优先识别 transcript 容器）：
+        0. class/id 含 transcript / episode-transcript 的容器
+        1. class/id 含 article-body / content / body 的容器
+        2. <article>
+        3. <main>
+        4. <body>
+        5. 原 HTML
     """
     try:
         soup = BeautifulSoup(html, "html.parser")
+
+        # Phase 2B：优先找 transcript 容器
+        for keyword in ("transcript", "episode-transcript", "article-body", "content", "body"):
+            # class 匹配
+            for tag in soup.find_all(class_=True):
+                classes = tag.get("class", [])
+                if isinstance(classes, list):
+                    classes_str = " ".join(classes).lower()
+                else:
+                    classes_str = str(classes).lower()
+                if keyword in classes_str:
+                    for t in tag.find_all(["script", "style", "nav", "footer", "aside"]):
+                        t.decompose()
+                    text = tag.get_text(strip=True)
+                    if len(text) >= _LOW_MIN_CHARS:
+                        return str(tag)
+            # id 匹配
+            for tag in soup.find_all(id=True):
+                id_val = (tag.get("id") or "").lower()
+                if keyword in id_val:
+                    for t in tag.find_all(["script", "style", "nav", "footer", "aside"]):
+                        t.decompose()
+                    text = tag.get_text(strip=True)
+                    if len(text) >= _LOW_MIN_CHARS:
+                        return str(tag)
+
+        # 退化到标准标签
         for selector in ("article", "main", "body"):
             node = soup.find(selector)
             if node:
