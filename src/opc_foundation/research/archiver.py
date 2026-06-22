@@ -61,10 +61,12 @@ class ResearchInjectors:
         http_html:  按 URL 注入 HTML，跳过真实 HTTP 抓取
         now_str:    注入当前时间函数（默认用 utcnow_iso）
         feed_content_by_url: 按 feed_url 注入 RSS 内容（用于 RSS connector 测试）
+        list_html_by_url:    按 list page URL 注入列表页 HTML（用于 official_public_research 测试）
     """
     http_html: HttpHtmlInjector | None = None
     now_str: Callable[[], str] | None = None
     feed_content_by_url: Callable[[str], str | None] | None = None
+    list_html_by_url: Callable[[str], str | None] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -154,6 +156,14 @@ class ResearchArchiver:
 
             connector = RSSConnector(
                 feed_content_by_url=self.injectors.feed_content_by_url
+            )
+
+        # official_public_research connector 支持注入列表页 HTML
+        if source.source_type == "official_public_research" and self.injectors.list_html_by_url:
+            from .connectors.official_public import OfficialPublicResearchConnector
+
+            connector = OfficialPublicResearchConnector(
+                list_html_by_url=self.injectors.list_html_by_url
             )
 
         try:

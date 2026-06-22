@@ -8,11 +8,15 @@ Phase 1 已实现：
     - RSSConnector          处理 rss_feed
     - WeChatArchiveConnector 处理 wechat_archive
     - ManualURLConnector    处理 manual_url
+
+Phase 2A 已实现：
+    - OfficialPublicResearchConnector 处理 official_public_research
 """
 from __future__ import annotations
 
 from .base import BaseResearchConnector, get_connector
 from .manual_url import ManualURLConnector
+from .official_public import OfficialPublicResearchConnector
 from .rss import RSSConnector
 from .wechat_archive import WeChatArchiveConnector
 
@@ -22,4 +26,5 @@ __all__ = [
     "RSSConnector",
     "WeChatArchiveConnector",
     "ManualURLConnector",
+    "OfficialPublicResearchConnector",
 ]

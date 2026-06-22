@@ -42,11 +42,11 @@ IMPLEMENTED_SOURCE_TYPES = {
     "rss_feed",
     "wechat_archive",
     "manual_url",
+    "official_public_research",  # Phase 2A 新增
 }
 
-# 模型中预留但 Phase 1 未实现的 source_type（CLI run 时会标记 skipped）
+# 模型中预留但尚未实现的 source_type（CLI run 时会标记 skipped）
 RESERVED_SOURCE_TYPES = {
-    "official_public_research",
     "podcast_transcript",
     "conference_transcript",
     "analyst_action",
@@ -192,6 +192,10 @@ def validate_research_config(config: ResearchArchiveConfig) -> list[str]:
         if src.source_type == "manual_url" and not src.manual_urls_path and not src.url:
             errors.append(
                 f"source [{src.source_id}] manual_url 需要 manual_urls_path 或 url"
+            )
+        if src.source_type == "official_public_research" and not src.url and not src.base_url:
+            errors.append(
+                f"source [{src.source_id}] official_public_research 需要 url 或 base_url"
             )
 
     return errors

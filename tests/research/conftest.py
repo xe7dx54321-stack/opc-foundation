@@ -45,6 +45,30 @@ def manual_urls_path() -> Path:
 
 
 @pytest.fixture
+def sample_official_research_list_html() -> str:
+    """读取 sample_official_research_list.html 内容。"""
+    return (FIXTURES_DIR / "sample_official_research_list.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_official_research_article_html() -> str:
+    """读取 sample_official_research_article.html 内容。"""
+    return (FIXTURES_DIR / "sample_official_research_article.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_official_research_empty_html() -> str:
+    """读取 sample_official_research_empty.html 内容。"""
+    return (FIXTURES_DIR / "sample_official_research_empty.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_official_research_malformed_html() -> str:
+    """读取 sample_official_research_malformed.html 内容。"""
+    return (FIXTURES_DIR / "sample_official_research_malformed.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
 def temp_archive_root(tmp_path: Path) -> Path:
     """临时归档根目录（每个测试独立，测试结束自动清理）。"""
     root = tmp_path / "research_archive"

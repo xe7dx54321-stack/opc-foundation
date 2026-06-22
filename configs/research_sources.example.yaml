@@ -127,21 +127,51 @@ sources:
     notes: "用户手工投喂的 URL 列表，每行一个 URL，# 开头为注释"
 
   # -------------------------------------------------------------------------
-  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # Phase 2A 已实现：official_public_research（官方公开研究页面）
   # -------------------------------------------------------------------------
   - source_id: "official_public_research_sample"
     source_name: "Official Public Research Sample"
     source_type: "official_public_research"
     url: "https://example.com/research"
+    base_url: "https://example.com"
     enabled: false
     legal_profile: "official_public"
     fetch_profile: "default_web"
-    extraction_profile: "article_page"
+    extraction_profile: "generic_article_list"
     update_frequency: "daily"
     priority: "high"
     tags: ["official", "research"]
-    notes: "Phase 1 未实现，预留 source_type"
+    notes: "示例官方研究列表页，实际使用时替换为真实 URL；extraction_profile 可选 generic_article_list / simple_card_list / link_list"
 
+  - source_id: "official_public_research_card_sample"
+    source_name: "Official Public Research Card Sample"
+    source_type: "official_public_research"
+    url: "https://example.com/research-cards"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "simple_card_list"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["official", "research", "card"]
+    notes: "卡片式列表页示例，extraction_profile=simple_card_list"
+
+  - source_id: "official_public_research_link_sample"
+    source_name: "Official Public Research Link Sample"
+    source_type: "official_public_research"
+    url: "https://example.com/research-links"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "link_list"
+    update_frequency: "weekly"
+    priority: "low"
+    tags: ["official", "research", "link"]
+    notes: "纯链接列表页示例，extraction_profile=link_list"
+
+  # -------------------------------------------------------------------------
+  # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
+  # -------------------------------------------------------------------------
   - source_id: "podcast_transcript_sample"
     source_name: "Podcast Transcript Sample"
     source_type: "podcast_transcript"

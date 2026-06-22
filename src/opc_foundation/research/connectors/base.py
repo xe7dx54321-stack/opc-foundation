@@ -58,4 +58,7 @@ def get_connector(source_type: str) -> BaseResearchConnector | None:
     if source_type == "manual_url":
         from .manual_url import ManualURLConnector
         return ManualURLConnector()
+    if source_type == "official_public_research":
+        from .official_public import OfficialPublicResearchConnector
+        return OfficialPublicResearchConnector()
     return None
