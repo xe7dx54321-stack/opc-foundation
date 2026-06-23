@@ -200,3 +200,22 @@ Conditions:
 - accept fail-soft behavior
 - avoid JS/anti-bot/paywall sources
 - keep all investment judgment downstream
+
+---
+
+## Cross-Repo Migration Outlook
+
+Non-WeChat Research Source Foundation is production-trial ready.
+
+The next foundation expansion should not immediately add more noisy research/news sources.  
+The recommended next track is official filings:
+
+- SEC EDGAR
+- CNINFO
+- HKEXnews
+
+Reason:
+official filings are public, official, reusable across projects, and separable from investment judgment.
+
+See:
+- docs/source_migration_from_th_capital_stock.md

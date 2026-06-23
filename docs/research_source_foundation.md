@@ -1185,3 +1185,32 @@ research task trigger
 ### 不引入新依赖
 
 本阶段不引入新依赖。如 Phase 4 的 PDF 抽取需要新依赖，单独评估。
+
+
+---
+
+## Cross-Repo Source Migration
+
+`th_capital_stock` 仓库中存在部分可复用信息源能力，但迁移必须遵守 foundation 边界。
+
+迁移路线图详见：
+
+- docs/source_migration_from_th_capital_stock.md
+
+当前决策：
+
+| Family | Decision | Priority |
+|---|---|---|
+| official_filing | migrate first | P0 |
+| document_extraction | migrate later | P1 |
+| market_data | separate module later | P1 |
+| market_flow | separate module later | P1/P2 |
+| research/news harmonization | selective | P2 |
+| procurement | partial, decouple first | P2 |
+| ir_interaction | partial, decouple first | P2 |
+| vendor/iFinD | client only | P3 |
+| factor/valuation/opportunity/risk/signal | do not migrate | No |
+
+Next recommended phase:
+
+M1A: Official Filing Foundation SPEC
