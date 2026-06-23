@@ -21,6 +21,9 @@ from .models import (
     FailedDocument,
     HEALTH_STATUS_HEALTHY,
     HEALTH_STATUS_DISABLED,
+    HEALTH_STATUS_DEGRADED,
+    HEALTH_STATUS_FAILED,
+    HEALTH_STATUS_UNKNOWN,
 )
 
 

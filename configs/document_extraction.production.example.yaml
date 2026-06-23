@@ -7,6 +7,16 @@
 #   1. 创建 local config 时，不要提交到 git
 #   2. local config 路径添加到 .gitignore
 #   3. archive_root 建议使用绝对路径或 .gitignore 忽略 data/document_extraction
+#
+# 支持的 source_type：
+#     - local_document    本地文件（PDF / HTML / TXT / Markdown）
+#
+# Live Smoke / Production 建议：
+#     - 先用 dry-run 验证配置正确性
+#     - 首次运行用 max_documents=5 小样本验证
+#     - 确认无问题后再扩大 max_documents
+#     - ocr_enabled 默认为 false，不做 OCR
+#     - 不支持远程 URL 下载，仅支持本地文件
 
 archive_root: "./data/document_extraction"
 
@@ -19,13 +29,85 @@ defaults:
   extract_tables: false
   ocr_enabled: false
 
+# ---------------------------------------------------------------------------
+# sources: 文档源列表
+# ---------------------------------------------------------------------------
+
 sources:
-  # TODO: 添加生产环境文档源
-  # - source_id: "production_local_docs"
-  #   source_name: "Production Local Documents"
-  #   source_type: "local_document"
-  #   input_path: "/path/to/your/documents"
-  #   input_glob: "*.pdf"
-  #   enabled: false
-  #   legal_profile: "user_provided"
-  #   document_type: "unknown"
+  # -------------------------------------------------------------------------
+  # 本地 PDF 文档示例
+  # 说明：
+  #     - 扫描指定目录下的 PDF 文件
+  #     - 使用 PyMuPDF 提取文本和 metadata
+  #     - 支持 page_count / char_count / word_count
+  # -------------------------------------------------------------------------
+  - source_id: "prod_local_pdf_example"
+    source_name: "Local PDF Documents Example"
+    source_type: "local_document"
+    input_path: "/path/to/your/pdf/documents"
+    input_glob: "*.pdf"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 10
+    notes: |
+      本地 PDF 文档示例。
+      请将 input_path 修改为你的 PDF 文档目录。
+      建议启用前先用 dry-run 验证候选数量。
+
+  # -------------------------------------------------------------------------
+  # 本地 HTML 文档示例
+  # 说明：
+  #     - 扫描指定目录下的 HTML 文件
+  #     - 使用 beautifulsoup4 提取纯文本
+  # -------------------------------------------------------------------------
+  - source_id: "prod_local_html_example"
+    source_name: "Local HTML Documents Example"
+    source_type: "local_document"
+    input_path: "/path/to/your/html/documents"
+    input_glob: "*.html"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 10
+    notes: |
+      本地 HTML 文档示例。
+      请将 input_path 修改为你的 HTML 文档目录。
+
+  # -------------------------------------------------------------------------
+  # 本地 TXT 文档示例
+  # 说明：
+  #     - 扫描指定目录下的 TXT 纯文本文件
+  #     - 直接读取文件内容
+  # -------------------------------------------------------------------------
+  - source_id: "prod_local_txt_example"
+    source_name: "Local TXT Documents Example"
+    source_type: "local_document"
+    input_path: "/path/to/your/txt/documents"
+    input_glob: "*.txt"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 20
+    notes: |
+      本地 TXT 纯文本文档示例。
+      直接读取文件内容，抽取质量最高。
+
+  # -------------------------------------------------------------------------
+  # 本地 Markdown 文档示例
+  # 说明：
+  #     - 扫描指定目录下的 Markdown 文件
+  #     - 直接读取文件内容，保留 Markdown 格式
+  # -------------------------------------------------------------------------
+  - source_id: "prod_local_md_example"
+    source_name: "Local Markdown Documents Example"
+    source_type: "local_document"
+    input_path: "/path/to/your/md/documents"
+    input_glob: "*.md"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 20
+    notes: |
+      本地 Markdown 文档示例。
+      直接读取文件内容，保留原始 Markdown 格式。

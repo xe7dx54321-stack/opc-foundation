@@ -73,6 +73,21 @@ paper portfolio
 | financials/valuation          | do not migrate now    |       No | N/A                      |
 | opportunity/risk/report logic | never migrate         |       No | N/A                      |
 
+## 3.5 M2 Status: Document Extraction Foundation
+
+**M2 (Document Extraction Foundation): Production Trial Ready**
+
+```text
+状态: Production Trial Ready for local/public documents with OCR disabled
+模块: src/opc_foundation/document_extraction/
+能力: 本地 PDF / HTML / TXT / Markdown 抽取
+边界: 不做 OCR / 不做浏览器自动化 / 不下载远程 PDF / 不做投资判断
+```
+
+详细说明见：
+- [Document Extraction Foundation](document_extraction_foundation.md)
+- [Production Readiness](document_extraction_production_readiness.md)
+
 ## 4. P0 Target: Official Filing Foundation
 
 第一批真正开发目标：

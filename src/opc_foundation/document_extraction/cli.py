@@ -25,7 +25,7 @@ from typing import Any
 import typer
 
 from .archiver import DocumentArchiver
-from .config import load_config, validate_config
+from .config import load_config, validate_config as validate_archive_config
 from .health import get_source_health
 from .reports import daily_report_filename
 
@@ -56,7 +56,7 @@ def validate_config(
         raise typer.Exit(1)
 
     # 验证配置
-    errors = validate_config(cfg)
+    errors = validate_archive_config(cfg)
 
     if errors:
         typer.echo("❌ 配置验证失败:")

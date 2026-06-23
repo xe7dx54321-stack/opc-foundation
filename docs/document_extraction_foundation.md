@@ -1,5 +1,15 @@
 # Document Extraction Foundation
 
+## Production Trial Status
+
+**Status: Production Trial Ready for local/public documents with OCR disabled.**
+
+已验证：本地 PDF / HTML / TXT / Markdown 全链路可运行，fail-soft 设计完整，source health 语义正确。
+
+详细说明见：
+- [Live Smoke Registry](document_extraction_live_smoke_registry.md)
+- [Production Readiness](document_extraction_production_readiness.md)
+
 ## 模块目标
 
 Document Extraction Foundation 为 `opc-foundation` 提供**通用公开文档抽取基础设施**，用于服务：

@@ -10,6 +10,18 @@
 
 ## 0. 实现状态
 
+### M2: Document Extraction Foundation (独立模块)
+
+```text
+M2 Document Extraction Foundation: Production Trial Ready
+- 模块路径: src/opc_foundation/document_extraction/
+- 能力: 本地 PDF / HTML / TXT / Markdown 抽取
+- 输出: documents.jsonl / source_health.jsonl / failed_queue.jsonl
+- 状态: Production Trial Ready for local/public documents with OCR disabled
+```
+
+详见 [Document Extraction Foundation](document_extraction_foundation.md)。
+
 ### Phase 1 MVP 已实现
 
 ```text
