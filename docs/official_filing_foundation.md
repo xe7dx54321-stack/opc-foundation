@@ -242,3 +242,44 @@ python -m opc_foundation.official_filings.cli retry-failed --archive-root data/o
 3. **结构化字段**：从年报中提取财务数据（XBRL 解析等）
 4. **增量同步**：基于 date_from/date_to 的增量抓取
 5. **真实网络抓取**：MVP 仅支持 fixture，后续可加真实 HTTP fetcher
+
+
+---
+
+## 十三、Production Trial Status
+
+Official Filing Foundation 在 M1 阶段完成 live smoke 验证后，已达到 **Production Trial Ready** 状态。
+
+### Source 状态
+
+| Source | Source Type | Status | 说明 |
+|--------|-------------|--------|------|
+| SEC EDGAR | sec_edgar | ✅ ready | 真实 HTTP fetch 正常 |
+| CNINFO | cninfo_announcement | ✅ ready | 真实 HTTP POST 正常 |
+| HKEXnews | hkex_announcement | ⚠️ degraded | 客户端渲染限制，无静态数据 |
+
+### Health 语义规则
+
+```text
+enabled + candidate_count = 0 → degraded + empty_source
+```
+
+这确保不会对可达但无数据的 source 误标为 healthy。
+
+### 相关文档
+
+- [Live Smoke Registry](./official_filing_live_smoke_registry.md)
+- [Production Readiness Summary](./official_filing_production_readiness.md)
+- [生产运行指南](./official_filing_production_run.md)
+- [Live Smoke 报告](./official_filing_live_smoke.md)
+
+### M1 完成状态
+
+```
+M1: Official Filing Foundation ✅ Production Trial Ready
+- SEC EDGAR: ready
+- CNINFO: ready
+- HKEXnews: degraded (limitation documented)
+
+Next: M2 Document Extraction Foundation
+```

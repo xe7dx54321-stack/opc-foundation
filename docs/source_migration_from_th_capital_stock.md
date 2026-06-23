@@ -556,3 +556,35 @@ M1 后续可扩展：
 3. 正文提取（HTML/PDF 文本抽取）
 4. XBRL 解析（SEC 财务数据结构化）
 5. 增量同步（基于日期的增量抓取）
+
+
+---
+
+## 附录 D：M1 Official Filing Foundation 完成
+
+### Production Trial Ready
+
+Official Filing Foundation 已达到 **Production Trial Ready** 状态。
+
+### Live Smoke 结果
+
+| Source | Result | Health | Production |
+|--------|--------|--------|------------|
+| SEC EDGAR | 5/5 saved | healthy | ready |
+| CNINFO | 5/5 saved | healthy | ready |
+| HKEXnews | 0 candidates | degraded | limited |
+
+### HKEXnews 限制
+
+港交所页面使用 JavaScript 动态加载数据，当前为 **degraded + empty_source**。
+
+### 下一步
+
+```
+M2: Document Extraction Foundation
+```
+
+考虑：
+- PDF 正文文本提取
+- HTML 正文文本抽取
+- 结构化字段增强

@@ -1266,3 +1266,55 @@ Official Filing Foundation 是与 Research Source Foundation 并列的独立模�
 | 典型用途 | 研究参考、观点汇总 | 事实核查、基本面分析 |
 
 两个模块共享底层基础设施（JSONL 存储、pydantic 模型、typer CLI 等），但上层模型和 connector 各自独立。
+
+
+---
+
+## 十三、Official Filing Foundation 状态
+
+### Production Trial Ready
+
+Official Filing Foundation 已达到 **Production Trial Ready with Caveats**。
+
+### Ready for Production Trial
+
+| Source | Status | 说明 |
+|--------|--------|------|
+| SEC EDGAR | ✅ ready | 真实 HTTP fetch 正常 |
+| CNINFO | ✅ ready | 真实 HTTP POST 正常 |
+
+### Limited
+
+| Source | Status | 说明 |
+|--------|--------|------|
+| HKEXnews | ⚠️ degraded | 客户端渲染限制 |
+
+### 关键文档
+
+- [Official Filing Foundation 主文档](../official_filing_foundation.md)
+- [Live Smoke Registry](../official_filing_live_smoke_registry.md)
+- [Production Readiness Summary](../official_filing_production_readiness.md)
+
+### 与 Research Source 的关系
+
+| 维度 | Research Source | Official Filing |
+|------|----------------|-----------------|
+| 内容类型 | 研究文章、博客、播客等 | 官方监管披露、公司公告 |
+| 权威性 | 各有不同 | 官方发布，权威性高 |
+| 时效性 | 各有不同 | 法定披露，时效性强 |
+| 结构化程度 | 半结构化/非结构化 | 相对结构化 |
+| 典型用途 | 研究参考、观点汇总 | 事实核查、基本面分析 |
+
+两个模块共享底层基础设施（JSONL 存储、pydantic 模型、typer CLI 等），但上层模型和 connector 各自独立。
+
+### 下一步
+
+```
+M2: Document Extraction Foundation
+```
+
+在 M2 中可以考虑：
+- PDF 正文文本提取
+- HTML 正文文本抽取
+- 结构化字段增强
+- 更多披露源接入

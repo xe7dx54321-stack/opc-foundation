@@ -332,3 +332,53 @@ A: 默认在 `data/official_filings/` 下，结构见 Foundation 文档的"目�
 ### Q: 怎么接入到我的业务系统？
 
 A: 读取 `index/filings.latest.jsonl`，按你的业务逻辑过滤和处理。Foundation 不做投资判断，这部分是你业务系统的职责。
+
+
+---
+
+## 十三、Recommended Production Trial Setup
+
+### 初始生产试运行配置
+
+**建议启用的 Source：**
+
+| Source | 建议 | 原因 |
+|--------|------|------|
+| SEC EDGAR | ✅ 启用 | 真实 HTTP fetch 正常 |
+| CNINFO | ✅ 启用 | 真实 HTTP POST 正常 |
+| HKEXnews | ⚠️ 保持 disabled | 客户端渲染限制 |
+
+### 配置规则
+
+```yaml
+defaults:
+  max_items_per_source: 5      # 试运行阶段限制
+  download_pdfs: false         # 默认不下载 PDF
+  save_raw: true               # 保存原始响应
+  save_html: true              # 保存 HTML
+  save_pdf_metadata: true      # 记录 PDF 元数据
+  fetch_timeout_seconds: 30    # 超时设置
+```
+
+### HKEXnews 限制说明
+
+港交所页面使用 JavaScript 动态加载数据，静态 HTML 解析器当前无法获取公告列表。
+
+**当前状态：** degraded + empty_source
+
+**不要将其标记为 healthy。**
+
+直到确认有公开静态端点可用，否则保持 disabled。
+
+### 操作清单
+
+1. validate-config
+2. dry-run
+3. run
+4. check script
+5. source-health
+6. source-health --format json
+7. report
+8. duplicate run
+9. retry-failed
+10. 确认 local config/data 未被提交
