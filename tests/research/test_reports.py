@@ -78,7 +78,7 @@ def test_report_contains_chinese_header() -> None:
     report = build_research_daily_report(result)
     assert "Research Source Foundation 采集日报" in report
     assert "总览" in report
-    assert "Source 结果" in report
+    assert "Source 健康概览" in report
     assert "新保存文档" in report
 
 
@@ -153,7 +153,7 @@ def test_report_contains_source_health() -> None:
     """日报包含 source health 表格。"""
     result = _make_result()
     report = build_research_daily_report(result)
-    assert "Source Health" in report
+    assert "Source 健康概览" in report
     assert "healthy" in report
 
 

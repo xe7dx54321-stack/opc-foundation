@@ -53,6 +53,60 @@ HttpHtmlInjector = Callable[[str], str | None]
 # 签名：接受 url，返回预先准备好的 HTML 字符串。返回 None 表示走真实 HTTP。
 
 
+# ---------------------------------------------------------------------------
+# 标准化 error_type 分类（Phase 2F）
+# ---------------------------------------------------------------------------
+
+
+# 合法的 error_type 取值
+ERROR_TYPES = {
+    "config_error",
+    "connector_error",
+    "fetch_error",
+    "parse_error",
+    "extract_error",
+    "storage_error",
+    "empty_source",
+    "unsupported_source_type",
+    "unknown_error",
+}
+
+
+def classify_error(error_msg: str | None) -> str | None:
+    """根据错误信息推断标准化 error_type。
+
+    参数：
+        error_msg: 原始错误信息
+
+    返回：
+        error_type 字符串；无错误返回 None
+
+    小白解读：
+        只做关键词匹配，不做语义判断。
+        用于让 failed_queue 和 source_health 更可诊断。
+    """
+    if not error_msg:
+        return None
+    lower = error_msg.lower()
+    if "unsupported source_type" in lower:
+        return "unsupported_source_type"
+    if "config" in lower and "error" in lower:
+        return "config_error"
+    if "connector 异常" in lower or "connector error" in lower:
+        return "connector_error"
+    if "抓取失败" in lower or "fetch" in lower or "http" in lower or "timeout" in lower:
+        return "fetch_error"
+    if "解析" in lower or "parse" in lower or "beautifulsoup" in lower:
+        return "parse_error"
+    if "正文抽取" in lower or "extract" in lower:
+        return "extract_error"
+    if "写入" in lower or "storage" in lower or "io" in lower:
+        return "storage_error"
+    if "内容为空" in lower or "empty" in lower:
+        return "empty_source"
+    return "unknown_error"
+
+
 @dataclass
 class ResearchInjectors:
     """测试用的注入点。生产环境一般全是 None。
@@ -501,6 +555,7 @@ class ResearchArchiver:
             total_new += new_count
             total_duplicate += dup_count
 
+            err_type = classify_error(err)
             status = "healthy"
             if err:
                 status = "failed"
@@ -508,17 +563,22 @@ class ResearchArchiver:
                 total_skipped += cand_count
             elif cand_count == 0:
                 status = "degraded"
+                err_type = "empty_source"
 
             stat = {
                 "source_id": source.source_id,
                 "source_name": source.source_name,
                 "source_type": source.source_type,
+                "enabled": True,
                 "candidate_count": cand_count,
                 "new_count": new_count,
                 "duplicate_count": dup_count,
                 "saved_count": 0,
+                "partial_count": 0,
                 "failed_count": 0,
+                "skipped_count": 0,
                 "status": status,
+                "error_type": err_type,
                 "error": err,
             }
             source_stats.append(stat)
@@ -526,14 +586,23 @@ class ResearchArchiver:
             source_health_records.append({
                 "source_id": source.source_id,
                 "source_name": source.source_name,
+                "source_type": source.source_type,
                 "checked_at": started_at,
                 "status": status,
                 "last_success_at": None if err else started_at,
                 "last_failure_at": started_at if err else None,
                 "consecutive_failures": 1 if err else 0,
                 "last_error": err,
+                "last_error_type": err_type,
                 "candidate_count_last_run": cand_count,
+                "new_count_last_run": new_count,
                 "saved_count_last_run": 0,
+                "partial_count_last_run": 0,
+                "failed_count_last_run": 0,
+                "duplicate_count_last_run": dup_count,
+                "skipped_count_last_run": 0,
+                "last_run_id": run_id,
+                "last_report_path": None,
             })
 
         seen_store.close()
@@ -615,11 +684,14 @@ class ResearchArchiver:
             partial_count = 0
             failed_count = 0
             dup_count = 0
+            skipped_count = 0
             source_error: str | None = err
+            source_error_type: str | None = classify_error(err)
 
             if err:
                 warnings.append(f"source [{source.source_name}] 发现失败: {err}")
                 total_skipped += cand_count
+                skipped_count = cand_count
             else:
                 for cand in candidates:
                     try:
@@ -657,6 +729,8 @@ class ResearchArchiver:
                     else:
                         failed_count += 1
                         total_failed += 1
+                        # 根据失败原因分类 error_type
+                        doc_err_type = classify_error(doc.error) or "unknown_error"
                         failed_doc = FailedDocument(
                             source_id=cand.source_id,
                             source_name=cand.source_name,
@@ -666,8 +740,10 @@ class ResearchArchiver:
                             canonical_url=cand.canonical_url,
                             failed_at=started_at,
                             error=doc.error or "未知错误",
+                            error_type=doc_err_type,
                             retryable=True,
                             retry_count=0,
+                            run_id=run_id,
                             raw_entry=cand.raw_entry,
                         )
                         all_failed_documents.append(failed_doc)
@@ -678,8 +754,12 @@ class ResearchArchiver:
                 status = "failed"
             elif failed_count > 0 and saved_count == 0:
                 status = "failed"
-            elif failed_count > 0 or cand_count == 0:
+                if source_error_type is None:
+                    source_error_type = "unknown_error"
+            elif failed_count > 0 or partial_count > 0 or cand_count == 0:
                 status = "degraded"
+                if source_error_type is None and cand_count == 0:
+                    source_error_type = "empty_source"
             else:
                 status = "healthy"
 
@@ -687,27 +767,39 @@ class ResearchArchiver:
                 "source_id": source.source_id,
                 "source_name": source.source_name,
                 "source_type": source.source_type,
+                "enabled": True,
                 "candidate_count": cand_count,
                 "new_count": cand_count - dup_count,
                 "saved_count": saved_count,
                 "partial_count": partial_count,
                 "failed_count": failed_count,
                 "duplicate_count": dup_count,
+                "skipped_count": skipped_count,
                 "status": status,
+                "error_type": source_error_type,
                 "error": source_error,
             })
 
             source_health_records.append({
                 "source_id": source.source_id,
                 "source_name": source.source_name,
+                "source_type": source.source_type,
                 "checked_at": started_at,
                 "status": status,
                 "last_success_at": started_at if status in ("healthy", "degraded") else None,
                 "last_failure_at": started_at if status == "failed" else None,
                 "consecutive_failures": 1 if status == "failed" else 0,
                 "last_error": source_error,
+                "last_error_type": source_error_type,
                 "candidate_count_last_run": cand_count,
+                "new_count_last_run": cand_count - dup_count,
                 "saved_count_last_run": saved_count,
+                "partial_count_last_run": partial_count,
+                "failed_count_last_run": failed_count,
+                "duplicate_count_last_run": dup_count,
+                "skipped_count_last_run": skipped_count,
+                "last_run_id": run_id,
+                "last_report_path": None,
             })
 
         seen_store.close()
@@ -856,6 +948,7 @@ class ResearchArchiver:
                 saved_documents.append(doc)
             else:
                 total_failed += 1
+                doc_err_type = classify_error(doc.error) or "unknown_error"
                 new_failed.append(FailedDocument(
                     source_id=cand.source_id,
                     source_name=cand.source_name,
@@ -865,8 +958,10 @@ class ResearchArchiver:
                     canonical_url=cand.canonical_url,
                     failed_at=started_at,
                     error=doc.error or "重试失败",
+                    error_type=doc_err_type,
                     retryable=True,
                     retry_count=1,
+                    run_id=run_id,
                     raw_entry=cand.raw_entry,
                 ))
 
@@ -944,13 +1039,20 @@ def _compute_exit_code(total_saved: int, total_partial: int, total_failed: int) 
 
 
 def _run_summary_entry(result: ResearchRunResult) -> dict[str, Any]:
-    """构造 run_log.jsonl 的 run_summary 记录。"""
+    """构造 run_log.jsonl 的 run_summary 记录。
+
+    Phase 2F 增强：
+        - 新增 archive_root 字段
+        - 新增 source_stats 字段（包含每个 source 的运行统计）
+        - 新增 warnings 字段
+    """
     return {
         "entry_type": "run_summary",
         "run_id": result.run_id,
         "mode": result.mode,
         "started_at": result.started_at,
         "finished_at": result.finished_at,
+        "archive_root": result.archive_root,
         "source_count": result.source_count,
         "enabled_source_count": result.enabled_source_count,
         "candidate_count": result.candidate_count,
@@ -961,6 +1063,8 @@ def _run_summary_entry(result: ResearchRunResult) -> dict[str, Any]:
         "duplicate_count": result.duplicate_count,
         "skipped_count": result.skipped_count,
         "exit_code": result.exit_code,
+        "source_stats": result.source_stats,
+        "warnings": result.warnings,
         "report_path": result.report_path,
     }
 

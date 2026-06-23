@@ -242,6 +242,21 @@ class FailedDocument(BaseModel):
     """失败队列条目。
 
     记录足够多的信息，便于 retry-failed 命令重跑。
+
+    字段说明：
+        source_id:    所属 source
+        source_name:  source 人类可读名
+        source_type:  source 类型
+        title:        标题（可能为空）
+        url:          原始 URL
+        canonical_url: 规范化 URL
+        failed_at:    失败时间（ISO 字符串）
+        error:        错误信息
+        error_type:   标准化错误类型（Phase 2F 新增）
+        retryable:    是否可重试
+        retry_count:  已重试次数
+        run_id:       失败时所属的运行 ID（Phase 2F 新增）
+        raw_entry:    原始条目（便于调试，不记录正文/secrets）
     """
 
     source_id: str
@@ -252,8 +267,10 @@ class FailedDocument(BaseModel):
     canonical_url: str
     failed_at: str
     error: str
+    error_type: str | None = None
     retryable: bool = True
     retry_count: int = 0
+    run_id: str | None = None
     raw_entry: dict[str, Any] = Field(default_factory=dict)
 
 
@@ -266,15 +283,27 @@ class SourceHealth(BaseModel):
     """源健康状态。
 
     status 取值：
-        healthy   - 最近运行成功
-        degraded  - 连续失败 1-2 次
-        failed    - 连续失败 ≥3 次
+        healthy   - 最近运行成功，且 failed_count_last_run = 0
+        degraded  - 能 discover 或部分保存，但存在 partial/failed/warnings
+        failed    - connector 失败、fetch 失败、config invalid、连续失败
         disabled  - 配置中 enabled=false
         unknown   - 尚未运行过
+
+    Phase 2F 新增字段（向后兼容，全部可选）：
+        source_type:              source 类型
+        last_error_type:          标准化错误类型
+        new_count_last_run:       本次新文档数
+        partial_count_last_run:   本次 partial 数
+        failed_count_last_run:    本次失败数
+        duplicate_count_last_run: 本次重复数
+        skipped_count_last_run:   本次跳过数
+        last_run_id:              最近一次运行 ID
+        last_report_path:         最近一次日报路径
     """
 
     source_id: str
     source_name: str
+    source_type: str | None = None
     checked_at: str
     status: str
 
@@ -282,9 +311,18 @@ class SourceHealth(BaseModel):
     last_failure_at: str | None = None
     consecutive_failures: int = 0
     last_error: str | None = None
+    last_error_type: str | None = None
 
     candidate_count_last_run: int = 0
+    new_count_last_run: int = 0
     saved_count_last_run: int = 0
+    partial_count_last_run: int = 0
+    failed_count_last_run: int = 0
+    duplicate_count_last_run: int = 0
+    skipped_count_last_run: int = 0
+
+    last_run_id: str | None = None
+    last_report_path: str | None = None
 
 
 class ResearchRunResult(BaseModel):

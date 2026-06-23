@@ -4,7 +4,7 @@
 > 英文名：Research Source Foundation
 > 所属项目：`opc-foundation`
 > 规划模块路径：`src/opc_foundation/research/`
-> 文档版本：v0.7（Phase 2E 已实现）
+> 文档版本：v0.8（Phase 2F 已实现）
 
 ---
 
@@ -109,6 +109,41 @@ Phase 2E 暂未实现（已在模型中预留）：
 ```
 
 CLI run 时遇到未实现的 source_type 会标记 skipped/failed，不会崩溃。
+
+### Phase 2F 已实现
+
+```text
+Phase 2F implemented:
+- production source registry template
+- source health hardening
+- source-level run stats
+- daily report hardening
+- production run/check scripts
+```
+
+Phase 2F 重点：
+
+```text
+1. 新增 configs/research_sources.production.example.yaml 生产配置模板
+2. SourceHealth 模型增强：source_type / last_error_type / new_count_last_run / partial_count_last_run / failed_count_last_run / duplicate_count_last_run / skipped_count_last_run / last_run_id / last_report_path
+3. FailedDocument 模型增强：error_type / run_id
+4. status 标准化：healthy / degraded / failed / disabled / unknown
+5. error_type 标准化：config_error / connector_error / fetch_error / parse_error / extract_error / storage_error / empty_source / unsupported_source_type / unknown_error
+6. run_summary 包含 source_stats（每个 source 的运行统计）
+7. daily report 增强：Source 健康概览 / Partial/Failed 表格 / 下游消费入口
+8. source-health CLI 增强：--status 过滤 / --format text|json
+9. 新增 scripts/run_research_archive.ps1 和 scripts/check_research_archive.ps1
+10. 新增 docs/research_source_production_run.md 生产运行指南
+```
+
+边界声明：
+
+```text
+Phase 2F 仍不接 th_capital_stock。
+research module 只负责采集、标准化、归档，不做投研判断。
+下游项目只消费 documents.jsonl / documents.latest.jsonl。
+不提交 local config / data / secrets。
+```
 
 ### Phase 1 模块结构
 

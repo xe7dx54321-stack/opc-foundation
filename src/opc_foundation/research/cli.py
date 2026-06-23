@@ -300,33 +300,87 @@ def _merge_run_summaries(
 @app.command("source-health")
 def cmd_source_health(
     archive_root: str = typer.Option(..., "--archive-root", help="归档根目录"),
+    status: str | None = typer.Option(
+        None, "--status", help="只看某种状态：healthy/degraded/failed/disabled/unknown"
+    ),
+    fmt: str = typer.Option(
+        "text", "--format", help="输出格式：text 或 json"
+    ),
 ) -> None:
-    """输出所有 source 的最新健康状态。"""
+    """输出所有 source 的最新健康状态。
+
+    Phase 2F 增强：
+        - 支持 --status 过滤
+        - 支持 --format text/json
+        - 在没有 source_health.jsonl 时不崩溃
+        - 输出中文可读摘要
+    """
+    import json as json_module
+
     records = load_source_health(archive_root)
+
+    # 过滤
+    if status:
+        status_lower = status.lower()
+        records = [r for r in records if r.get("status", "").lower() == status_lower]
+
+    if fmt.lower() == "json":
+        typer.echo(json_module.dumps(records, ensure_ascii=False, indent=2))
+        raise typer.Exit(code=0)
+
+    # text 输出
     if not records:
         typer.echo("[提示] 暂无 source 健康记录")
         raise typer.Exit(code=0)
 
-    typer.echo("")
-    typer.echo("Source Health 状态：")
-    typer.echo("")
-    typer.echo(
-        f"{'Source ID':<28} {'Source Name':<24} {'Status':<10} {'候选':<6} {'保存':<6} {'最近成功':<24}"
-    )
-    typer.echo("-" * 110)
+    # 统计各状态数量
+    counts: dict[str, int] = {
+        "healthy": 0,
+        "degraded": 0,
+        "failed": 0,
+        "disabled": 0,
+        "unknown": 0,
+    }
     for r in records:
-        typer.echo(
-            f"{r.get('source_id', ''):<28} "
-            f"{r.get('source_name', ''):<24} "
-            f"{r.get('status', ''):<10} "
-            f"{r.get('candidate_count_last_run', 0):<6} "
-            f"{r.get('saved_count_last_run', 0):<6} "
-            f"{r.get('last_success_at') or '-':<24}"
-        )
-        err = r.get("last_error")
-        if err:
-            typer.echo(f"    └─ 错误：{err}")
+        s = r.get("status", "unknown")
+        if s in counts:
+            counts[s] += 1
+        else:
+            counts["unknown"] += 1
+
     typer.echo("")
+    typer.echo("Research Source Foundation Source Health")
+    typer.echo("")
+    typer.echo(f"healthy:  {counts['healthy']}")
+    typer.echo(f"degraded: {counts['degraded']}")
+    typer.echo(f"failed:   {counts['failed']}")
+    typer.echo(f"disabled: {counts['disabled']}")
+    typer.echo(f"unknown:  {counts['unknown']}")
+    typer.echo("")
+
+    # 按状态分组输出详情
+    for group_status in ("failed", "degraded", "healthy", "disabled", "unknown"):
+        group_records = [r for r in records if r.get("status", "unknown") == group_status]
+        if not group_records:
+            continue
+        typer.echo(f"[{group_status}]")
+        for r in group_records:
+            source_name = r.get("source_name", "")
+            source_type = r.get("source_type") or "-"
+            typer.echo(f"- {source_name} ({source_type})")
+            if group_status in ("failed", "degraded"):
+                cf = r.get("consecutive_failures", 0)
+                saved = r.get("saved_count_last_run", 0)
+                failed = r.get("failed_count_last_run", 0)
+                err_type = r.get("last_error_type") or "-"
+                err = r.get("last_error") or "-"
+                typer.echo(f"  consecutive_failures: {cf}")
+                typer.echo(f"  saved_count_last_run: {saved}")
+                typer.echo(f"  failed_count_last_run: {failed}")
+                typer.echo(f"  last_error_type: {err_type}")
+                typer.echo(f"  last_error: {err}")
+        typer.echo("")
+
     raise typer.Exit(code=0)
 
 

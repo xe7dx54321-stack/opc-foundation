@@ -1,0 +1,137 @@
+# Research Source Foundation - 生产配置模板（示例）
+#
+# 这是生产配置模板，不是真实 local config。
+#
+# 使用方法：
+#   1. 复制本文件为 configs/research_sources.production.local.yaml
+#   2. 编辑 local config，填入真实 source URL
+#   3. local config 不会被 git 提交（已在 .gitignore 中）
+#
+# 要求：
+#   - 不包含真实私有 URL
+#   - 不包含 cookie/token/API key
+#   - 所有示例 URL 使用 example.com
+#   - 默认 enabled: false
+#   - 不绕过 paywall
+
+archive_root: "./data/research_archive"
+
+defaults:
+  fetch_timeout_seconds: 20
+  max_items_per_source: 20
+  save_html: true
+  save_markdown: true
+  save_raw: true
+  download_assets: false
+  user_agent: "Mozilla/5.0"
+
+# 生产环境元信息（Phase 2F 新增）
+production:
+  schedule_hint: "daily"
+  recommended_run_time_local: "08:00"
+  owner_project: "opc-foundation"
+  downstream_contract: "index/documents.jsonl"
+  local_config_path: "configs/research_sources.production.local.yaml"
+
+# source groups 分组说明（仅文档化用途，不影响运行）
+source_groups:
+  official_public_research:
+    description: "Official public research and insight pages"
+    enabled_by_default: false
+
+  podcast_transcript:
+    description: "Official podcast transcript pages or feeds"
+    enabled_by_default: false
+
+  conference_transcript:
+    description: "Public IR/conference transcript, webcast, and presentation pages"
+    enabled_by_default: false
+
+  analyst_action:
+    description: "Public analyst action tables/cards/news lists"
+    enabled_by_default: false
+
+  media_mention:
+    description: "Public media mentions of banks, analysts, research, ratings, targets, or conferences"
+    enabled_by_default: false
+
+sources:
+  # ------------------------------------------------------------
+  # 1. official_public_research
+  # ------------------------------------------------------------
+  - source_id: "sample_official_public_research"
+    source_name: "Sample Official Public Research"
+    source_type: "official_public_research"
+    url: "https://example.com/research"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "generic_article_list"
+    update_frequency: "daily"
+    tags: ["sample", "official_public_research"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 2. podcast_transcript
+  # ------------------------------------------------------------
+  - source_id: "sample_podcast_transcript"
+    source_name: "Sample Podcast Transcript"
+    source_type: "podcast_transcript"
+    url: "https://example.com/podcast"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "podcast_episode_list"
+    update_frequency: "weekday"
+    tags: ["sample", "podcast", "transcript"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 3. conference_transcript
+  # ------------------------------------------------------------
+  - source_id: "sample_conference_transcript"
+    source_name: "Sample Conference Transcript"
+    source_type: "conference_transcript"
+    url: "https://example.com/events"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "public_ir"
+    fetch_profile: "default_web"
+    extraction_profile: "conference_event_list"
+    update_frequency: "weekly"
+    tags: ["sample", "conference", "transcript"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 4. analyst_action
+  # ------------------------------------------------------------
+  - source_id: "sample_analyst_action"
+    source_name: "Sample Analyst Action"
+    source_type: "analyst_action"
+    url: "https://example.com/analyst-actions"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "analyst_action_table"
+    update_frequency: "daily"
+    tags: ["sample", "analyst_action"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 5. media_mention
+  # ------------------------------------------------------------
+  - source_id: "sample_media_mention"
+    source_name: "Sample Media Mention"
+    source_type: "media_mention"
+    url: "https://example.com/markets/news"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "media_mention_news_list"
+    update_frequency: "daily"
+    tags: ["sample", "media_mention"]
+    max_items: 20
