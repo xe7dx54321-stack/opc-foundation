@@ -1,0 +1,145 @@
+{
+  "cik": "0000320193",
+  "entityName": "Apple Inc.",
+  "sic": "3571",
+  "sicDescription": "Electronic Computers",
+  "insiderTransactionForOwnerExists": 0,
+  "insiderTransactionForIssuerExists": 1,
+  "tickers": [
+    "AAPL"
+  ],
+  "exchanges": [
+    "Nasdaq"
+  ],
+  "ein": "942404110",
+  "description": "",
+  "website": "",
+  "investorWebsite": "",
+  "category": "Large accelerated filer",
+  "fiscalYearEnd": "0930",
+  "stateOfIncorporation": "CA",
+  "stateOfIncorporationDescription": "California",
+  "addresses": {
+    "mailing": {
+      "street1": "ONE APPLE PARK WAY",
+      "street2": "",
+      "city": "CUPERTINO",
+      "stateOrCountry": "CA",
+      "zipCode": "95014",
+      "stateOrCountryDescription": "CALIFORNIA"
+    },
+    "business": {
+      "street1": "ONE APPLE PARK WAY",
+      "street2": "",
+      "city": "CUPERTINO",
+      "stateOrCountry": "CA",
+      "zipCode": "95014",
+      "stateOrCountryDescription": "CALIFORNIA"
+    }
+  },
+  "phone": "(408) 996-1010",
+  "flags": [],
+  "formerNames": [],
+  "filings": {
+    "recent": {
+      "accessionNumber": [
+        "0000320193-24-000006",
+        "0000320193-24-000005",
+        "0000320193-24-000003",
+        "0000320193-23-000107",
+        "0000320193-23-000098"
+      ],
+      "filingDate": [
+        "2024-02-02",
+        "2024-02-01",
+        "2024-01-25",
+        "2023-11-03",
+        "2023-10-26"
+      ],
+      "reportDate": [
+        "2023-12-30",
+        "",
+        "2024-01-25",
+        "2023-09-30",
+        "2023-09-30"
+      ],
+      "acceptanceDateTime": [
+        "2024-02-02T18:02:46.000Z",
+        "2024-02-01T16:00:00.000Z",
+        "2024-01-25T16:30:00.000Z",
+        "2023-11-03T06:01:17.000Z",
+        "2023-10-26T16:30:00.000Z"
+      ],
+      "act": [
+        "34",
+        "34",
+        "33",
+        "34",
+        "34"
+      ],
+      "form": [
+        "10-Q",
+        "8-K",
+        "S-1",
+        "10-K",
+        "8-K"
+      ],
+      "fileNumber": [
+        "001-36743",
+        "001-36743",
+        "333-276543",
+        "001-36743",
+        "001-36743"
+      ],
+      "filmNumber": [
+        "24548967",
+        "24543210",
+        "24520123",
+        "23552345",
+        "23532456"
+      ],
+      "items": [
+        "",
+        "Item 2.02, Item 9.01",
+        "",
+        "",
+        "Item 5.02, Item 9.01"
+      ],
+      "size": [
+        1234567,
+        234567,
+        8901234,
+        2345678,
+        123456
+      ],
+      "isXBRL": [
+        1,
+        0,
+        1,
+        1,
+        0
+      ],
+      "isInlineXBRL": [
+        1,
+        0,
+        0,
+        1,
+        0
+      ],
+      "primaryDocument": [
+        "aapl-20231230.htm",
+        "aapl-20240201x8k.htm",
+        "s1-20240125.htm",
+        "aapl-20230930.htm",
+        "aapl-20231026x8k.htm"
+      ],
+      "primaryDocDescription": [
+        "10-Q Quarterly Report",
+        "8-K Current Report",
+        "S-1 Registration Statement",
+        "10-K Annual Report",
+        "8-K Current Report"
+      ]
+    }
+  }
+}

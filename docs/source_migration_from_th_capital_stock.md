@@ -507,3 +507,52 @@ M6: th_capital_stock Consumption Bridge
 ```text
 M1A: Official Filing Foundation SPEC
 ```
+
+
+---
+
+## 附录 C：M1 进展更新（Official Filing Foundation 已新增）
+
+### M1 状态：✅ 已完成 MVP
+
+M1 = **Official Filing Foundation** 已作为独立模块新增到 opc-foundation。
+
+### 已实现内容
+
+| 模块 | 说明 |
+|------|------|
+| `official_filings` 模块 | 独立的官方披露归档模块 |
+| 数据模型 | FilingSourceConfig / FilingCandidate / NormalizedFiling / FilingSourceHealth |
+| Connector Protocol | OfficialFilingConnector 基类 + get_connector 注册 |
+| SEC EDGAR connector | submissions JSON 解析，fixture 注入模式 |
+| CNINFO connector | 公告列表 JSON 解析，fixture 注入模式 |
+| HKEX connector | 公告列表 HTML 解析，fixture 注入模式 |
+| Storage / Index | filings.jsonl / filings.latest.jsonl / metadata sidecar |
+| Dedupe | canonical_key + content_hash 去重 |
+| Source Health | healthy/degraded/failed/disabled/unknown |
+| Failed Queue | 失败记录 + retryable 标记 |
+| Daily Report | 中文 Markdown 日报 |
+| CLI | validate-config / dry-run / run / source-health / report / retry-failed |
+| 测试 | 10 个测试文件，覆盖 models/config/connectors/storage/reports/cli/docs |
+
+### 文档
+
+- `docs/official_filing_foundation.md` — Foundation 主文档
+- `docs/official_filing_production_run.md` — 生产运行指南
+- `configs/official_filings.example.yaml` — 示例配置（全部 enabled=false）
+
+### MVP 边界
+
+- 仅支持 fixture 注入模式，不包含真实网络抓取
+- 不做正文提取（只做元数据归档）
+- 不下载 PDF（只存 PDF URL）
+- 不做投资判断（严格遵守 foundation 边界）
+
+### 后续方向
+
+M1 后续可扩展：
+1. 真实 HTTP fetcher（接入网络抓取）
+2. 更多披露源（上交所、深交所等）
+3. 正文提取（HTML/PDF 文本抽取）
+4. XBRL 解析（SEC 财务数据结构化）
+5. 增量同步（基于日期的增量抓取）

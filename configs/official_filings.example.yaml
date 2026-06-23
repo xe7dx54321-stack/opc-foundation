@@ -1,0 +1,90 @@
+# Official Filing Foundation - 示例配置
+#
+# 功能说明（小白解读）：
+#     这个文件是 Official Filing Foundation 的示例配置。
+#     它只负责声明"从哪里抓、抓哪些类型、抓到的东西存哪"，不包含任何投研评分规则。
+#
+# 支持的 source_type：
+#     - sec_edgar          美国 SEC EDGAR 官方披露
+#     - cninfo_announcement 中国 CNINFO 巨潮资讯公告
+#     - hkex_announcement   香港 HKEXnews 港交所披露易公告
+#
+# 使用方式：
+#     1. 复制本文件为 configs/official_filings.local.yaml
+#     2. 根据实际情况修改 archive_root、sources 列表
+#     3. 用 `python -m opc_foundation.official_filings.cli validate-config --config configs/official_filings.local.yaml` 校验
+#
+# 注意：
+#     - 所有 example source 默认 enabled: false，不会真实访问网络
+#     - legal_profile 必填，取值：official_public / public_ir / unknown
+#     - source_id 必须全局唯一
+#     - 该配置只是 source registry，不包含任何投研评分规则
+#     - Foundation 只做归档和元数据整理，不做投资判断
+
+archive_root: "./data/official_filings"
+
+# 全局默认参数（每个 source 可以通过对应字段覆盖）
+defaults:
+  fetch_timeout_seconds: 30
+  max_items_per_source: 10
+  save_raw: true
+  save_html: true
+  save_pdf_metadata: true
+  download_pdfs: false
+  user_agent: "Mozilla/5.0 (compatible; opc-foundation-filings/0.1)"
+
+# ---------------------------------------------------------------------------
+# sources: 官方披露源列表
+# ---------------------------------------------------------------------------
+
+sources:
+  # -------------------------------------------------------------------------
+  # SEC EDGAR（美国证监会官方披露）
+  # -------------------------------------------------------------------------
+  - source_id: "example_sec_edgar"
+    source_name: "Example SEC EDGAR"
+    source_type: "sec_edgar"
+    market: "US"
+    jurisdiction: "US"
+    base_url: "https://www.sec.gov"
+    endpoint_url: "https://data.sec.gov/submissions/CIK0000320193.json"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default"
+    max_items: 10
+    filing_types: []
+    notes: "示例 SEC EDGAR 源，实际使用时替换为真实 CIK 的 submissions URL；filing_types 留空表示全部类型"
+
+  # -------------------------------------------------------------------------
+  # CNINFO 巨潮资讯（中国证监会指定披露平台）
+  # -------------------------------------------------------------------------
+  - source_id: "example_cninfo"
+    source_name: "Example CNINFO Announcements"
+    source_type: "cninfo_announcement"
+    market: "CN"
+    jurisdiction: "CN"
+    base_url: "https://www.cninfo.com.cn"
+    endpoint_url: "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default"
+    max_items: 10
+    filing_types: []
+    notes: "示例巨潮资讯源，实际使用时配置正确的查询参数；MVP 版本仅支持 fixture 测试"
+
+  # -------------------------------------------------------------------------
+  # HKEXnews 港交所披露易（香港联交所官方披露平台）
+  # -------------------------------------------------------------------------
+  - source_id: "example_hkex"
+    source_name: "Example HKEXnews Announcements"
+    source_type: "hkex_announcement"
+    market: "HK"
+    jurisdiction: "HK"
+    base_url: "https://www.hkexnews.hk"
+    endpoint_url: "https://www.hkexnews.hk/listedco/listconews/advancedsearch/search_active_main_c.aspx"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default"
+    max_items: 10
+    filing_types: []
+    notes: "示例港交所披露易源，实际使用时配置正确的查询参数；MVP 版本仅支持 fixture 测试"

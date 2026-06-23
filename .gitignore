@@ -31,3 +31,10 @@ data/research_archive/
 # Research Source Foundation 本地配置（包含真实 feed_url，严禁提交）
 configs/research_sources.local.yaml
 configs/research_sources.production.local.yaml
+
+# Official Filing Foundation 归档数据（包含真实披露文件，严禁提交）
+data/official_filings/
+
+# Official Filing Foundation 本地配置（包含真实查询参数，严禁提交）
+configs/official_filings.local.yaml
+configs/official_filings.production.local.yaml

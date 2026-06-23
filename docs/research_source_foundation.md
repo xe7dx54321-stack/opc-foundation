@@ -1214,3 +1214,55 @@ research task trigger
 Next recommended phase:
 
 M1A: Official Filing Foundation SPEC
+
+---
+
+## 十二、Official Filing Foundation（M1 新增）
+
+### 12.1 模块定位
+
+Official Filing Foundation 是与 Research Source Foundation 并列的独立模块，专注于**官方披露/公告**的归档。
+
+- **Research Source Foundation**：研究内容归档（研报、博客、公众号、播客等）
+- **Official Filing Foundation**：官方披露归档（SEC EDGAR / CNINFO / HKEX 等）
+
+两者都是 foundation 层基础设施，遵循相同的设计原则：
+
+> Foundation 提供基础设施；业务系统保留判断力。
+
+### 12.2 已实现 Source
+
+| source_type | 名称 | 市场 | 状态 |
+|-------------|------|------|------|
+| `sec_edgar` | SEC EDGAR | US | ✅ MVP 已实现 |
+| `cninfo_announcement` | CNINFO 巨潮资讯 | CN | ✅ MVP 已实现 |
+| `hkex_announcement` | HKEXnews 港交所披露易 | HK | ✅ MVP 已实现 |
+
+### 12.3 核心能力
+
+- 官方披露发现（discover）
+- 标准化元数据模型
+- 本地归档存储（raw / metadata / index）
+- canonical_key + content_hash 去重
+- Source Health 监控
+- Failed Queue 失败重试
+- 中文日报
+- CLI 命令行工具
+
+### 12.4 文档入口
+
+- **主文档**：[official_filing_foundation.md](./official_filing_foundation.md)
+- **生产运行**：[official_filing_production_run.md](./official_filing_production_run.md)
+- **示例配置**：`configs/official_filings.example.yaml`
+
+### 12.5 与 Research Source 的关系
+
+| 维度 | Research Source | Official Filing |
+|------|-----------------|-----------------|
+| 内容类型 | 研究文章、博客、播客等 | 官方监管披露、公司公告 |
+| 权威性 | 各有不同 | 官方发布，权威性高 |
+| 时效性 | 各有不同 | 法定披露，时效性强 |
+| 结构化程度 | 半结构化/非结构化 | 相对结构化 |
+| 典型用途 | 研究参考、观点汇总 | 事实核查、基本面分析 |
+
+两个模块共享底层基础设施（JSONL 存储、pydantic 模型、typer CLI 等），但上层模型和 connector 各自独立。
