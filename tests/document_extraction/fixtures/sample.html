@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document Extraction Foundation - Sample HTML</title>
+</head>
+<body>
+    <header>
+        <h1>Document Extraction Foundation</h1>
+        <p class="subtitle">Universal Public Document Extraction Infrastructure</p>
+    </header>
+
+    <main>
+        <section id="overview">
+            <h2>Overview</h2>
+            <p>The Document Extraction Foundation provides a <strong>universal public document extraction</strong> infrastructure for various document types.</p>
+        </section>
+
+        <section id="features">
+            <h2>Key Features</h2>
+            <ul>
+                <li>Local PDF text extraction</li>
+                <li>HTML content extraction</li>
+                <li>Plain text processing</li>
+                <li>Markdown parsing</li>
+                <li>Document hash computation</li>
+                <li>Quality assessment</li>
+            </ul>
+        </section>
+
+        <section id="supported-types">
+            <h2>Supported Document Types</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Extension</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>PDF</td>
+                        <td>.pdf</td>
+                        <td>Portable Document Format</td>
+                    </tr>
+                    <tr>
+                        <td>HTML</td>
+                        <td>.html, .htm</td>
+                        <td>HyperText Markup Language</td>
+                    </tr>
+                    <tr>
+                        <td>Text</td>
+                        <td>.txt</td>
+                        <td>Plain text files</td>
+                    </tr>
+                    <tr>
+                        <td>Markdown</td>
+                        <td>.md, .markdown</td>
+                        <td>Markdown documents</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section id="architecture">
+            <h2>Architecture</h2>
+            <p>The architecture consists of:</p>
+            <ol>
+                <li><strong>DocumentArchiver</strong> - Main orchestrator</li>
+                <li><strong>Extractors</strong> - Format-specific extractors
+                    <ul>
+                        <li>PDFExtractor</li>
+                        <li>HTMLExtractor</li>
+                        <li>TextExtractor</li>
+                        <li>MarkdownExtractor</li>
+                    </ul>
+                </li>
+                <li><strong>Storage</strong> - JSONL-based storage</li>
+                <li><strong>Health</strong> - Source health monitoring</li>
+            </ol>
+        </section>
+
+        <section id="disclaimer">
+            <h2>Disclaimer</h2>
+            <blockquote>
+                <p>This module provides infrastructure only.</p>
+                <p>Business logic remains with the consuming system.</p>
+            </blockquote>
+        </section>
+    </main>
+
+    <footer>
+        <p>OPC Foundation M2 - Document Extraction Foundation</p>
+    </footer>
+</body>
+</html>

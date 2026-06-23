@@ -1,0 +1,31 @@
+# Document Extraction Foundation - Production Example Configuration
+#
+# 本配置是生产环境配置的示例模板。
+# 所有 source 默认 disabled，不包含真实路径，不包含 secrets。
+#
+# 注意事项：
+#   1. 创建 local config 时，不要提交到 git
+#   2. local config 路径添加到 .gitignore
+#   3. archive_root 建议使用绝对路径或 .gitignore 忽略 data/document_extraction
+
+archive_root: "./data/document_extraction"
+
+defaults:
+  max_documents: 20
+  save_raw: true
+  save_markdown: true
+  save_metadata: true
+  extract_text: true
+  extract_tables: false
+  ocr_enabled: false
+
+sources:
+  # TODO: 添加生产环境文档源
+  # - source_id: "production_local_docs"
+  #   source_name: "Production Local Documents"
+  #   source_type: "local_document"
+  #   input_path: "/path/to/your/documents"
+  #   input_glob: "*.pdf"
+  #   enabled: false
+  #   legal_profile: "user_provided"
+  #   document_type: "unknown"

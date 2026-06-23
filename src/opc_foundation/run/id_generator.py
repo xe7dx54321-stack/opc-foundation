@@ -13,3 +13,8 @@ def new_id(prefix: str = "") -> str:
 def new_run_id() -> str:
     """Generate a run-scoped ID."""
     return new_id("run_")
+
+
+def generate_document_id() -> str:
+    """Generate a document-scoped ID for Document Extraction."""
+    return new_id("doc_")

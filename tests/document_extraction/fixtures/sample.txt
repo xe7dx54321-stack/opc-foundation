@@ -1,0 +1,35 @@
+Document Extraction Foundation Test Fixtures
+
+This is a sample text file for testing the document extraction module.
+
+Section 1: Introduction
+The Document Extraction Foundation provides a universal public document extraction
+infrastructure for various document types including PDF, HTML, TXT, and Markdown.
+
+Section 2: Key Features
+- Local PDF text extraction
+- HTML content extraction
+- Plain text processing
+- Markdown parsing
+- Document hash computation
+- Quality assessment
+
+Section 3: Quality Levels
+Documents are assessed for extraction quality:
+- High: More than 5000 characters
+- Medium: Between 1000 and 5000 characters
+- Low: Less than 1000 characters
+- Empty: No text extracted
+
+Section 4: Use Cases
+This module can serve:
+- CNINFO announcement PDFs
+- HKEX announcement PDF metadata
+- SEC filing exhibits
+- Company IR presentations
+- Public whitepapers
+- Industry reports
+- Policy documents
+- User-provided local documents
+
+Footer: This is test data for the OPC Foundation M2 Document Extraction Foundation.

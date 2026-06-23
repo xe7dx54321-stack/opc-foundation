@@ -1,0 +1,112 @@
+# Document Extraction Foundation - Example Configuration
+#
+# 本配置用于测试和演示 document_extraction 模块。
+# 所有 source 默认 disabled，不包含真实路径。
+#
+# 使用方式：
+#   python -m opc_foundation.document_extraction.cli run --config configs/document_extraction.example.yaml
+#   python -m opc_foundation.document_extraction.cli validate-config --config configs/document_extraction.example.yaml
+#   python -m opc_foundation.document_extraction.cli dry-run --config configs/document_extraction.example.yaml
+
+archive_root: "./data/document_extraction"
+
+defaults:
+  max_documents: 20
+  save_raw: true
+  save_markdown: true
+  save_metadata: true
+  extract_text: true
+  extract_tables: false
+  ocr_enabled: false  # OCR 默认关闭，本阶段不实现
+
+sources:
+  # 示例：本地文档源
+  - source_id: "example_local_documents"
+    source_name: "Example Local Documents"
+    source_type: "local_document"
+    input_path: "./examples/documents"
+    input_glob: "*.pdf"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 20
+    save_raw: true
+    save_markdown: true
+    save_metadata: true
+
+  # 示例：官方披露 PDF 源
+  - source_id: "example_official_filing_pdf"
+    source_name: "Example Official Filing PDFs"
+    source_type: "official_filing_pdf"
+    input_path: "./examples/filings"
+    input_glob: "*.pdf"
+    enabled: false
+    legal_profile: "official_public"
+    document_type: "official_filing"
+    max_documents: 20
+
+  # 示例：IR 演示文稿
+  - source_id: "example_ir_presentation"
+    source_name: "Example IR Presentations"
+    source_type: "ir_presentation"
+    input_path: "./examples/ir"
+    input_glob: "*.pdf"
+    enabled: false
+    legal_profile: "public_ir"
+    document_type: "ir_presentation"
+    max_documents: 20
+
+  # 示例：公开报告
+  - source_id: "example_public_report"
+    source_name: "Example Public Reports"
+    source_type: "public_report"
+    input_path: "./examples/reports"
+    input_glob: "*.pdf"
+    enabled: false
+    legal_profile: "official_public"
+    document_type: "research_report"
+    max_documents: 20
+
+  # 示例：政策文件
+  - source_id: "example_policy_document"
+    source_name: "Example Policy Documents"
+    source_type: "policy_document"
+    input_path: "./examples/policy"
+    input_glob: "*.pdf"
+    enabled: false
+    legal_profile: "official_public"
+    document_type: "policy"
+    max_documents: 20
+
+  # 示例：HTML 文档
+  - source_id: "example_html_docs"
+    source_name: "Example HTML Documents"
+    source_type: "public_report"
+    input_path: "./examples/html"
+    input_glob: "*.html"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 20
+
+  # 示例：Markdown 文档
+  - source_id: "example_markdown_docs"
+    source_name: "Example Markdown Documents"
+    source_type: "local_document"
+    input_path: "./examples/markdown"
+    input_glob: "*.md"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 20
+
+  # 示例：纯文本文档
+  - source_id: "example_text_docs"
+    source_name: "Example Text Documents"
+    source_type: "local_document"
+    input_path: "./examples/text"
+    input_glob: "*.txt"
+    enabled: false
+    legal_profile: "user_provided"
+    document_type: "unknown"
+    max_documents: 20
