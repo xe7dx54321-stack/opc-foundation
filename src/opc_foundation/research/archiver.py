@@ -65,6 +65,7 @@ class ResearchInjectors:
         podcast_html_by_url: 按 URL 注入 podcast HTML/XML（用于 podcast_transcript 测试）
         conference_html_by_url: 按 URL 注入 conference HTML（用于 conference_transcript 测试）
         analyst_action_html_by_url: 按 URL 注入 analyst action HTML（用于 analyst_action 测试）
+        media_mention_html_by_url: 按 URL 注入 media mention HTML（用于 media_mention 测试）
     """
     http_html: HttpHtmlInjector | None = None
     now_str: Callable[[], str] | None = None
@@ -73,6 +74,7 @@ class ResearchInjectors:
     podcast_html_by_url: Callable[[str], str | None] | None = None
     conference_html_by_url: Callable[[str], str | None] | None = None
     analyst_action_html_by_url: Callable[[str], str | None] | None = None
+    media_mention_html_by_url: Callable[[str], str | None] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -194,6 +196,14 @@ class ResearchArchiver:
 
             connector = AnalystActionConnector(
                 html_by_url=self.injectors.analyst_action_html_by_url
+            )
+
+        # media_mention connector 支持注入 HTML
+        if source.source_type == "media_mention" and self.injectors.media_mention_html_by_url:
+            from .connectors.media_mention import MediaMentionConnector
+
+            connector = MediaMentionConnector(
+                html_by_url=self.injectors.media_mention_html_by_url
             )
 
         try:

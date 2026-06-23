@@ -315,5 +315,70 @@ sources:
     notes: "示例单篇评级变动详情页，extraction_profile=analyst_action_detail"
 
   # -------------------------------------------------------------------------
+  # Phase 2E 已实现：media_mention（媒体对投行观点 / 研报 / 分析师的公开引用）
+  # 注意：media_mention 只记录公开媒体报道与被提及对象 metadata，不做投资建议，不判断利好利空。
+  # mentioned_tickers 只是媒体报道原文提及的 ticker metadata，不等同于 watchlist 映射。
+  # -------------------------------------------------------------------------
+  - source_id: "sample_media_mention_article_list"
+    source_name: "Sample Media Mention Article List"
+    source_type: "media_mention"
+    url: "https://example.com/media/articles"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "media_mention_article_list"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "media", "research_mention"]
+    max_items: 20
+    notes: "示例媒体文章列表页，extraction_profile=media_mention_article_list；mentioned_tickers 只是 metadata，不是投资建议"
+
+  - source_id: "sample_media_mention_cards"
+    source_name: "Sample Media Mention Cards"
+    source_type: "media_mention"
+    url: "https://example.com/media/cards"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "media_mention_cards"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "media", "cards"]
+    max_items: 20
+    notes: "示例卡片式媒体新闻页面，extraction_profile=media_mention_cards"
+
+  - source_id: "sample_media_mention_news_list"
+    source_name: "Sample Media Mention News List"
+    source_type: "media_mention"
+    url: "https://example.com/media/news"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "media_mention_news_list"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "media", "news"]
+    max_items: 20
+    notes: "示例新闻列表式媒体页面，extraction_profile=media_mention_news_list"
+
+  - source_id: "sample_media_mention_detail"
+    source_name: "Sample Media Mention Detail"
+    source_type: "media_mention"
+    url: "https://example.com/media/detail"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "media_mention_detail"
+    update_frequency: "daily"
+    priority: "low"
+    tags: ["sample", "media", "detail"]
+    max_items: 1
+    notes: "示例单篇媒体报道详情页，extraction_profile=media_mention_detail"
+
+  # -------------------------------------------------------------------------
   # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
   # -------------------------------------------------------------------------

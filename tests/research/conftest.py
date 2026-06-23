@@ -185,6 +185,47 @@ def sample_analyst_action_malformed_html() -> str:
     return (FIXTURES_DIR / "sample_analyst_action_malformed.html").read_text(encoding="utf-8")
 
 
+# ---------------------------------------------------------------------------
+# Phase 2E：media_mention fixtures
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture
+def sample_media_mention_article_list_html() -> str:
+    """读取 sample_media_mention_article_list.html 内容（媒体文章列表页）。"""
+    return (FIXTURES_DIR / "sample_media_mention_article_list.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_media_mention_cards_html() -> str:
+    """读取 sample_media_mention_cards.html 内容（卡片式媒体新闻页面）。"""
+    return (FIXTURES_DIR / "sample_media_mention_cards.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_media_mention_news_list_html() -> str:
+    """读取 sample_media_mention_news_list.html 内容（新闻列表式媒体页面）。"""
+    return (FIXTURES_DIR / "sample_media_mention_news_list.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_media_mention_detail_html() -> str:
+    """读取 sample_media_mention_detail.html 内容（单篇媒体报道详情页）。"""
+    return (FIXTURES_DIR / "sample_media_mention_detail.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_media_mention_empty_html() -> str:
+    """读取 sample_media_mention_empty.html 内容（空列表页，用于 fail-soft 测试）。"""
+    return (FIXTURES_DIR / "sample_media_mention_empty.html").read_text(encoding="utf-8")
+
+
+@pytest.fixture
+def sample_media_mention_malformed_html() -> str:
+    """读取 sample_media_mention_malformed.html 内容（畸形 HTML，用于 fail-soft 测试）。"""
+    return (FIXTURES_DIR / "sample_media_mention_malformed.html").read_text(encoding="utf-8")
+
+
 @pytest.fixture
 def temp_archive_root(tmp_path: Path) -> Path:
     """临时归档根目录（每个测试独立，测试结束自动清理）。"""

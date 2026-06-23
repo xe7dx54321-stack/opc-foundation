@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Malformed Media Mention Page</title>
+</head>
+<body>
+    <h1>Malformed Media Mentions</h1>
+
+    <article>
+        <h2><a href="/media/malformed-1">Goldman Sachs Raises AI Outlook</a></h2>
+        <time datetime="2026-03-15T09:00:00+08:00">2026-03-15</time>
+        <p class="summary">Goldman Sachs research note cites strong AI demand.
+        <!-- 未闭合的 p 标签 -->
+        <p>Reuters reported that Goldman Sachs analyst Jane Doe raised the AI outlook.
+    </article>
+
+    <article>
+        <!-- 缺链接 -->
+        <h2>Missing Link Article</h2>
+        <time datetime="2026-03-14T10:00:00+08:00">2026-03-14</time>
+        <p class="summary">This article has no link and should be skipped.</p>
+    </article>
+
+    <article>
+        <h2><a href="">Empty Href Article</a></h2>
+        <time datetime="2026-03-13T11:00:00+08:00">2026-03-13</time>
+        <p class="summary">This article has an empty href.</p>
+    </article>
+
+    <article>
+        <h2><a href="/media/malformed-4">J.P. Morgan Sets Target on Sample Tech</a></h2>
+        <time datetime="2026-03-12T14:00:00+08:00">2026-03-12</time>
+        <p class="summary">JPMorgan analyst sets $200 price target on SMP.</p>
+        <p>CNBC reported that JPMorgan initiated coverage on SMP.</p>
+    </article>
+
+</body>
+</html>

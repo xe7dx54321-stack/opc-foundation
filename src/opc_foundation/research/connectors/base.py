@@ -70,4 +70,7 @@ def get_connector(source_type: str) -> BaseResearchConnector | None:
     if source_type == "analyst_action":
         from .analyst_action import AnalystActionConnector
         return AnalystActionConnector()
+    if source_type == "media_mention":
+        from .media_mention import MediaMentionConnector
+        return MediaMentionConnector()
     return None

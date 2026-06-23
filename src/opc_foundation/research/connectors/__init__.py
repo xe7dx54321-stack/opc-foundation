@@ -20,6 +20,9 @@ Phase 2C 已实现：
 
 Phase 2D 已实现：
     - AnalystActionConnector 处理 analyst_action
+
+Phase 2E 已实现：
+    - MediaMentionConnector 处理 media_mention
 """
 from __future__ import annotations
 
@@ -27,6 +30,7 @@ from .analyst_action import AnalystActionConnector
 from .base import BaseResearchConnector, get_connector
 from .conference_transcript import ConferenceTranscriptConnector
 from .manual_url import ManualURLConnector
+from .media_mention import MediaMentionConnector
 from .official_public import OfficialPublicResearchConnector
 from .podcast_transcript import PodcastTranscriptConnector
 from .rss import RSSConnector
@@ -42,4 +46,5 @@ __all__ = [
     "PodcastTranscriptConnector",
     "ConferenceTranscriptConnector",
     "AnalystActionConnector",
+    "MediaMentionConnector",
 ]

@@ -4,7 +4,7 @@
 > 英文名：Research Source Foundation
 > 所属项目：`opc-foundation`
 > 规划模块路径：`src/opc_foundation/research/`
-> 文档版本：v0.6（Phase 2D 已实现）
+> 文档版本：v0.7（Phase 2E 已实现）
 
 ---
 
@@ -78,10 +78,31 @@ analyst_action 只记录公开事件 metadata，不做投资建议，不判断�
 price target / rating_to 只是事件字段，不是买入/卖出/持有建议。
 ```
 
-Phase 2D 暂未实现（已在模型中预留）：
+### Phase 2E 已实现
 
 ```text
-- media_mention
+Phase 2E implemented:
+- media_mention source_type
+- media article list discovery
+- media card discovery
+- media news list discovery
+- media detail page candidate generation
+- mentioned institution / analyst / research / ticker metadata extraction
+- fixture-based tests
+```
+
+注意：
+
+```text
+media_mention 只记录公开媒体报道与被提及对象 metadata，不做投资建议，不判断利好利空。
+mentioned_tickers 只是媒体报道原文提及的 ticker metadata，不等同于 watchlist 映射。
+mention_type 只是媒体引用类型，不是投资判断。
+price_target_mention 只是表示媒体文章提到了目标价，不是投资建议。
+```
+
+Phase 2E 暂未实现（已在模型中预留）：
+
+```text
 - local_document
 - PDF extraction
 - LLM analysis
