@@ -4,7 +4,7 @@
 > 英文名：Research Source Foundation
 > 所属项目：`opc-foundation`
 > 规划模块路径：`src/opc_foundation/research/`
-> 文档版本：v0.8（Phase 2F 已实现）
+> 文档版本：v0.9（Phase 2H 已实现）
 
 ---
 
@@ -143,6 +143,82 @@ Phase 2F 仍不接 th_capital_stock。
 research module 只负责采集、标准化、归档，不做投研判断。
 下游项目只消费 documents.jsonl / documents.latest.jsonl。
 不提交 local config / data / secrets。
+```
+
+### Phase 2H 已实现
+
+```text
+Phase 2H implemented:
+- Live Smoke Registry 文档
+- Production Readiness Summary 文档
+- 6 类非微信自动源真实公开源 live smoke 结果沉淀
+- source_type 状态表
+- source pattern 推荐/谨慎/不适合分类
+- 生产试运行选源建议
+- 系统边界固化
+```
+
+Phase 2H 重点：
+
+```text
+1. 新增 docs/research_source_live_smoke_registry.md
+2. 新增 docs/research_source_production_readiness.md
+3. 更新 docs/research_source_foundation.md 加入 Phase 2H 状态
+4. 更新 docs/research_source_production_run.md 加入生产选源建议
+5. 更新 configs/research_sources.production.example.yaml 补全 source_type 示例
+6. 新增 tests/research/test_live_smoke_registry_docs.py
+```
+
+结论：
+
+```text
+非微信自动源主线已完成真实公开源 live smoke，达到 production trial ready。
+```
+
+已验证 source_type：
+
+```text
+- official_public_research
+- podcast_transcript
+- conference_transcript
+- analyst_action
+- media_mention
+- rss_feed
+```
+
+可跳过：
+
+```text
+- manual_url，人工兜底入口，不属于自动源主线
+```
+
+待处理：
+
+```text
+- wechat_archive，后续单独处理
+```
+
+#### Source Type 状态表
+
+| Source Type | Implementation Status | Live Smoke Status | Production Trial Status |
+|---|---|---|---|
+| official_public_research | implemented | completed | ready with caveats |
+| podcast_transcript | implemented | completed | ready with caveats |
+| conference_transcript | implemented | completed | ready with caveats |
+| analyst_action | implemented | completed | ready with caveats |
+| media_mention | implemented | completed | ready with caveats |
+| rss_feed | implemented | completed | ready |
+| manual_url | implemented | skipped by decision | optional fallback |
+| wechat_archive | implemented | pending | separate track |
+
+边界声明：
+
+```text
+Phase 2H 仍不接 th_capital_stock。
+research module 只负责采集、标准化、归档，不做投研判断。
+下游项目只消费 documents.jsonl / documents.latest.jsonl。
+不提交 local config / data / secrets。
+不做 JS 渲染、不绕过 paywall、不下载 PDF、不 OCR、不下载音频、不转写音频。
 ```
 
 ### Phase 1 模块结构

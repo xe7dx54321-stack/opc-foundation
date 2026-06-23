@@ -55,6 +55,18 @@ source_groups:
     description: "Public media mentions of banks, analysts, research, ratings, targets, or conferences"
     enabled_by_default: false
 
+  rss_feed:
+    description: "Public RSS/Atom feeds. Production-trial ready after Live Smoke 6."
+    enabled_by_default: false
+
+  manual_url:
+    description: "Manual one-off URL ingestion. Optional fallback, not part of automatic mainline."
+    enabled_by_default: false
+
+  wechat_archive:
+    description: "WeChat archive ingestion. Separate track, pending high-signal source selection."
+    enabled_by_default: false
+
 sources:
   # ------------------------------------------------------------
   # 1. official_public_research
@@ -134,4 +146,53 @@ sources:
     extraction_profile: "media_mention_news_list"
     update_frequency: "daily"
     tags: ["sample", "media_mention"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 6. rss_feed
+  # ------------------------------------------------------------
+  - source_id: "sample_rss_feed"
+    source_name: "Sample RSS Feed"
+    source_type: "rss_feed"
+    url: "https://example.com/feed.xml"
+    feed_url: "https://example.com/feed.xml"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default_web"
+    extraction_profile: "rss_feed"
+    update_frequency: "daily"
+    tags: ["sample", "rss_feed"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 7. manual_url (optional fallback, not part of automatic mainline)
+  # ------------------------------------------------------------
+  - source_id: "sample_manual_url"
+    source_name: "Sample Manual URL"
+    source_type: "manual_url"
+    url: "https://example.com/manual-article"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "user_provided"
+    fetch_profile: "default_web"
+    extraction_profile: "generic_article"
+    update_frequency: "ad-hoc"
+    tags: ["sample", "manual_url"]
+    max_items: 20
+
+  # ------------------------------------------------------------
+  # 8. wechat_archive (separate track, pending high-signal source selection)
+  # ------------------------------------------------------------
+  - source_id: "sample_wechat_archive"
+    source_name: "Sample WeChat Archive"
+    source_type: "wechat_archive"
+    url: "./data/wechat_archive/index/articles.jsonl"
+    base_url: ""
+    enabled: false
+    legal_profile: "rebroadcast"
+    fetch_profile: "local_index"
+    extraction_profile: "metadata_passthrough"
+    update_frequency: "daily"
+    tags: ["sample", "wechat_archive"]
     max_items: 20

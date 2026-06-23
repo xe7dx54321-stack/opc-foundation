@@ -200,3 +200,55 @@ research module 不做：
 - trade_signal
 - watchlist mapping
 - buy/sell/hold recommendation
+
+## 13. Production Source Selection After Live Smoke
+
+Phase 2H 完成 6 类非微信自动源的真实公开源 live smoke 验证。
+基于 live smoke 结果，给出以下生产试运行选源建议。
+
+### Recommended initial production trial source types
+
+1. rss_feed
+2. official_public_research
+3. podcast_transcript
+4. conference_transcript
+5. analyst_action
+6. media_mention
+
+manual_url is optional and only needed for manual one-off URL ingestion.
+
+wechat_archive should be handled separately after high-signal WeChat source selection.
+
+### Suggested source count for pilot
+
+```text
+official_public_research: 2-3 sources
+rss_feed: 2-3 sources
+podcast_transcript: 1-2 sources
+conference_transcript: 1-2 sources
+analyst_action: 1-2 sources
+media_mention: 1-2 sources
+```
+
+### Source patterns to prefer
+
+- official static HTML pages
+- valid RSS/Atom feed
+- institution-owned public pages
+- pages with direct article/event/episode links
+- pages with text body in HTML
+
+### Source patterns to avoid
+
+- JS-only pages
+- anti-bot pages
+- social platform redirects
+- PDF-only repositories
+- audio-only pages
+- paywalled content
+- low signal-to-noise WeChat official broker accounts
+
+### Reference documents
+
+- `docs/research_source_live_smoke_registry.md` - live smoke 结果汇总
+- `docs/research_source_production_readiness.md` - 生产试运行准备就绪说明

@@ -120,12 +120,24 @@ def test_production_config_has_production_meta() -> None:
 
 
 def test_production_config_uses_example_com() -> None:
-    """production example config 中所有 URL 必须使用 example.com。"""
+    """production example config 中所有 URL 必须使用 example.com。
+
+    小白解读：
+        wechat_archive 是本地文件路径（./data/...），不是 HTTP URL，
+        所以跳过 example.com 检查；其他 source 必须用 example.com 占位。
+    """
     config_dict = load_yaml_config(str(PRODUCTION_EXAMPLE))
     sources = config_dict.get("sources", [])
     for src in sources:
+        source_type = src.get("source_type", "")
         url = src.get("url", "")
         base_url = src.get("base_url", "")
+        # wechat_archive 使用本地文件路径，跳过 example.com 检查
+        if source_type == "wechat_archive":
+            assert url.startswith("./data/") or url == "", (
+                f"source [{src.get('source_id')}] wechat_archive url 应为本地路径，实际为 {url}"
+            )
+            continue
         assert "example.com" in url, (
             f"source [{src.get('source_id')}] url 必须使用 example.com，实际为 {url}"
         )
