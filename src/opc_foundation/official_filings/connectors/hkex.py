@@ -76,16 +76,47 @@ class HKEXFilingConnector(OfficialFilingConnector):
                 f"HKEX source [{source.source_id}] 缺少 endpoint_url 或 base_url"
             )
 
-        # 获取 HTML 数据（优先用注入的 fixture）
+        # 获取 HTML 数据
+        # 1. 优先用注入的 fixture（测试模式）
+        # 2. 否则使用真实 HTTP GET（生产模式）
         html_content = None
-        if self._html_by_url is not None:
-            html_content = self._html_by_url(endpoint)
 
-        if html_content is None:
-            raise ValueError(
-                f"HKEX connector MVP 仅支持 fixture 注入模式，"
-                f"请传入 html_by_url 或配置 endpoint_url"
-            )
+        if self._html_by_url is not None:
+            # 测试注入模式
+            html_content = self._html_by_url(endpoint)
+        else:
+            # 真实 HTTP GET
+            import ssl
+            import urllib.request
+
+            user_agent = config.defaults.user_agent or "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            timeout = config.defaults.fetch_timeout_seconds or 30
+
+            try:
+                ctx = ssl.create_default_context()
+                req = urllib.request.Request(
+                    endpoint,
+                    headers={
+                        "User-Agent": user_agent,
+                        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                        "Accept-Language": "en-US,en;q=0.5",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Connection": "keep-alive",
+                    }
+                )
+
+                with urllib.request.urlopen(req, timeout=timeout, context=ctx) as response:
+                    raw_bytes = response.read()
+                    if response.headers.get("Content-Encoding") == "gzip":
+                        import gzip
+                        raw_bytes = gzip.decompress(raw_bytes)
+                    html_content = raw_bytes.decode("utf-8", errors="replace")
+
+            except Exception as e:
+                raise ValueError(
+                    f"HKEX fetch 失败 [{endpoint}]: {type(e).__name__}: {e}"
+                ) from None
+
 
         return self._parse_announcements_html(source, config, html_content, endpoint)
 

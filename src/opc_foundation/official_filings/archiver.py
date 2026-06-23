@@ -256,20 +256,38 @@ class FilingArchiver:
             result.failed_count += failed_count
 
             # 更新 source health
-            health_status = compute_health_status(
-                candidate_count=len(candidates),
-                saved_count=saved_count,
-                failed_count=failed_count,
-                partial_count=0,
-                consecutive_failures=0,
-                connector_failed=False,
-            )
+            # 规则：
+            # 1. enabled=True 但 candidate_count=0 → degraded（empty_source）
+            # 2. enabled=True 且 candidate_count>0 → 按 compute_health_status 结果
+            # 3. enabled=False → disabled（由上层处理）
+            health_status: str
+            if source.enabled and len(candidates) == 0:
+                # enabled source 但没有发现任何候选 → degraded
+                health_status = "degraded"
+            else:
+                health_status = compute_health_status(
+                    candidate_count=len(candidates),
+                    saved_count=saved_count,
+                    failed_count=failed_count,
+                    partial_count=0,
+                    consecutive_failures=0,
+                    connector_failed=False,
+                )
+            
+            # 构造错误信息
+            if health_status == "healthy":
+                last_error_msg = None
+            elif len(candidates) == 0:
+                last_error_msg = "empty_source"
+            else:
+                last_error_msg = f"{failed_count} failed"
+            
             health = update_source_health(
                 archive_root,
                 source_id=source.source_id,
                 source_type=source.source_type,
                 status=health_status,
-                last_error=None if health_status == "healthy" else f"{failed_count} failed",
+                last_error=last_error_msg,
                 candidate_count=len(candidates),
                 saved_count=saved_count,
                 duplicate_count=duplicate_count,

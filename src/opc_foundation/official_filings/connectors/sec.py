@@ -75,16 +75,50 @@ class SECFilingConnector(OfficialFilingConnector):
                 f"SEC source [{source.source_id}] 缺少 endpoint_url 或 base_url"
             )
 
-        # 获取 JSON 数据（优先用注入的 fixture）
+        # 获取 JSON 数据
+        # 1. 优先用注入的 fixture（测试模式）
+        # 2. 否则使用真实 HTTP fetch（生产模式）
         raw_data = None
-        if self._json_by_url is not None:
-            raw_data = self._json_by_url(endpoint)
 
-        if raw_data is None:
-            raise ValueError(
-                f"SEC connector MVP 仅支持 fixture 注入模式，"
-                f"请传入 json_by_url 或配置 endpoint_url"
-            )
+        if self._json_by_url is not None:
+            # 测试注入模式
+            raw_data = self._json_by_url(endpoint)
+        else:
+            # 真实 HTTP fetch（使用 Python 内置 urllib）
+            import json
+            import ssl
+            import urllib.request
+
+            user_agent = config.defaults.user_agent or "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            timeout = config.defaults.fetch_timeout_seconds or 30
+
+            try:
+                # 创建 SSL context
+                ctx = ssl.create_default_context()
+
+                # 构建请求，添加必要的 headers
+                req = urllib.request.Request(
+                    endpoint,
+                    headers={
+                        "User-Agent": user_agent,
+                        "Accept": "application/json, text/plain, */*",
+                        "Accept-Encoding": "gzip, deflate",
+                    }
+                )
+
+                with urllib.request.urlopen(req, timeout=timeout, context=ctx) as response:
+                    raw_bytes = response.read()
+                    # 处理 gzip 压缩
+                    if response.headers.get("Content-Encoding") == "gzip":
+                        import gzip
+                        raw_bytes = gzip.decompress(raw_bytes)
+                    raw_text = raw_bytes.decode("utf-8", errors="replace")
+                    raw_data = json.loads(raw_text)
+
+            except Exception as e:
+                raise ValueError(
+                    f"SEC fetch 失败 [{endpoint}]: {type(e).__name__}: {e}"
+                ) from None
 
         return self._parse_submissions(source, config, raw_data, endpoint)
 

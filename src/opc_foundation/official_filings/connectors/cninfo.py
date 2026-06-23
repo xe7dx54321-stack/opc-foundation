@@ -75,16 +75,70 @@ class CNINFOFilingConnector(OfficialFilingConnector):
                 f"CNINFO source [{source.source_id}] 缺少 endpoint_url 或 base_url"
             )
 
-        # 获取 JSON 数据（优先用注入的 fixture）
+        # 获取 JSON 数据
+        # 1. 优先用注入的 fixture（测试模式）
+        # 2. 否则使用真实 HTTP POST（生产模式）
         raw_data = None
-        if self._json_by_url is not None:
-            raw_data = self._json_by_url(endpoint)
 
-        if raw_data is None:
-            raise ValueError(
-                f"CNINFO connector MVP 仅支持 fixture 注入模式，"
-                f"请传入 json_by_url 或配置 endpoint_url"
-            )
+        if self._json_by_url is not None:
+            # 测试注入模式
+            raw_data = self._json_by_url(endpoint)
+        else:
+            # 真实 HTTP POST（巨潮查询 API 需要 POST）
+            import json
+            import ssl
+            import urllib.request
+            import urllib.parse
+
+            user_agent = config.defaults.user_agent or "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"
+            timeout = config.defaults.fetch_timeout_seconds or 30
+
+            try:
+                # CNINFO API 需要 POST 参数
+                # 构造查询参数（根据巨潮 API 格式）
+                stock_code = source.issuer_filter or ""  # 如果有特定股票代码过滤
+                post_data = json.dumps({
+                    "stock": stock_code,
+                    "tabName": "fulltext",
+                    "pageSize": source.max_items or config.defaults.max_items_per_source or 5,
+                    "pageNum": 1,
+                    "column": "szse",
+                    "category": "",
+                    "plate": "",
+                    "seDate": "",
+                    "searchkey": "",
+                    "secid": "",
+                    "asset": "",
+                    "keyWord": "",
+                    "isHLtitle": "true"
+                }).encode("utf-8")
+
+                ctx = ssl.create_default_context()
+                req = urllib.request.Request(
+                    endpoint,
+                    data=post_data,
+                    headers={
+                        "User-Agent": user_agent,
+                        "Content-Type": "application/json",
+                        "Accept": "application/json, text/plain, */*",
+                        "Accept-Encoding": "gzip, deflate",
+                        "Origin": "https://www.cninfo.com.cn",
+                        "Referer": "https://www.cninfo.com.cn/new/hisAnnouncement/query",
+                    }
+                )
+
+                with urllib.request.urlopen(req, timeout=timeout, context=ctx) as response:
+                    raw_bytes = response.read()
+                    if response.headers.get("Content-Encoding") == "gzip":
+                        import gzip
+                        raw_bytes = gzip.decompress(raw_bytes)
+                    raw_text = raw_bytes.decode("utf-8", errors="replace")
+                    raw_data = json.loads(raw_text)
+
+            except Exception as e:
+                raise ValueError(
+                    f"CNINFO fetch 失败 [{endpoint}]: {type(e).__name__}: {e}"
+                ) from None
 
         return self._parse_announcements(source, config, raw_data, endpoint)
 

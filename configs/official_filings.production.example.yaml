@@ -1,0 +1,118 @@
+# Official Filing Foundation - 生产环境配置模板
+#
+# 作用：作为生产环境的配置起点，提供真实可用的 source 配置示例。
+#
+# 重要提醒：
+#     - 所有 source 默认 enabled: false，不会真实访问网络
+#     - 使用前请先复制为 configs/official_filings.production.local.yaml
+#     - production.local.yaml 已在 .gitignore 中，不会被提交到 git
+#     - 不要在配置中写入密码、token 等敏感信息
+#
+# 支持的 source_type：
+#     - sec_edgar          美国 SEC EDGAR 官方披露
+#     - cninfo_announcement 中国 CNINFO 巨潮资讯公告
+#     - hkex_announcement   香港 HKEXnews 港交所披露易公告
+#
+# Live Smoke / Production 建议：
+#     - 先用 dry-run 验证配置正确性
+#     - 首次运行用 max_items=5 小样本验证
+#     - 确认无问题后再扩大 max_items
+#     - download_pdfs 默认为 false，只下载 PDF URL，不下载 PDF 本体
+#     - 遵守各平台的 rate limit，不要高频请求
+
+archive_root: "./data/official_filings"
+
+# 全局默认参数（每个 source 可以通过对应字段覆盖）
+defaults:
+  fetch_timeout_seconds: 30
+  max_items_per_source: 5
+  save_raw: true
+  save_html: true
+  save_pdf_metadata: true
+  download_pdfs: false
+  user_agent: "opc-foundation-official-filings/0.1 (production-ready)"
+
+# ---------------------------------------------------------------------------
+# sources: 官方披露源列表
+# ---------------------------------------------------------------------------
+
+sources:
+  # -------------------------------------------------------------------------
+  # SEC EDGAR（美国证监会官方披露）
+  # 说明：
+  #     - SEC EDGAR 是最规范的公开披露平台
+  #     - 无需注册、无需 key、纯公开 HTTP
+  #     - 建议遵守 rate limit（每秒不超过 10 个请求）
+  #     - endpoint_url 格式：https://data.sec.gov/submissions/CIK<9位数字>.json
+  #     - CIK 前面补零到 9 位，如 Apple 的 CIK 是 320193，要写成 CIK0000320193
+  # 建议测试公司：
+  #     - Apple:   CIK0000320193
+  #     - NVIDIA:  CIK0001045810
+  #     - Microsoft: CIK0000789019
+  # -------------------------------------------------------------------------
+  - source_id: "prod_sec_edgar_example"
+    source_name: "SEC EDGAR Official Filings Example"
+    source_type: "sec_edgar"
+    market: "US"
+    jurisdiction: "US"
+    base_url: "https://www.sec.gov"
+    endpoint_url: "https://data.sec.gov/submissions/CIK0000320193.json"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default"
+    max_items: 5
+    filing_types: []
+    notes: |
+      SEC EDGAR 示例，测试 Apple (CIK0000320193) 最近披露。
+      filing_types 留空表示全部类型（10-K, 10-Q, 8-K, S-1 等）。
+      建议启用前先用 dry-run 验证。
+
+  # -------------------------------------------------------------------------
+  # CNINFO 巨潮资讯（中国证监会指定披露平台）
+  # 说明：
+  #     - 巨潮资讯是证监会指定的上市公司信息披露平台
+  #     - 有公开的查询 API，但可能有反爬限制
+  #     - 建议控制请求频率，避免被限流
+  #     - MVP 版本 connector 主要解析 JSON fixture，真实 API 可能需要额外处理
+  # -------------------------------------------------------------------------
+  - source_id: "prod_cninfo_example"
+    source_name: "CNINFO Announcements Example"
+    source_type: "cninfo_announcement"
+    market: "CN"
+    jurisdiction: "CN"
+    base_url: "https://www.cninfo.com.cn"
+    endpoint_url: "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default"
+    max_items: 5
+    filing_types: []
+    notes: |
+      巨潮资讯示例，公告查询 API。
+      MVP 版本可能需要额外适配真实 API 参数和响应格式。
+      如遇反爬，建议降低频率或使用其他方式。
+
+  # -------------------------------------------------------------------------
+  # HKEXnews 港交所披露易（香港联交所官方披露平台）
+  # 说明：
+  #     - 港交所披露易是港股上市公司公告的官方发布平台
+  #     - 有搜索页面可以查询公告
+  #     - 可能需要处理相对 URL、中英文版本差异
+  #     - MVP 版本 connector 主要解析 HTML fixture，真实页面可能需要额外处理
+  # -------------------------------------------------------------------------
+  - source_id: "prod_hkex_example"
+    source_name: "HKEXnews Announcements Example"
+    source_type: "hkex_announcement"
+    market: "HK"
+    jurisdiction: "HK"
+    base_url: "https://www.hkexnews.hk"
+    endpoint_url: "https://www.hkexnews.hk/listedco/listconews/advancedsearch/search_active_main_c.aspx"
+    enabled: false
+    legal_profile: "official_public"
+    fetch_profile: "default"
+    max_items: 5
+    filing_types: []
+    notes: |
+      港交所披露易示例，公告搜索页面。
+      MVP 版本可能需要额外适配真实页面结构。
+      公告 URL 可能是相对路径，需要拼接 base_url。
