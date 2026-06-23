@@ -4,7 +4,7 @@
 > 英文名：Research Source Foundation
 > 所属项目：`opc-foundation`
 > 规划模块路径：`src/opc_foundation/research/`
-> 文档版本：v0.5（Phase 2C 已实现）
+> 文档版本：v0.6（Phase 2D 已实现）
 
 ---
 
@@ -59,10 +59,28 @@ Phase 2C implemented:
 - fixture-based tests
 ```
 
-Phase 2C 暂未实现（已在模型中预留）：
+### Phase 2D 已实现
 
 ```text
-- analyst_action
+Phase 2D implemented:
+- analyst_action connector
+- 支持 extraction_profile: analyst_action_table / analyst_action_cards / analyst_action_news_list / analyst_action_detail
+- 三种入口：rating table / cards / news list / single detail page
+- 事件字段：action_date / company / ticker / broker / analyst / action_type / rating_from / rating_to / price_target_from / price_target_to / currency
+- analyst action 容器识别（extractor.py 增强）
+- fixture-based tests
+```
+
+注意：
+
+```text
+analyst_action 只记录公开事件 metadata，不做投资建议，不判断利好利空。
+price target / rating_to 只是事件字段，不是买入/卖出/持有建议。
+```
+
+Phase 2D 暂未实现（已在模型中预留）：
+
+```text
 - media_mention
 - local_document
 - PDF extraction

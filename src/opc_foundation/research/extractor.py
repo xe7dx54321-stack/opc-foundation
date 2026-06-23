@@ -169,9 +169,10 @@ def _extract_meta_with_bs4(html: str) -> dict[str, Any]:
 def _extract_body_html(html: str) -> str:
     """简单提取正文 HTML 片段。
 
-    优先级（Phase 2C 增强：优先识别 conference / transcript / presentation 容器）：
-        0. class/id 含 transcript / event-transcript / conference-transcript /
-           webcast-transcript / presentation / event-body / article-body / content / body
+    优先级（Phase 2D 增强：优先识别 analyst action / conference / transcript / presentation 容器）：
+        0. class/id 含 analyst-action / analyst-rating / rating-detail / action-detail /
+           transcript / event-transcript / conference-transcript / webcast-transcript /
+           presentation / event-body / article-body / content / body
         1. <article>
         2. <main>
         3. <body>
@@ -180,8 +181,12 @@ def _extract_body_html(html: str) -> str:
     try:
         soup = BeautifulSoup(html, "html.parser")
 
-        # Phase 2C：优先找 transcript / conference / presentation 容器
+        # Phase 2D：优先找 analyst action / transcript / conference / presentation 容器
         for keyword in (
+            "analyst-action",
+            "analyst-rating",
+            "rating-detail",
+            "action-detail",
             "transcript",
             "event-transcript",
             "conference-transcript",

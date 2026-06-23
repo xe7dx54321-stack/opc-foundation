@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Malformed Analyst Action Table</title>
+</head>
+<body>
+    <h1>Malformed Analyst Actions</h1>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Company</th>
+                <th>Ticker</th>
+                <th>Action</th>
+                <th>Rating To</th>
+                <th>Target To</th>
+                <th>Detail</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>2026-03-15</td>
+                <td>Malformed Tech</td>
+                <td>MAL</td>
+                <td>Upgrade</td>
+                <td>Buy</td>
+                <td>$150
+                <td><a href="/actions/malformed-1">View</a></td>
+            </tr>
+            <tr>
+                <!-- 缺链接 -->
+                <td>2026-03-14</td>
+                <td>Missing Link Corp</td>
+                <td>MLS</td>
+                <td>Downgrade</td>
+                <td>Hold</td>
+                <td>$180</td>
+                <td>-</td>
+            </tr>
+            <tr>
+                <!-- 空 href -->
+                <td>2026-03-13</td>
+                <td>Empty Href Inc</td>
+                <td>EMP</td>
+                <td>Initiated</td>
+                <td>Buy</td>
+                <td>$75</td>
+                <td><a href="">View</a></td>
+            </tr>
+            <tr>
+                <td>2026-03-12</td>
+                <td>Normal Corp</td>
+                <td>NRM</td>
+                <td>Maintain</td>
+                <td>Buy</td>
+                <td>$60</td>
+                <td><a href="/actions/malformed-4">View</a></td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

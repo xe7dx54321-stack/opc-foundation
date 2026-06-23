@@ -67,4 +67,7 @@ def get_connector(source_type: str) -> BaseResearchConnector | None:
     if source_type == "conference_transcript":
         from .conference_transcript import ConferenceTranscriptConnector
         return ConferenceTranscriptConnector()
+    if source_type == "analyst_action":
+        from .analyst_action import AnalystActionConnector
+        return AnalystActionConnector()
     return None

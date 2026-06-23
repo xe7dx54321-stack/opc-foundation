@@ -251,5 +251,69 @@ sources:
     notes: "示例 presentation 页面，extraction_profile=presentation_page；Phase 2C 不下载 PDF，只保存 metadata"
 
   # -------------------------------------------------------------------------
+  # Phase 2D 已实现：analyst_action（分析师评级变动 / 目标价调整）
+  # 注意：analyst_action 只记录公开事件 metadata，不做投资建议，不判断利好利空。
+  # -------------------------------------------------------------------------
+  - source_id: "sample_analyst_action_table"
+    source_name: "Sample Analyst Action Table"
+    source_type: "analyst_action"
+    url: "https://example.com/analyst-actions"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "analyst_action_table"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "analyst_action", "ratings"]
+    max_items: 20
+    notes: "示例评级变动表格，extraction_profile=analyst_action_table；price target 只作为事件 metadata，不是投资建议"
+
+  - source_id: "sample_analyst_action_cards"
+    source_name: "Sample Analyst Action Cards"
+    source_type: "analyst_action"
+    url: "https://example.com/analyst-cards"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "analyst_action_cards"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "analyst_action", "cards"]
+    max_items: 20
+    notes: "示例卡片式评级变动页面，extraction_profile=analyst_action_cards"
+
+  - source_id: "sample_analyst_action_news_list"
+    source_name: "Sample Analyst Action News List"
+    source_type: "analyst_action"
+    url: "https://example.com/analyst-news"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "analyst_action_news_list"
+    update_frequency: "daily"
+    priority: "medium"
+    tags: ["sample", "analyst_action", "news"]
+    max_items: 20
+    notes: "示例新闻列表式评级变动页面，extraction_profile=analyst_action_news_list"
+
+  - source_id: "sample_analyst_action_detail"
+    source_name: "Sample Analyst Action Detail"
+    source_type: "analyst_action"
+    url: "https://example.com/analyst-action/detail"
+    base_url: "https://example.com"
+    enabled: false
+    legal_profile: "licensed_media"
+    fetch_profile: "default_web"
+    extraction_profile: "analyst_action_detail"
+    update_frequency: "daily"
+    priority: "low"
+    tags: ["sample", "analyst_action", "detail"]
+    max_items: 1
+    notes: "示例单篇评级变动详情页，extraction_profile=analyst_action_detail"
+
+  # -------------------------------------------------------------------------
   # Phase 1 未实现（模型预留，CLI run 时会标记 skipped/failed）
   # -------------------------------------------------------------------------

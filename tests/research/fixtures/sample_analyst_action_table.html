@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sample Analyst Action Table</title>
+</head>
+<body>
+    <h1>Analyst Actions</h1>
+
+    <table class="analyst-action-table">
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Company</th>
+                <th>Ticker</th>
+                <th>Broker</th>
+                <th>Analyst</th>
+                <th>Action</th>
+                <th>Rating From</th>
+                <th>Rating To</th>
+                <th>Target From</th>
+                <th>Target To</th>
+                <th>Detail</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>2026-03-15</td>
+                <td>Sample Tech</td>
+                <td>SMP</td>
+                <td>Sample Bank</td>
+                <td>Jane Doe</td>
+                <td>Upgrade</td>
+                <td>Hold</td>
+                <td>Buy</td>
+                <td>$100</td>
+                <td>$150</td>
+                <td><a href="/actions/detail-1">View</a></td>
+            </tr>
+            <tr>
+                <td>2026-03-14</td>
+                <td>Another Corp</td>
+                <td>ANT</td>
+                <td>Another Bank</td>
+                <td>John Smith</td>
+                <td>Downgrade</td>
+                <td>Buy</td>
+                <td>Hold</td>
+                <td>$200</td>
+                <td>$180</td>
+                <td><a href="/actions/detail-2">View</a></td>
+            </tr>
+            <tr>
+                <td>2026-03-13</td>
+                <td>Third Inc</td>
+                <td>THD</td>
+                <td>Third Bank</td>
+                <td>Alice Lee</td>
+                <td>Initiated Coverage</td>
+                <td>-</td>
+                <td>Buy</td>
+                <td>-</td>
+                <td>$75</td>
+                <td><a href="/actions/detail-3">View</a></td>
+            </tr>
+            <tr>
+                <td>2026-03-12</td>
+                <td>Fourth Co</td>
+                <td>FRC</td>
+                <td>Fourth Bank</td>
+                <td>Bob Wang</td>
+                <td>Price Target Raised</td>
+                <td>Buy</td>
+                <td>Buy</td>
+                <td>$50</td>
+                <td>$60</td>
+                <td><a href="/actions/detail-4">View</a></td>
+            </tr>
+            <tr>
+                <!-- 无 detail link，应使用 source.url 作为 url，title 唯一 -->
+                <td>2026-03-11</td>
+                <td>Fifth Corp</td>
+                <td>FIF</td>
+                <td>Fifth Bank</td>
+                <td>Carol Chen</td>
+                <td>Maintain</td>
+                <td>Buy</td>
+                <td>Buy</td>
+                <td>$120</td>
+                <td>$120</td>
+                <td>-</td>
+            </tr>
+        </tbody>
+    </table>
+
+</body>
+</html>

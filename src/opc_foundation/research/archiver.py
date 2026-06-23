@@ -64,6 +64,7 @@ class ResearchInjectors:
         list_html_by_url:    按 list page URL 注入列表页 HTML（用于 official_public_research 测试）
         podcast_html_by_url: 按 URL 注入 podcast HTML/XML（用于 podcast_transcript 测试）
         conference_html_by_url: 按 URL 注入 conference HTML（用于 conference_transcript 测试）
+        analyst_action_html_by_url: 按 URL 注入 analyst action HTML（用于 analyst_action 测试）
     """
     http_html: HttpHtmlInjector | None = None
     now_str: Callable[[], str] | None = None
@@ -71,6 +72,7 @@ class ResearchInjectors:
     list_html_by_url: Callable[[str], str | None] | None = None
     podcast_html_by_url: Callable[[str], str | None] | None = None
     conference_html_by_url: Callable[[str], str | None] | None = None
+    analyst_action_html_by_url: Callable[[str], str | None] | None = None
     extra: dict[str, Any] = field(default_factory=dict)
 
 
@@ -184,6 +186,14 @@ class ResearchArchiver:
 
             connector = ConferenceTranscriptConnector(
                 html_by_url=self.injectors.conference_html_by_url
+            )
+
+        # analyst_action connector 支持注入 HTML
+        if source.source_type == "analyst_action" and self.injectors.analyst_action_html_by_url:
+            from .connectors.analyst_action import AnalystActionConnector
+
+            connector = AnalystActionConnector(
+                html_by_url=self.injectors.analyst_action_html_by_url
             )
 
         try:
