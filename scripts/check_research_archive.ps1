@@ -1,28 +1,19 @@
-# Research Source Foundation - 归档产物检查脚本
+﻿# Research Source Foundation - 归档产物检查脚本
 #
 # 作用：检查 research archive 产物是否存在，输出基本健康信息。
 #
 # 使用方法：
 #   .\scripts\check_research_archive.ps1
 #   .\scripts\check_research_archive.ps1 -ArchiveRoot ./data/research_archive
-#
-# 检查内容：
-#   - data/research_archive/index/documents.jsonl
-#   - data/research_archive/index/documents.latest.jsonl
-#   - data/research_archive/state/run_log.jsonl
-#   - data/research_archive/state/source_health.jsonl
-#   - data/research_archive/state/failed_queue.jsonl
-#   - data/research_archive/reports/
-#
-# 小白解读：
-#   这个脚本帮你快速看一眼"采集产物齐不齐"。
-#   缺少关键文件会输出 warning，但不会因为 failed_queue 存在就失败。
 
 param(
     [string]$ArchiveRoot = "./data/research_archive"
 )
 
 $ErrorActionPreference = "Stop"
+
+# 设置 PYTHONPATH 优先使用项目 src
+$env:PYTHONPATH = "src;$env:PYTHONPATH"
 
 Write-Host ""
 Write-Host "Research Source Foundation - Archive Check" -ForegroundColor Cyan
@@ -55,13 +46,13 @@ $missingOptional = 0
 foreach ($file in $criticalFiles) {
     if (Test-Path $file.Path) {
         $size = (Get-Item $file.Path).Length
-        Write-Host "  [OK]   $($file.Name) ($size bytes)" -ForegroundColor Green
+        Write-Host ("  [OK]   " + $file.Name + " (" + $size + " bytes)") -ForegroundColor Green
     } else {
         if ($file.Required) {
-            Write-Host "  [WARN] $($file.Name) - MISSING (critical)" -ForegroundColor Yellow
+            Write-Host ("  [WARN] " + $file.Name + " - MISSING (critical)") -ForegroundColor Yellow
             $missingCritical++
         } else {
-            Write-Host "  [-]    $($file.Name) - not present (optional)" -ForegroundColor Gray
+            Write-Host ("  [-]    " + $file.Name + " - not present (optional)") -ForegroundColor Gray
             $missingOptional++
         }
     }
@@ -71,7 +62,7 @@ foreach ($file in $criticalFiles) {
 Write-Host ""
 if (Test-Path $reportsDir) {
     $reportCount = (Get-ChildItem -Path $reportsDir -Filter "*.md" -ErrorAction SilentlyContinue | Measure-Object).Count
-    Write-Host "  [OK]   reports/ ($reportCount markdown reports)" -ForegroundColor Green
+    Write-Host ("  [OK]   reports/ (" + $reportCount + " markdown reports)") -ForegroundColor Green
 } else {
     Write-Host "  [WARN] reports/ - MISSING" -ForegroundColor Yellow
     $missingCritical++
@@ -86,13 +77,13 @@ if (Test-Path $failedQueuePath) {
 
 Write-Host ""
 Write-Host "Summary:" -ForegroundColor Cyan
-Write-Host "  Missing critical files: $missingCritical"
-Write-Host "  Missing optional files: $missingOptional"
-Write-Host "  Failed queue entries:   $failedCount"
+Write-Host ("  Missing critical files: " + $missingCritical)
+Write-Host ("  Missing optional files: " + $missingOptional)
+Write-Host ("  Failed queue entries:   " + $failedCount)
 Write-Host ""
 
 if ($failedCount -gt 0) {
-    Write-Host "[INFO] failed_queue has $failedCount entries." -ForegroundColor Yellow
+    Write-Host ("[INFO] failed_queue has " + $failedCount + " entries.") -ForegroundColor Yellow
     Write-Host "       这不代表脚本失败，只代表有部分文档归档失败，可以 retry-failed。" -ForegroundColor Yellow
     Write-Host ""
 }
@@ -106,7 +97,7 @@ if (Test-Path (Join-Path $stateDir "source_health.jsonl")) {
 
 if ($missingCritical -gt 0) {
     Write-Host ""
-    Write-Host "[WARNING] $missingCritical critical file(s) missing." -ForegroundColor Yellow
+    Write-Host ("[WARNING] " + $missingCritical + " critical file(s) missing.") -ForegroundColor Yellow
     exit 0  # 不以失败退出，只输出 warning
 }
 

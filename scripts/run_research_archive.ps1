@@ -1,4 +1,4 @@
-# Research Source Foundation - 生产运行脚本
+﻿# Research Source Foundation - 生产运行脚本
 #
 # 作用：读取 production local config，运行 research archive。
 #
@@ -19,6 +19,9 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+
+# 设置 PYTHONPATH 优先使用项目 src
+$env:PYTHONPATH = "src;$env:PYTHONPATH"
 
 # 检查配置文件是否存在
 if (!(Test-Path $Config)) {
