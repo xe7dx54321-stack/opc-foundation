@@ -43,3 +43,4 @@ configs/official_filings.production.local.yaml
 data/document_extraction/
 configs/document_extraction.local.yaml
 configs/document_extraction.production.local.yaml
+capability_usage_registry.local.yaml

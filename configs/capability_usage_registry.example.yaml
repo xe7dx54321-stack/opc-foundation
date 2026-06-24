@@ -1,0 +1,75 @@
+# OPC Foundation Capability Usage Registry (Example)
+#
+# 功能说明（小白解读）：
+#     这个文件记录"哪些下游项目用了哪些能力"。
+#     每个项目有若干工作流（workflow），每个工作流有若干阶段（stage），
+#     每个阶段引用若干 capability_id。
+#
+#     这样就能在 dashboard 里看到：哪些能力被用了，哪些没人用，
+#     哪些引用了不存在的能力。
+#
+# 使用方式：
+#     1. 复制本文件为 configs/capability_usage_registry.local.yaml
+#     2. 根据实际情况修改项目和工作流
+#
+# 注意：
+#     - capability_id 必须在 foundation_capabilities.yaml 中存在
+#     - 不包含任何投资判断字段
+#
+# 更新时间：2026-06-24
+# 版本：1.0
+
+version: "1.0"
+updated_at: "2026-06-24"
+
+projects:
+  # -------------------------------------------------------------------------
+  # th_capital_stock：TH Capital Stock 项目（planned 状态）
+  # -------------------------------------------------------------------------
+  - project_id: th_capital_stock
+    project_name: TH Capital Stock
+    status: planned
+    workflows:
+      - workflow_id: disclosure_monitoring
+        workflow_name: Disclosure Monitoring
+        status: planned
+        stages:
+          - stage_id: collect_filings
+            stage_name: Collect Filings
+            agent: filing_collector
+            status: planned
+            purpose: "从 SEC/CNINFO/HKEX 采集官方公告，归档到 official_filings archive。"
+            capabilities:
+              - official_filing.sec_edgar
+              - official_filing.cninfo_announcement
+              - official_filing.hkex_announcement
+
+          - stage_id: extract_filing_documents
+            stage_name: Extract Filing Documents
+            agent: document_extractor
+            status: planned
+            purpose: "从采集到的公告文件中抽取干净文本，供下游分析。"
+            capabilities:
+              - document_extraction.pdf
+              - document_extraction.html
+
+  # -------------------------------------------------------------------------
+  # demand_radar：Demand Radar 项目（candidate 状态）
+  # -------------------------------------------------------------------------
+  - project_id: demand_radar
+    project_name: Demand Radar
+    status: candidate
+    workflows:
+      - workflow_id: source_collection
+        workflow_name: Source Collection
+        status: candidate
+        stages:
+          - stage_id: collect_public_sources
+            stage_name: Collect Public Sources
+            agent: source_collector
+            status: candidate
+            purpose: "采集公开研究信息源，归档到 research_archive。"
+            capabilities:
+              - research.rss_feed
+              - research.manual_url
+              - research.official_public_research

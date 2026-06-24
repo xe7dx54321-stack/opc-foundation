@@ -22,6 +22,7 @@ Document Extraction Foundation → Production Trial Ready
 | Official Filing Foundation     | complete       | complete         | complete           | Production Trial Ready |
 | Document Extraction Foundation | complete       | complete         | complete           | Production Trial Ready |
 | Shared Runtime Foundation       | MVP complete   | N/A (utility)    | N/A (utility)      | MVP Ready              |
+| Foundation Control Center        | MVP complete   | N/A (visualization) | N/A (visualization) | MVP Ready              |
 
 ---
 
@@ -98,6 +99,23 @@ shared CLI command vocabulary
 Note: Runtime Foundation is a shared utility layer, not a standalone data source. It supports the three data source tracks above.
 
 详见 [Runtime Foundation](runtime_foundation.md) 和 [Runtime Output Contract](runtime_output_contract.md)。
+
+### Foundation Control Center
+
+Ready for:
+
+```text
+capability visualization
+maturity status display
+runtime health monitoring
+usage mapping (project → workflow → stage → agent → capability)
+docs hub
+config validation
+```
+
+Note: Control Center is a visualization layer, not a new data source track.
+
+详见 [Foundation Control Center](foundation_control_center.md)。
 
 ## 4. What Is Not Ready / Out of Scope
 

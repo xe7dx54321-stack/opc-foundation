@@ -146,6 +146,24 @@ Module path: `src/opc_foundation/runtime/`
 
 ---
 
+### 2.5 Foundation Control Center
+
+**Status**: MVP Ready
+
+> Control Center is a visualization layer, not a new data source track.
+
+Local dashboard for visualizing foundation capabilities, health, and usage mapping.
+
+- 启动方式：`streamlit run src/opc_foundation/dashboard/app.py`
+- 能力台账：`configs/foundation_capabilities.yaml`
+- 使用关系：`configs/capability_usage_registry.example.yaml`
+
+详细文档：
+- [Foundation Control Center](foundation_control_center.md)
+- [Control Center 使用指南](foundation_control_center_usage.md)
+
+---
+
 ## 3. Shared Operating Capabilities
 
 三条主线共享以下操作模式：

@@ -24,6 +24,17 @@ Current foundation tracks (all Production Trial Ready):
 
 See [Foundation Capability Registry](docs/foundation_capability_registry.md) and [Foundation Readiness Summary](docs/foundation_readiness_summary.md) for details.
 
+## Foundation Control Center
+
+Local dashboard for visualizing foundation capabilities, health, and usage.
+
+```powershell
+streamlit run src/opc_foundation/dashboard/app.py
+```
+
+- [Control Center 文档](docs/foundation_control_center.md)
+- [Control Center 使用指南](docs/foundation_control_center_usage.md)
+
 ## What it is
 
 A single installable Python package providing cross-project reusable capabilities:

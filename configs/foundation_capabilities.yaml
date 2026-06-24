@@ -1,0 +1,371 @@
+# OPC Foundation Capability Registry
+#
+# 功能说明（小白解读）：
+#     这个文件是 opc-foundation 的能力注册表。
+#     它声明了项目里有哪些"能力"（capability），每条能力属于哪条"主线"（track），
+#     成熟度如何，输出文件在哪，健康检查文件在哪。
+#
+#     核心原则：Foundation provides infrastructure. Business systems keep judgment.
+#     这个配置不包含任何投资判断字段。
+#
+# 更新时间：2026-06-24
+# 版本：1.0
+
+version: "1.0"
+updated_at: "2026-06-24"
+
+# ===========================================================================
+# tracks: 能力主线（4 条）
+# ===========================================================================
+tracks:
+  - track_id: research
+    name: Research Source Foundation
+    status: production_trial_ready
+    description: "公开研究信息源归档基础设施：RSS、微信公众号归档、手工 URL、官方研究页面、播客 transcript、会议 transcript、分析师评级变动、媒体引用。只采集公开 metadata，不做投资判断。"
+
+  - track_id: official_filing
+    name: Official Filing Foundation
+    status: production_trial_ready
+    description: "官方公告归档基础设施：SEC EDGAR、巨潮资讯（CNINFO）、港交所（HKEX）。只归档公开公告原文和 metadata，不做投资判断。"
+
+  - track_id: document_extraction
+    name: Document Extraction Foundation
+    status: production_trial_ready
+    description: "文档抽取基础设施：PDF、HTML、TXT、Markdown。把各种格式的文档抽成干净的文本和 metadata，不做投资判断。"
+
+  - track_id: runtime
+    name: Shared Runtime Foundation
+    status: mvp_ready
+    description: "共享运行时基础设施：archive 路径、JSONL 读写、失败队列、运行日志、健康状态。所有 foundation 模块复用这一层。"
+
+# ===========================================================================
+# capabilities: 能力列表（20 条）
+# ===========================================================================
+capabilities:
+
+  # -------------------------------------------------------------------------
+  # Research Source Foundation（8 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: research.rss_feed
+    name: RSS Feed
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "从公开 RSS/Atom feed 采集研究文章，归档为 markdown + metadata。"
+    input_type: rss_feed
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.wechat_archive
+    name: WeChat Archive
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "读取微信公众号归档索引（由 wechat 模块归档），不重新抓微信。只消费已归档的公开文章 metadata。"
+    input_type: wechat_archive
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.manual_url
+    name: Manual URL
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "用户手工投喂 URL 列表，逐个抓取并归档为 markdown + metadata。"
+    input_type: manual_url
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.official_public_research
+    name: Official Public Research
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "从官方公开研究页面采集文章列表和详情，归档为 markdown + metadata。"
+    input_type: official_public_research
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.podcast_transcript
+    name: Podcast Transcript
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "从公开播客 episode 列表页或 RSS feed 采集 transcript metadata，归档为 markdown + metadata。"
+    input_type: podcast_transcript
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.conference_transcript
+    name: Conference Transcript
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "从公开会议/event 页面采集 transcript 和 presentation metadata，归档为 markdown + metadata。"
+    input_type: conference_transcript
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.analyst_action
+    name: Analyst Action
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "从公开页面采集分析师评级变动和目标价调整的 raw metadata。只记录公开事件，不做投资建议，不判断利好利空。"
+    input_type: analyst_action
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.media_mention
+    name: Media Mention
+    track: research
+    category: source
+    maturity_status: production_trial_ready
+    description: "从公开媒体报道采集对投行观点/研报/分析师的引用 metadata。只记录公开报道，不做投资建议。"
+    input_type: media_mention
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  # -------------------------------------------------------------------------
+  # Official Filing Foundation（3 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: official_filing.sec_edgar
+    name: SEC EDGAR
+    track: official_filing
+    category: filing
+    maturity_status: production_trial_ready
+    description: "从 SEC EDGAR 采集美股公开公告（8-K/10-K/10-Q 等），归档为原文 + metadata。"
+    input_type: sec_edgar
+    primary_output: data/official_filings/index/filings.latest.jsonl
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    docs:
+      - docs/official_filing_foundation.md
+      - docs/official_filing_production_readiness.md
+      - docs/official_filing_live_smoke_registry.md
+
+  - capability_id: official_filing.cninfo_announcement
+    name: CNINFO Announcement
+    track: official_filing
+    category: filing
+    maturity_status: production_trial_ready
+    description: "从巨潮资讯网采集 A 股公开公告，归档为原文 + metadata。"
+    input_type: cninfo_announcement
+    primary_output: data/official_filings/index/filings.latest.jsonl
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    docs:
+      - docs/official_filing_foundation.md
+      - docs/official_filing_production_readiness.md
+      - docs/official_filing_live_smoke_registry.md
+
+  - capability_id: official_filing.hkex_announcement
+    name: HKEX Announcement
+    track: official_filing
+    category: filing
+    maturity_status: degraded
+    description: "从港交所 HKEXnews 采集港股公开公告。当前因客户端渲染问题处于 degraded 状态，静态路径可用但产出有限。"
+    input_type: hkex_announcement
+    primary_output: data/official_filings/index/filings.latest.jsonl
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    docs:
+      - docs/official_filing_foundation.md
+      - docs/official_filing_production_readiness.md
+      - docs/official_filing_live_smoke_registry.md
+
+  # -------------------------------------------------------------------------
+  # Document Extraction Foundation（4 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: document_extraction.pdf
+    name: PDF Extraction
+    track: document_extraction
+    category: document
+    maturity_status: production_trial_ready
+    description: "从本地或公开 PDF 文件抽取干净文本和 metadata。OCR 默认关闭。"
+    input_type: pdf
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+      - docs/document_extraction_live_smoke_registry.md
+
+  - capability_id: document_extraction.html
+    name: HTML Extraction
+    track: document_extraction
+    category: document
+    maturity_status: production_trial_ready
+    description: "从本地或公开 HTML 文件抽取干净文本和 metadata。"
+    input_type: html
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+      - docs/document_extraction_live_smoke_registry.md
+
+  - capability_id: document_extraction.txt
+    name: TXT Extraction
+    track: document_extraction
+    category: document
+    maturity_status: production_trial_ready
+    description: "从纯文本文件抽取文本统计和 metadata。"
+    input_type: txt
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+      - docs/document_extraction_live_smoke_registry.md
+
+  - capability_id: document_extraction.markdown
+    name: Markdown Extraction
+    track: document_extraction
+    category: document
+    maturity_status: production_trial_ready
+    description: "从 Markdown 文件抽取保留格式文本和文本统计 metadata。"
+    input_type: markdown
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+      - docs/document_extraction_live_smoke_registry.md
+
+  # -------------------------------------------------------------------------
+  # Shared Runtime Foundation（5 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: runtime.archive_paths
+    name: Archive Paths
+    track: runtime
+    category: runtime
+    maturity_status: mvp_ready
+    description: "标准 archive 路径构建器：根据 archive_root 和索引文件名构建所有标准路径。"
+    input_type: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.jsonl
+    name: JSONL Helper
+    track: runtime
+    category: runtime
+    maturity_status: mvp_ready
+    description: "通用 JSONL 读写 helper：append / read / snapshot / latest，UTF-8 编码，fail-soft 跳过坏行。"
+    input_type: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.failed_queue
+    name: Failed Queue
+    track: runtime
+    category: runtime
+    maturity_status: mvp_ready
+    description: "通用失败队列 helper：FailedQueueRecord / append / load，记录失败项的通用信息。"
+    input_type: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.run_log
+    name: Run Log
+    track: runtime
+    category: runtime
+    maturity_status: mvp_ready
+    description: "通用运行日志 helper：RunLogRecord / append / load，记录每次 CLI 命令执行结果。"
+    input_type: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.health_status
+    name: Health Status
+    track: runtime
+    category: runtime
+    maturity_status: mvp_ready
+    description: "通用健康状态枚举和模型：healthy / degraded / failed / disabled / unknown。"
+    input_type: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
