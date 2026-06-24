@@ -120,6 +120,32 @@ data/document_extraction/raw/
 
 ---
 
+### 2.4 Shared Runtime Foundation
+
+**Status**: MVP Ready
+
+> Runtime Foundation is a shared utility layer, not a standalone data source.
+
+Shared runtime primitives used by all foundation tracks:
+
+| Capability | Description |
+|---|---|
+| RunMode | validate-config / dry-run / run / source-health / report / retry-failed |
+| RuntimeStatus | success / partial / failed / skipped |
+| HealthStatus | healthy / degraded / failed / disabled / unknown |
+| ArchivePaths | Standard archive path builder |
+| JSONL helper | append / read / snapshot / latest |
+| FailedQueue helper | FailedQueueRecord / append / load |
+| RunLog helper | RunLogRecord / append / load |
+
+Module path: `src/opc_foundation/runtime/`
+
+详细文档：
+- [Runtime Foundation](runtime_foundation.md)
+- [Runtime Output Contract](runtime_output_contract.md)
+
+---
+
 ## 3. Shared Operating Capabilities
 
 三条主线共享以下操作模式：

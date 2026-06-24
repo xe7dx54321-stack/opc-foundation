@@ -21,6 +21,7 @@ Document Extraction Foundation → Production Trial Ready
 | Research Source Foundation     | complete       | complete         | complete           | Production Trial Ready |
 | Official Filing Foundation     | complete       | complete         | complete           | Production Trial Ready |
 | Document Extraction Foundation | complete       | complete         | complete           | Production Trial Ready |
+| Shared Runtime Foundation       | MVP complete   | N/A (utility)    | N/A (utility)      | MVP Ready              |
 
 ---
 
@@ -80,6 +81,23 @@ daily reports
 Notable: OCR is disabled by default and not implemented. Only local files — no remote PDF download.
 
 ---
+
+### Shared Runtime Foundation
+
+Ready for:
+
+```text
+standard run modes / status / health enums
+archive path helpers
+JSONL read/write helpers
+failed queue helper
+run log helper
+shared CLI command vocabulary
+```
+
+Note: Runtime Foundation is a shared utility layer, not a standalone data source. It supports the three data source tracks above.
+
+详见 [Runtime Foundation](runtime_foundation.md) 和 [Runtime Output Contract](runtime_output_contract.md)。
 
 ## 4. What Is Not Ready / Out of Scope
 
