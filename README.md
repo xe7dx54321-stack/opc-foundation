@@ -12,6 +12,18 @@ Current version: **v0.1.3**
 
 ---
 
+## Foundation Capability Registry
+
+Current foundation tracks (all Production Trial Ready):
+
+| Track | Status | Docs |
+|---|---|---|
+| Research Source Foundation | Production Trial Ready | [docs](docs/foundation_capability_registry.md) |
+| Official Filing Foundation | Production Trial Ready | [docs](docs/foundation_capability_registry.md) |
+| Document Extraction Foundation | Production Trial Ready | [docs](docs/foundation_capability_registry.md) |
+
+See [Foundation Capability Registry](docs/foundation_capability_registry.md) and [Foundation Readiness Summary](docs/foundation_readiness_summary.md) for details.
+
 ## What it is
 
 A single installable Python package providing cross-project reusable capabilities:

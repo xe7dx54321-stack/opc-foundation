@@ -215,3 +215,11 @@ M2: Document Extraction Foundation
 - [Live Smoke Registry](./official_filing_live_smoke_registry.md)
 - [Official Filing Foundation 主文档](./official_filing_foundation.md)
 - [生产运行指南](./official_filing_production_run.md)
+
+---
+
+## Related Foundation Registry
+
+See also:
+- [Foundation Capability Registry](foundation_capability_registry.md)
+- [Foundation Readiness Summary](foundation_readiness_summary.md)

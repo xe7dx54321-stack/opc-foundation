@@ -186,6 +186,14 @@ un_document_extraction.ps1 -Mode report
 6. **Windows 路径兼容**: 已做基本兼容，但大规模部署建议测试
 7. **无并发支持**: 单线程顺序处理
 
+---
+
+## Related Foundation Registry
+
+See also:
+- [Foundation Capability Registry](foundation_capability_registry.md)
+- [Foundation Readiness Summary](foundation_readiness_summary.md)
+
 ## 7. Final decision
 
 **Status: Production Trial Ready for local/public documents with OCR disabled.**

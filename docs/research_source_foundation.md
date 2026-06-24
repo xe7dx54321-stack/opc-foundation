@@ -8,6 +8,13 @@
 
 ---
 
+## Foundation-Level Registry
+
+For the cross-track capability registry and readiness summary, see:
+
+- [Foundation Capability Registry](foundation_capability_registry.md)
+- [Foundation Readiness Summary](foundation_readiness_summary.md)
+
 ## 0. 实现状态
 
 ### M2: Document Extraction Foundation (独立模块)

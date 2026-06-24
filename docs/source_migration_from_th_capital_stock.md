@@ -57,6 +57,23 @@ paper portfolio
 | vendor               | iFinD adapters                     | client-only, later                      |
 | financials/valuation | mock adapters                      | no, not now                             |
 
+## 2.5 Current Foundation Capability Status
+
+As of 2026-06-24, completed foundation tracks:
+
+| Track | Status |
+|---|---|
+| Research Source Foundation | Production Trial Ready |
+| Official Filing Foundation | Production Trial Ready |
+| Document Extraction Foundation | Production Trial Ready |
+
+Next recommended track: **M3 Market Data / Market Flow Foundation**
+
+Foundation-level registry docs have been added:
+
+- [Foundation Capability Registry](foundation_capability_registry.md)
+- [Foundation Readiness Summary](foundation_readiness_summary.md)
+
 ## 3. Migration Decision Matrix
 
 | Source Family                 | Decision              | Priority | Target Foundation Module |
