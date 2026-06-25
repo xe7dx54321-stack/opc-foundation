@@ -56,6 +56,7 @@ capabilities:
     track: research
     category: 信息源
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "从公开的 RSS/Atom 订阅源自动采集文章列表和正文。"
     what_it_does:
       - "订阅各种公开网站的 RSS 源"
@@ -78,6 +79,7 @@ capabilities:
     track: research
     category: 信息源
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "读取已经归档好的微信公众号文章索引。"
     what_it_does:
       - "消费微信模块已经归档好的公众号文章"
@@ -95,6 +97,7 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.manual_url
+    runtime_mode: manual_only
     display_name: 手动网址投喂
     name: Manual URL
     track: research
@@ -122,6 +125,7 @@ capabilities:
     track: research
     category: 信息源
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "从官方公开的研究页面列表页采集文章。"
     what_it_does:
       - "抓取券商/机构/公司官网的研究文章列表"
@@ -139,6 +143,7 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.podcast_transcript
+    runtime_mode: data_source
     display_name: 播客文字稿
     name: Podcast Transcript
     track: research
@@ -166,6 +171,7 @@ capabilities:
     track: research
     category: 信息源
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "从公开会议/活动页面采集纪要和演讲材料。"
     what_it_does:
       - "抓取 investor day、业绩会、行业会议的公开页面"
@@ -183,6 +189,7 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.analyst_action
+    runtime_mode: data_source
     display_name: 分析师评级变动
     name: Analyst Action
     track: research
@@ -205,6 +212,7 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.media_mention
+    runtime_mode: data_source
     display_name: 媒体报道引用
     name: Media Mention
     track: research
@@ -235,6 +243,7 @@ capabilities:
     track: official_filing
     category: 公告
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "从美国 SEC EDGAR 系统采集美股上市公司的公开公告。"
     what_it_does:
       - "抓取 8-K（重大事件）、10-K（年报）、10-Q（季报）等"
@@ -252,6 +261,7 @@ capabilities:
       - docs/official_filing_live_smoke_registry.md
 
   - capability_id: official_filing.cninfo_announcement
+    runtime_mode: data_source
     display_name: A 股巨潮公告
     name: CNINFO Announcement
     track: official_filing
@@ -274,6 +284,7 @@ capabilities:
       - docs/official_filing_live_smoke_registry.md
 
   - capability_id: official_filing.hkex_announcement
+    runtime_mode: known_limited
     display_name: 港股港交所公告
     name: HKEX Announcement
     track: official_filing
@@ -304,6 +315,7 @@ capabilities:
     track: document_extraction
     category: 文档
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "从 PDF 文件中抽取干净的文本内容和元数据。"
     what_it_does:
       - "读取本地或公开的 PDF 文件"
@@ -322,6 +334,7 @@ capabilities:
       - docs/document_extraction_live_smoke_registry.md
 
   - capability_id: document_extraction.html
+    runtime_mode: data_source
     display_name: HTML 网页抽取
     name: HTML Extraction
     track: document_extraction
@@ -345,6 +358,7 @@ capabilities:
       - docs/document_extraction_live_smoke_registry.md
 
   - capability_id: document_extraction.txt
+    runtime_mode: data_source
     display_name: TXT 纯文本抽取
     name: TXT Extraction
     track: document_extraction
@@ -372,6 +386,7 @@ capabilities:
     track: document_extraction
     category: 文档
     maturity_status: production_trial_ready
+    runtime_mode: data_source
     description: "处理 Markdown 文件，保留格式并统计元数据。"
     what_it_does:
       - "读取 .md Markdown 文件"
@@ -398,6 +413,7 @@ capabilities:
     track: runtime
     category: 工具
     maturity_status: mvp_ready
+    runtime_mode: utility
     description: "统一构建各种文件路径的小工具。"
     what_it_does:
       - "给一个根目录，自动算出索引文件、报告目录等所有路径"
@@ -419,6 +435,7 @@ capabilities:
     track: runtime
     category: 工具
     maturity_status: mvp_ready
+    runtime_mode: utility
     description: "读写 JSONL 格式的通用工具。"
     what_it_does:
       - "一行一条 JSON 的文件读写"
@@ -436,6 +453,7 @@ capabilities:
       - docs/runtime_output_contract.md
 
   - capability_id: runtime.failed_queue
+    runtime_mode: utility
     display_name: 失败队列工具
     name: Failed Queue
     track: runtime
@@ -457,6 +475,7 @@ capabilities:
       - docs/runtime_output_contract.md
 
   - capability_id: runtime.run_log
+    runtime_mode: utility
     display_name: 运行日志工具
     name: Run Log
     track: runtime
@@ -483,6 +502,7 @@ capabilities:
     track: runtime
     category: 工具
     maturity_status: mvp_ready
+    runtime_mode: utility
     description: "统一的健康状态定义和判断规则。"
     what_it_does:
       - "定义什么是 healthy、degraded、failed 等状态"

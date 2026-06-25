@@ -5,18 +5,22 @@
     计算每个能力的运行时健康状态摘要（CapabilityRuntimeSummary）。
     以及整个 dashboard 的汇总统计（DashboardSummary）。
 
-    健康判断规则：
-    - not_configured: health_file 为空字符串
-    - unknown:        文件不存在或没有任何记录
-    - healthy:        最近一次 source_health 为 healthy，或 run_log 为 success
-    - degraded:       最近一次 source_health 为 degraded，或有失败但非全失败
-    - failed:         最近一次明确 failed
-    - needs_attention:最近 N 次中 failed/degraded >= 2，或连续失败 >= 2，
+    健康判断规则（M3B-3b 校准后）：
+    - utility:         工具能力，不需要运行记录（runtime.*）
+    - known_limited:   已知限制能力（如 HKEX），degraded 不计入需关注
+    - not_configured:  health_file 为空且非工具/已知限制
+    - unknown_never_run: 有 binding 但没有任何记录
+    - healthy:         最近一次 source_health 为 healthy，或 run_log 为 success
+    - degraded:        最近一次 source_health 为 degraded，或有失败但非全失败
+    - failed:          最近一次明确 failed
+    - needs_attention: 最近 N 次中 failed/degraded >= 2，或连续失败 >= 2，
                       或失败队列有积压且最近非 healthy
-    - stale:          最近运行时间超过 stale_days 天
+    - stale:           最近运行时间超过 stale_days 天
 
     时间解析 fail-soft：解析失败不抛异常，按未知处理。
     不写回 data 文件（只读不写）。
+
+    document_extraction 按文件扩展名精准归因（避免一个失败项扩散到全部类型）。
 
     不包含任何投资判断字段。
 """
@@ -33,6 +37,7 @@ from .models import (
     CapabilityRuntimeEvidence,
     CapabilityRuntimeSummary,
     DashboardSummary,
+    RuntimeMode,
 )
 from .usage import build_usage_index
 
@@ -371,6 +376,104 @@ def build_dashboard_summary(
 # ===========================================================================
 
 
+def _extract_file_extension_from_record(record: dict) -> str:
+    """从记录中提取文件扩展名。
+
+    功能说明（小白解读）：
+        按优先级从多个字段中找扩展名（用于 document_extraction 精准归因）：
+        1. file_extension 字段
+        2. original_path 后缀
+        3. document_path 后缀
+        4. raw_entry.path 后缀
+        5. raw_entry.file_path 后缀
+        6. metadata.file_extension
+        7. mime_type 推断
+        8. source_type 兜底
+
+    参数：
+        record: 一条 source_health / run_log / failed_queue 记录
+
+    返回：
+        小写的扩展名（带点），如 ".pdf" / ".html" / ""，找不到返回空字符串
+    """
+    # 1. 显式 file_extension 字段
+    fe = record.get("file_extension", "")
+    if fe:
+        return fe.lower() if fe.startswith(".") else f".{fe.lower()}"
+
+    # 2. original_path 后缀
+    for path_field in ("original_path", "document_path", "file_path", "path", "url"):
+        v = record.get(path_field, "")
+        if v and "." in v:
+            # 跳过 query string 和 anchor
+            base = v.split("?")[0].split("#")[0]
+            ext = base.rsplit(".", 1)[-1].lower() if "." in base.rsplit("/", 1)[-1] else ""
+            if ext and len(ext) <= 5:  # 防止取到奇怪的字符串
+                return f".{ext}"
+
+    # 3. raw_entry 嵌套字段
+    raw = record.get("raw_entry", {})
+    if isinstance(raw, dict):
+        for path_field in ("path", "file_path", "url", "source_path"):
+            v = raw.get(path_field, "")
+            if v and "." in v:
+                base = v.split("?")[0].split("#")[0]
+                ext = base.rsplit(".", 1)[-1].lower() if "." in base.rsplit("/", 1)[-1] else ""
+                if ext and len(ext) <= 5:
+                    return f".{ext}"
+
+    # 4. metadata.file_extension
+    md = record.get("metadata", {})
+    if isinstance(md, dict):
+        v = md.get("file_extension", "")
+        if v:
+            return v.lower() if v.startswith(".") else f".{v.lower()}"
+
+    # 5. mime_type 推断
+    mime = record.get("mime_type", "").lower()
+    mime_to_ext = {
+        "application/pdf": ".pdf",
+        "text/html": ".html",
+        "text/plain": ".txt",
+        "text/markdown": ".md",
+    }
+    if mime in mime_to_ext:
+        return mime_to_ext[mime]
+
+    return ""
+
+
+def _match_records_by_file_extension(
+    records: list[dict],
+    file_extensions: list[str],
+) -> list[dict]:
+    """按文件扩展名过滤记录。
+
+    功能说明（小白解读）：
+        对 document_extraction 类能力做精准归因。
+        比如 document_extraction.pdf 只想看 .pdf 失败的记录。
+        如果记录完全找不到扩展名（无法判断），才 fallback 到 source_type 匹配。
+        （在调用方处理 fallback）
+
+    参数：
+        records:        原始记录列表
+        file_extensions: 要匹配的扩展名列表（如 [".pdf"]）
+
+    返回：
+        匹配到扩展名的记录列表（不含无法判断的）
+    """
+    if not file_extensions:
+        return records
+
+    ext_set = {e.lower() for e in file_extensions}
+    matched: list[dict] = []
+    for r in records:
+        ext = _extract_file_extension_from_record(r)
+        if ext in ext_set:
+            matched.append(r)
+    return matched
+
+
 def _match_records_by_binding(
     records: list[dict],
     binding: CapabilityRuntimeBinding,
@@ -379,10 +482,16 @@ def _match_records_by_binding(
 
     功能说明（小白解读）：
         从一堆记录中，按 binding 的规则筛选出属于这个能力的记录。
-        匹配优先级：
-        1. 先按 source_types 匹配（如果配置了的话）
-        2. 再按 source_ids 精确匹配（如果配置了的话）
-        3. 如果都没配置，返回全部记录（兜底）
+
+        匹配规则（M3B-3b 校准后）：
+        - document_extraction 类能力：严格按 file_extensions 精准归因
+          （如果配置了 file_extensions，只返回匹配的，不 fallback）
+        - 其他能力：按 source_types / source_ids 匹配
+        - 都没配置：返回全部记录（兜底）
+
+        关键校准：
+        document_extraction 的 fallback 行为被禁用——避免一个 PDF 失败
+        扩散到全部文档类型。
 
     参数：
         records: 原始记录列表
@@ -394,19 +503,25 @@ def _match_records_by_binding(
     if not records:
         return []
 
+    # 1. document_extraction 类能力按 file_extensions 严格匹配
+    #    关键：匹配到 0 条就返回 0 条，不 fallback
+    #    避免一个 PDF 失败扩散到全部文档类型
+    if binding.file_extensions:
+        return _match_records_by_file_extension(records, binding.file_extensions)
+
     matched = records
 
-    # 1. 按 source_types 过滤
+    # 2. 按 source_types 过滤
     if binding.source_types:
-        matched = [
+        type_matched = [
             r for r in matched
             if r.get("source_type") in binding.source_types
         ]
-        # 如果 source_types 过滤后没有匹配的，用回全部记录（兜底）
-        if not matched:
-            matched = records
+        if type_matched:
+            matched = type_matched
+        # 如果 source_types 过滤后没有匹配，保留原 records（兜底）
 
-    # 2. 按 source_ids 过滤（如果配置了的话）
+    # 3. 按 source_ids 过滤（如果配置了的话）
     if binding.source_ids:
         id_matched = [
             r for r in matched
@@ -522,6 +637,68 @@ def build_runtime_evidence(
     )
 
 
+def _build_explanation(
+    capability: Capability,
+    health: str,
+    needs_attention: bool,
+    stale: bool,
+    failed_queue_count: int,
+) -> str:
+    """构建状态解释文本。
+
+    功能说明（小白解读）：
+        根据能力的运行模式 + 健康状态，生成一段中文解释。
+        用于 Dashboard 上告诉用户这个状态具体是什么意思。
+
+    参数：
+        capability:         能力对象
+        health:             运行健康状态
+        needs_attention:    是否需要关注
+        stale:              是否过期
+        failed_queue_count: 失败队列数量
+
+    返回：
+        中文状态解释文本
+    """
+    mode = capability.runtime_mode_enum
+
+    if mode == RuntimeMode.UTILITY:
+        return "工具能力，不需要单独运行，也不会产生 source_health 记录。"
+
+    if mode == RuntimeMode.KNOWN_LIMITED:
+        return "该能力当前属于已知限制，不作为每日修复项；除非需要推进相关能力增强，否则无需重复关注。"
+
+    if mode == RuntimeMode.MANUAL_ONLY:
+        return "该能力是人工触发能力，等待人工触发运行后才会产生记录。"
+
+    if health == "unknown_never_run":
+        return "能力已绑定运行数据路径，但本地尚未发现运行记录。运行对应能力后，Dashboard 会自动读取状态。"
+
+    if health == "not_configured":
+        return "尚未绑定运行数据路径，Dashboard 无法读取运行状态。"
+
+    if stale:
+        return "最近一次运行时间已超过设定天数，建议重新运行以更新状态。"
+
+    if health == "failed":
+        return "最近一次运行失败，建议优先查看失败队列和最近报告。"
+
+    if health == "degraded":
+        if mode == RuntimeMode.KNOWN_LIMITED:
+            return "降级属于已知限制的预期表现，不需要每天修复。"
+        return "最近一次运行出现降级，建议查看能力详情中的排查步骤。"
+
+    if needs_attention:
+        if failed_queue_count > 0:
+            return f"失败队列积压 {failed_queue_count} 项，建议重新 dry-run 并检查配置。"
+        return "最近多次运行出现异常，建议排查配置或外部依赖。"
+
+    if health == "healthy":
+        return "最近一次运行成功，且没有失败队列积压，状态正常。"
+
+    return "持续观察。"
+
+
 def build_runtime_summary_from_evidence(
     capability: Capability,
     binding: CapabilityRuntimeBinding | None,
@@ -529,20 +706,27 @@ def build_runtime_summary_from_evidence(
     recent_n: int = 3,
     stale_days: int = 7,
 ) -> CapabilityRuntimeSummary:
-    """根据运行时证据构建健康摘要。
+    """根据运行时证据构建健康摘要（M3B-3b 校准后）。
 
     功能说明（小白解读）：
         拿到 build_runtime_evidence 收集到的证据后，
         根据健康判断规则算出这个能力的运行状态。
 
-        健康判断规则：
-        - 未配置：没有 runtime binding
-        - 未知：有 binding 但没有任何记录
-        - 运行正常：最近一次 health=healthy 或 run status=success，且失败队列为空
-        - 降级：最近一次 health=degraded，或有失败但非全失败
-        - 失败：最近一次 health=failed 或 run status=failed
-        - 需关注：最近 3 次中失败/降级 >= 2，或连续失败 >= 2，或失败队列有积压且最近非健康
-        - 过期：最近运行时间超过 stale_days 天
+        健康判断规则（M3B-3b 校准后）：
+        - utility:           工具能力，不需要运行记录（runtime.*）
+        - known_limited:     已知限制能力（如 HKEX），degraded 不计入需关注
+        - not_configured:    没有 runtime binding
+        - unknown_never_run: 有 binding 但没有任何记录（与 unknown 等价但文案更友好）
+        - healthy:           最近一次 health=healthy 或 run status=success，且失败队列为空
+        - degraded:          最近一次 health=degraded，或有失败但非全失败
+        - failed:            最近一次 health=failed 或 run status=failed
+        - needs_attention:   最近 3 次中失败/降级 >= 2，或连续失败 >= 2，或失败队列有积压且最近非健康
+        - stale:             最近运行时间超过 stale_days 天
+
+        校准重点：
+        - 工具能力（utility）不计入任何异常统计
+        - 已知限制（known_limited）的 degraded 不触发 needs_attention
+        - 人工触发（manual_only）无记录不视为故障
 
     参数：
         capability: 能力对象
@@ -555,6 +739,27 @@ def build_runtime_summary_from_evidence(
         CapabilityRuntimeSummary 对象
     """
     cap_id = capability.capability_id
+    mode = capability.runtime_mode_enum
+
+    # 规则 0：工具能力直接返回 utility（不需要运行记录）
+    if mode == RuntimeMode.UTILITY:
+        return CapabilityRuntimeSummary(
+            capability_id=cap_id,
+            runtime_health="utility",
+            latest_status="",
+            latest_run_at="",
+            last_success_at="",
+            last_failure_at="",
+            recent_run_count=0,
+            recent_failure_count=0,
+            consecutive_failures=0,
+            failed_queue_count=0,
+            needs_attention=False,
+            stale=False,
+            latest_error="",
+            runtime_mode=capability.runtime_mode,
+            status_explanation=_build_explanation(capability, "utility", False, False, 0),
+        )
 
     # 规则 1：没有 binding -> not_configured
     if binding is None:
@@ -572,6 +777,8 @@ def build_runtime_summary_from_evidence(
             needs_attention=False,
             stale=False,
             latest_error="",
+            runtime_mode=capability.runtime_mode,
+            status_explanation=_build_explanation(capability, "not_configured", False, False, 0),
         )
 
     matched_health = evidence.matched_health_records
@@ -580,12 +787,14 @@ def build_runtime_summary_from_evidence(
     latest_health = evidence.latest_health_record
     latest_run = evidence.latest_run_record
 
-    # 规则 2：没有任何记录 -> unknown
+    # 规则 2：没有任何记录 -> unknown_never_run
     if not matched_health and not matched_run:
         failed_count = len(matched_failed)
+        # 已知限制能力即使有 failed_queue 也不触发 needs_attention
+        needs_attention_flag = (failed_count > 0 and mode != RuntimeMode.KNOWN_LIMITED)
         return CapabilityRuntimeSummary(
             capability_id=cap_id,
-            runtime_health="unknown",
+            runtime_health="unknown_never_run",
             latest_status="",
             latest_run_at="",
             last_success_at="",
@@ -594,9 +803,11 @@ def build_runtime_summary_from_evidence(
             recent_failure_count=0,
             consecutive_failures=0,
             failed_queue_count=failed_count,
-            needs_attention=failed_count > 0,
+            needs_attention=needs_attention_flag,
             stale=False,
             latest_error="",
+            runtime_mode=capability.runtime_mode,
+            status_explanation=_build_explanation(capability, "unknown_never_run", needs_attention_flag, False, failed_count),
         )
 
     # 取最近 N 条 run_log 记录
@@ -637,7 +848,7 @@ def build_runtime_summary_from_evidence(
     failed_queue_count = len(matched_failed)
 
     # 判断 runtime_health
-    runtime_health = "unknown"
+    runtime_health = "unknown_never_run"
 
     if latest_health:
         health_status = latest_health.get("status", "")
@@ -648,9 +859,9 @@ def build_runtime_summary_from_evidence(
         elif health_status == "failed":
             runtime_health = "failed"
         elif health_status == "disabled":
-            runtime_health = "unknown"
+            runtime_health = "unknown_never_run"
         else:
-            runtime_health = "unknown"
+            runtime_health = "unknown_never_run"
 
     # 如果没有 health 记录但有 run_log，用 run_log 状态判断
     if not latest_health and recent_runs:
@@ -662,20 +873,30 @@ def build_runtime_summary_from_evidence(
         elif last_run_status == "partial":
             runtime_health = "degraded"
         else:
-            runtime_health = "unknown"
+            runtime_health = "unknown_never_run"
 
     # needs_attention 判断
     recent_bad = sum(
         1 for r in recent_runs if r.get("status") in ("failed", "partial")
     )
-    needs_attention = (
+    base_needs_attention = (
         recent_bad >= 2
         or consecutive_failures >= 2
         or (failed_queue_count > 0 and runtime_health != "healthy")
     )
+    # 校准：已知限制能力的 degraded 不触发 needs_attention
+    if mode == RuntimeMode.KNOWN_LIMITED and runtime_health == "degraded":
+        needs_attention = False
+    else:
+        needs_attention = base_needs_attention
 
     # stale 判断
     stale = _is_stale(latest_run_at, stale_days)
+
+    # 生成状态解释
+    explanation = _build_explanation(
+        capability, runtime_health, needs_attention, stale, failed_queue_count
+    )
 
     return CapabilityRuntimeSummary(
         capability_id=cap_id,
@@ -691,6 +912,8 @@ def build_runtime_summary_from_evidence(
         needs_attention=needs_attention,
         stale=stale,
         latest_error=latest_error,
+        runtime_mode=capability.runtime_mode,
+        status_explanation=explanation,
     )
 
 
@@ -702,17 +925,21 @@ def suggest_action(health: str, needs_attention: bool, stale: bool) -> str:
         用于健康监控页面的"建议动作"列。
 
     参数：
-        health:          运行健康状态（healthy/degraded/failed/unknown/not_configured）
+        health:          运行健康状态（healthy/degraded/failed/unknown_never_run/not_configured/utility/known_limited）
         needs_attention: 是否需要关注
         stale:           是否过期
 
     返回：
         中文建议动作文本
     """
+    if health == "utility":
+        return "工具能力，无需处理"
+    if health == "known_limited":
+        return "已知限制，不需作为每日修复项"
     if health == "not_configured":
         return "尚未绑定运行数据"
-    if health == "unknown":
-        return "尚未发现运行记录"
+    if health == "unknown_never_run":
+        return "尚未发现运行记录，运行能力后会更新"
     if stale:
         return "超过设定时间未运行，建议重新运行"
     if health == "failed":

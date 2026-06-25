@@ -175,7 +175,22 @@ runtime_health 表示能力最近的运行状态（M3B-3 之后通过 runtime bi
 | needs_attention | 最近多次失败，需要人工关注 |
 | stale | 长时间没运行，可能已过期 |
 
-### M3B-3 真实数据聚合
+### M3B-3b 健康状态校准
+
+M3B-3b 在 M3B-3 基础上引入了 **runtime_mode（运行模式）** 校准：
+
+| 模式 | 中文 | 适用 | 异常计入 |
+|---|---|---|---|
+| data_source | 数据能力 | research / official_filing / document_extraction | 是 |
+| utility | 工具能力 | runtime.* | ❌ 否 |
+| known_limited | 已知限制 | HKEX | 降级不算 |
+| manual_only | 人工触发 | manual_url | 无记录不视为故障 |
+
+校准后：
+- 工具能力不再误报为「未配置」
+- HKEX 降级不再触发需关注
+- document_extraction 严格按文件类型归因（一个 PDF 失败不再扩散到全部）
+- 未知改为「未知 · 尚未运行」，明确说明是已绑定但未运行
 
 M3B-3 之后，健康状态不再是简单读取整个 health_file，而是：
 

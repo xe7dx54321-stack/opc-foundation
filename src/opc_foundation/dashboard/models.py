@@ -10,6 +10,39 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import Enum
+
+
+class RuntimeMode(str, Enum):
+    """能力运行模式（M3B-3b 新增）。
+
+    功能说明（小白解读）：
+        标记一个能力属于哪种运行模式，用于校准 Dashboard 健康状态显示：
+        - data_source:    数据能力，需要运行记录（research / official_filing / document_extraction）
+        - utility:        工具能力，不需要运行记录（runtime.*）
+        - known_limited:  已知限制能力（如 HKEX 因客户端渲染限制）
+        - manual_only:    人工触发能力（如 manual_url）
+
+    为什么要这个？
+        之前所有能力都用同一种方式判断健康状态，导致：
+        - 工具能力被误报成"未配置"
+        - 已知限制被误报成"新故障"
+        - 数据能力无记录被误报成"未知"
+    """
+
+    DATA_SOURCE = "data_source"
+    UTILITY = "utility"
+    KNOWN_LIMITED = "known_limited"
+    MANUAL_ONLY = "manual_only"
+
+
+# 中文显示标签
+RUNTIME_MODE_LABELS = {
+    RuntimeMode.DATA_SOURCE: "数据能力",
+    RuntimeMode.UTILITY: "工具能力",
+    RuntimeMode.KNOWN_LIMITED: "已知限制",
+    RuntimeMode.MANUAL_ONLY: "人工触发",
+}
 
 
 @dataclass(frozen=True)
@@ -56,6 +89,7 @@ class Capability:
         failed_queue_file:  失败队列文件路径（failed_queue.jsonl）
         docs:               相关文档路径列表
         sources:            已接入的数据源列表（每个源有 name/status/url 等）
+        runtime_mode:       运行模式（M3B-3b 新增：data_source/utility/known_limited/manual_only）
     """
 
     capability_id: str
@@ -74,6 +108,23 @@ class Capability:
     what_it_does: list[str] = field(default_factory=list)
     typical_usage: str = ""
     sources: list[dict] = field(default_factory=list)
+    runtime_mode: str = "data_source"  # 默认为数据能力，向后兼容
+
+    @property
+    def runtime_mode_enum(self) -> RuntimeMode:
+        """获取运行模式枚举对象。
+
+        功能说明：
+            安全的获取方式，解析失败时返回 data_source 兜底。
+            用于内部逻辑判断（不依赖 enum 比较，避免字符串硬编码）。
+
+        返回：
+            RuntimeMode 枚举对象
+        """
+        try:
+            return RuntimeMode(self.runtime_mode)
+        except ValueError:
+            return RuntimeMode.DATA_SOURCE
 
 
 @dataclass(frozen=True)
@@ -214,7 +265,7 @@ class CapabilityRuntimeSummary:
 
     参数：
         capability_id:        能力 ID
-        runtime_health:       运行健康状态（healthy/degraded/failed/unknown/not_configured）
+        runtime_health:       运行健康状态（healthy/degraded/failed/unknown_never_run/not_configured/utility/known_limited）
         latest_status:        最近一次原始状态（来自 source_health 或 run_log）
         latest_run_at:        最近运行时间
         last_success_at:      上次成功时间
@@ -226,6 +277,8 @@ class CapabilityRuntimeSummary:
         needs_attention:      是否需要人工关注
         stale:                是否过期（长时间没运行）
         latest_error:         最近错误信息
+        runtime_mode:         运行模式（M3B-3b 新增：data_source/utility/known_limited/manual_only）
+        status_explanation:   状态解释文本（M3B-3b 新增：中文说明当前状态的具体含义）
     """
 
     capability_id: str
@@ -241,6 +294,8 @@ class CapabilityRuntimeSummary:
     needs_attention: bool
     stale: bool
     latest_error: str
+    runtime_mode: str = "data_source"
+    status_explanation: str = ""
 
 
 @dataclass(frozen=True)

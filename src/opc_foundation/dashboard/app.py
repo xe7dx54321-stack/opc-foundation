@@ -104,6 +104,39 @@ def _cn(status: str) -> str:
     return STATUS_CN.get(status, status)
 
 
+# M3B-3b 新增：运行健康状态的中文映射
+RUNTIME_HEALTH_CN = {
+    "healthy": "运行正常",
+    "degraded": "降级",
+    "failed": "失败",
+    "unknown_never_run": "未知 · 尚未运行",
+    "not_configured": "未配置",
+    "utility": "工具能力",
+    "known_limited": "已知限制",
+}
+
+
+# M3B-3b 新增：运行健康状态的颜色映射
+RUNTIME_HEALTH_COLOR = {
+    "healthy": "#22c55e",
+    "degraded": "#eab308",
+    "failed": "#ef4444",
+    "unknown_never_run": "#3b82f6",
+    "not_configured": "#6b7280",
+    "utility": "#6b7280",
+    "known_limited": "#a3a3a3",
+}
+
+
+# M3B-3b 新增：运行模式（runtime_mode）的中文映射
+RUNTIME_MODE_CN = {
+    "data_source": "数据能力",
+    "utility": "工具能力",
+    "known_limited": "已知限制",
+    "manual_only": "人工触发",
+}
+
+
 def _lazy_import_streamlit():
     """延迟导入 streamlit。
 
@@ -486,25 +519,17 @@ def _render_capability_detail_modal(
         track = next((t for t in registry.tracks if t.track_id == cap.track), None)
 
         # 获取运行状态
-        health_status = runtime.runtime_health if runtime else "unknown"
-        health_label = _cn(health_status)
-        health_color = {
-            "healthy": "#22c55e",
-            "degraded": "#eab308",
-            "failed": "#ef4444",
-            "needs_attention": "#f97316",
-            "disabled": "#6b7280",
-            "stale": "#8b5cf6",
-            "unknown": "#6b7280",
-        }.get(health_status, "#6b7280")
+        health_status = runtime.runtime_health if runtime else "unknown_never_run"
+        health_label = RUNTIME_HEALTH_CN.get(health_status, health_status)
+        health_color = RUNTIME_HEALTH_COLOR.get(health_status, "#6b7280")
         health_bg_rgba = {
             "healthy": "rgba(34, 197, 94, 0.15)",
             "degraded": "rgba(234, 179, 8, 0.15)",
             "failed": "rgba(239, 68, 68, 0.15)",
-            "needs_attention": "rgba(249, 115, 22, 0.15)",
-            "disabled": "rgba(107, 114, 128, 0.15)",
-            "stale": "rgba(139, 92, 246, 0.15)",
-            "unknown": "rgba(107, 114, 128, 0.15)",
+            "unknown_never_run": "rgba(59, 130, 246, 0.15)",
+            "not_configured": "rgba(107, 114, 128, 0.15)",
+            "utility": "rgba(107, 114, 128, 0.15)",
+            "known_limited": "rgba(163, 163, 163, 0.15)",
         }.get(health_status, "rgba(107, 114, 128, 0.15)")
 
         # 获取连续成功次数和最后运行时间
@@ -1106,6 +1131,56 @@ def _render_capability_detail_modal(
 
         # --- 真实运行页面 ---
         elif active_tab == "真实运行":
+            # M3B-3b 新增：状态解释 / 归因说明卡片
+            runtime_mode_cn = RUNTIME_MODE_CN.get(cap.runtime_mode, cap.runtime_mode)
+            status_explanation_text = runtime.status_explanation if runtime else "该能力尚未运行。"
+            # 特定能力类型的归因说明
+            attribution_note = ""
+            if cap.capability_id.startswith("document_extraction."):
+                if cap.capability_id.endswith(".pdf"):
+                    attribution_note = "当前能力按文件类型归因：.pdf 失败只影响 document_extraction.pdf，不影响 html / txt / markdown。"
+                elif cap.capability_id.endswith(".html"):
+                    attribution_note = "当前能力按文件类型归因：.html / .htm 失败只影响 document_extraction.html。"
+                elif cap.capability_id.endswith(".txt"):
+                    attribution_note = "当前能力按文件类型归因：.txt 失败只影响 document_extraction.txt。"
+                elif cap.capability_id.endswith(".markdown"):
+                    attribution_note = "当前能力按文件类型归因：.md / .markdown 失败只影响 document_extraction.markdown。"
+            elif cap.runtime_mode == "utility":
+                attribution_note = "该能力是工具能力，不需要单独运行，也不会产生 source_health 记录。"
+            elif cap.runtime_mode == "known_limited":
+                attribution_note = "该能力当前属于已知限制：HKEXnews 页面客户端渲染导致静态抓取可能 empty_source，不作为每日修复项。"
+            elif cap.runtime_mode == "manual_only":
+                attribution_note = "该能力是人工触发能力，等待人工触发运行后才会产生记录。"
+
+            st.markdown(
+                f"""
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <div class="detail-card-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">ℹ️</div>
+                        <div class="detail-card-title">状态解释 / 归因说明</div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">能力类型</div>
+                        <div style="font-size: 13px; color: #cbd5e1;">{runtime_mode_cn}</div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">当前状态</div>
+                        <div style="font-size: 13px; color: #cbd5e1;">{RUNTIME_HEALTH_CN.get(health_status, health_status)}</div>
+                    </div>
+                    <div style="margin-bottom: 10px;">
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">状态解释</div>
+                        <div style="font-size: 12px; color: #cbd5e1; line-height: 1.6;">{status_explanation_text}</div>
+                    </div>
+                    {f'<div style="margin-bottom: 10px;"><div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">归因说明</div><div style="font-size: 12px; color: #fbbf24; line-height: 1.6;">{attribution_note}</div></div>' if attribution_note else ''}
+                    <div>
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">建议动作</div>
+                        <div style="font-size: 12px; color: #cbd5e1;">{suggest_action(health_status, runtime.needs_attention if runtime else False, runtime.stale if runtime else False)}</div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
             binding = runtime_binding_registry.get_binding(cap_id)
             evidence = None
             if binding:
@@ -1121,8 +1196,8 @@ def _render_capability_detail_modal(
                 binding_status = "未配置"
                 binding_status_color = "#6b7280"
                 binding_status_bg = "rgba(107, 114, 128, 0.15)"
-            elif runtime and runtime.runtime_health == "unknown":
-                binding_status = "已接入·无数据"
+            elif runtime and runtime.runtime_health == "unknown_never_run":
+                binding_status = "已接入·无运行记录"
                 binding_status_color = "#3b82f6"
                 binding_status_bg = "rgba(59, 130, 246, 0.15)"
             elif runtime and runtime.runtime_health == "healthy":
@@ -2245,6 +2320,24 @@ def _render_health_monitor(st, registry, runtime_summaries):
     st.header("健康监控")
     st.caption("查看所有能力的运行健康状态、运行统计和异常情况")
 
+    # M3B-3b 新增：状态说明区域
+    with st.expander("📖 状态说明", expanded=False):
+        st.markdown(
+            """
+**运行健康** | **含义**
+--- | ---
+**运行正常** | 最近一次运行成功，且没有失败队列积压，状态正常。
+**降级** | 最近运行部分异常，但不是完全失败。
+**失败** | 最近一次运行失败。
+**需关注** | 连续异常或失败队列积压，需要排查。
+**未知 · 尚未运行** | 已绑定运行数据路径，但本地暂无运行记录。运行对应能力后，Dashboard 会自动读取状态。
+**工具能力** | 工具函数（如 runtime.*），不需要单独运行记录，也不会产生 source_health。
+**已知限制** | 能力存在但当前有明确外部限制（如 HKEX 客户端渲染），不作为每日修复项。
+**过期** | 超过设定天数未运行。
+            """
+        )
+        st.caption("校准说明：未知 ≠ 失败；工具能力不计入异常统计；已知限制不作为每日修复项。")
+
     # --- 收集所有能力数据 ---
     all_caps = []
     for cap in registry.capabilities:
@@ -2281,8 +2374,10 @@ def _render_health_monitor(st, registry, runtime_summaries):
     failed_count = sum(1 for c in all_caps if c["runtime_health"] == "failed")
     attention_count = sum(1 for c in all_caps if c["needs_attention"])
     stale_count = sum(1 for c in all_caps if c["stale"])
-    unknown_count = sum(1 for c in all_caps if c["runtime_health"] == "unknown")
+    unknown_count = sum(1 for c in all_caps if c["runtime_health"] == "unknown_never_run")
     not_configured_count = sum(1 for c in all_caps if c["runtime_health"] == "not_configured")
+    utility_count = sum(1 for c in all_caps if c["runtime_health"] == "utility")
+    known_limited_count = sum(1 for c in all_caps if c["runtime_health"] == "known_limited")
 
     def pct(n):
         return str(round(n / total * 100, 1)) + "%" if total > 0 else "0%"
@@ -2295,10 +2390,10 @@ def _render_health_monitor(st, registry, runtime_summaries):
             "healthy": "#22c55e",
             "degraded": "#eab308",
             "failed": "#ef4444",
-            "unknown": "#3b82f6",
+            "unknown_never_run": "#3b82f6",
             "not_configured": "#6b7280",
-            "needs_attention": "#f97316",
-            "stale": "#a855f7",
+            "utility": "#6b7280",
+            "known_limited": "#a3a3a3",
         }
         dot_color = health_colors.get(c["runtime_health"], "#6b7280")
 
@@ -2307,8 +2402,10 @@ def _render_health_monitor(st, registry, runtime_summaries):
             "healthy": "运行正常",
             "degraded": "降级",
             "failed": "失败",
-            "unknown": "未知",
+            "unknown_never_run": "未知 · 尚未运行",
             "not_configured": "未配置",
+            "utility": "工具能力",
+            "known_limited": "已知限制",
         }
         health_label = health_labels.get(c["runtime_health"], c["runtime_health"])
         health_badge_color = health_colors.get(c["runtime_health"], "#6b7280")
@@ -3156,6 +3253,18 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
     st.header("配置检查")
     st.caption("一键检查所有配置是否正确，哪里红了修哪里 ✅")
 
+    # M3B-3b 新增：分类说明
+    with st.expander("📖 检查分类说明", expanded=False):
+        st.markdown(
+            """
+**分类** | **含义** | **示例**
+--- | --- | ---
+**错误** | 必须修复，否则能力无法正常运行。 | binding capability_id 不存在、重复 capability_id
+**警告** | 不影响运行，但需要知晓（data/ 目录不提交是正常的）。 | 文档路径缺失、运行文件不存在、运行手册缺失
+**说明** | 正常设计，按预期存在。 | runtime 工具能力无 binding、HKEX known_limited、能力尚未被使用
+            """
+        )
+
     # 1. 校验 capability_id 唯一性和 track 引用
     st.subheader("1️⃣ 能力注册表校验")
     errors = validate_capabilities(registry)
@@ -3204,7 +3313,7 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
     st.subheader("4️⃣ 未使用能力")
     unused = find_unused_capabilities(registry.capabilities, usage_registry)
     if unused:
-        st.info(f"ℹ️ 有 {len(unused)} 个能力暂未被使用：")
+        st.info(f"ℹ️【说明】有 {len(unused)} 个能力暂未被使用（这是正常设计）：")
         for cap_id in unused:
             st.caption(f"- {cap_id}")
     else:
@@ -3228,46 +3337,71 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
         bindings_path_local = project_root / "configs" / "capability_runtime_bindings.local.yaml"
         bindings_path_main = project_root / "configs" / "capability_runtime_bindings.yaml"
         if bindings_path_local.exists():
-            st.info(f"ℹ️ 使用本地运行时绑定配置：capability_runtime_bindings.local.yaml")
+            st.info(f"ℹ️【说明】使用本地运行时绑定配置：capability_runtime_bindings.local.yaml")
         elif bindings_path_main.exists():
             st.success(f"✅ 运行时绑定配置文件存在（共 {len(runtime_binding_registry.bindings)} 个绑定）。")
         else:
             st.warning("⚠️ capability_runtime_bindings.yaml 不存在，所有能力将显示为未绑定。")
 
-        # 校验 binding capability_id 是否有效
-        binding_warnings = validate_runtime_bindings(runtime_binding_registry, registry)
-        if binding_warnings:
-            for warn in binding_warnings:
-                st.warning(warn)
+        # 校验 binding capability_id 是否有效（错误级别）
+        binding_errors = []
+        binding_warnings = []
+        cap_ids = {c.capability_id for c in registry.capabilities}
+        binding_ids = {b.capability_id for b in runtime_binding_registry.bindings}
+        unknown_binding_ids = binding_ids - cap_ids
+        if unknown_binding_ids:
+            binding_errors.append(f"以下 binding 引用了未知的 capability_id：{', '.join(sorted(unknown_binding_ids))}")
+
+        # 检查重复
+        seen: dict[str, int] = {}
+        for b in runtime_binding_registry.bindings:
+            seen[b.capability_id] = seen.get(b.capability_id, 0) + 1
+        for cap_id, count in seen.items():
+            if count > 1:
+                binding_errors.append(f"runtime binding capability_id 重复：{cap_id} 出现了 {count} 次")
+
+        if binding_errors:
+            for err in binding_errors:
+                st.error(f"❌【错误】{err}")
         else:
             st.success("✅ 所有 binding 的 capability_id 都有效。")
 
-        # 检查 binding 文件路径是否存在（warning 不是 error）
+        # 检查 binding 文件路径是否存在（警告级别，因为 data/ 不提交是正常的）
         missing_files = check_binding_files_exist(runtime_binding_registry, project_root)
         if missing_files:
             total_missing_files = sum(len(files) for files in missing_files.values())
-            st.warning(f"⚠️ 有 {len(missing_files)} 个 binding 的运行文件不存在（共 {total_missing_files} 个，这是正常的，因为 data/ 目录不提交）")
+            st.warning(f"⚠️【警告】有 {len(missing_files)} 个 binding 的运行文件不存在（共 {total_missing_files} 个）。这通常是正常的，因为 data/ 目录不提交到仓库。")
             for cap_id, files in missing_files.items():
                 st.caption(f"- {cap_id}: {', '.join(files)}")
         else:
             st.success("✅ 所有 binding 指向的运行文件都存在。")
 
         # 绑定覆盖率
-        cap_ids = {c.capability_id for c in registry.capabilities}
-        binding_ids = {b.capability_id for b in runtime_binding_registry.bindings}
         covered = cap_ids & binding_ids
         not_covered = cap_ids - binding_ids
-        extra_bindings = binding_ids - cap_ids
 
         st.info(f"📊 绑定覆盖率：{len(covered)} / {len(cap_ids)} 个能力（{round(len(covered)/len(cap_ids)*100, 1) if cap_ids else 0}%）")
 
         if not_covered:
-            st.info(f"ℹ️ 有 {len(not_covered)} 个能力尚未绑定真实运行数据：")
+            # 区分"工具能力无 binding"（说明）和"数据能力无 binding"（警告）
+            utility_caps = []
+            other_caps = []
             for cap_id in sorted(not_covered):
-                st.caption(f"- {cap_id}")
+                # 查 cap 对象的 runtime_mode
+                cap_obj = next((c for c in registry.capabilities if c.capability_id == cap_id), None)
+                if cap_obj and cap_obj.runtime_mode == "utility":
+                    utility_caps.append(cap_id)
+                else:
+                    other_caps.append(cap_id)
 
-        if extra_bindings:
-            st.warning(f"⚠️ 有 {len(extra_bindings)} 个 binding 不在能力注册表中：{', '.join(sorted(extra_bindings))}")
+            if utility_caps:
+                st.info(f"ℹ️【说明】有 {len(utility_caps)} 个工具能力无需绑定（runtime.*）：{', '.join(utility_caps)}")
+            if other_caps:
+                st.warning(f"⚠️【警告】有 {len(other_caps)} 个数据能力尚未绑定真实运行数据：{', '.join(other_caps)}")
+
+        if unknown_binding_ids:
+            # 已经在前面用 error 报过了，这里省略
+            pass
 
 
 def main():

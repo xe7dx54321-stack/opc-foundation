@@ -1,7 +1,7 @@
 # OPC Foundation Control Center
 
 更新时间：2026-06-25
-状态：M3B-3 Ready（真实运行数据接入）
+状态：M3B-3b Ready（健康状态校准完成）
 
 ## 1. 目标
 
@@ -216,6 +216,7 @@ streamlit run src/opc_foundation/dashboard/app.py
 ```text
 ✅ M3B-1: Control Center MVP（能力地图、健康监控、配置检查）
 ✅ M3B-2: Control Center 增强（运行手册、能力详情、文档入口）
+✅ M3B-3b: 健康状态校准（runtime_mode / document_extraction 文件类型归因）
 ✅ M3B-3: Control Center 真实运行数据接入（runtime binding、健康聚合）
 M3C: Runtime 层接入已有主线
 M4: Research/News Source Harmonization

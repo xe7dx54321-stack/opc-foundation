@@ -309,13 +309,13 @@ def test_build_runtime_summary_failed(tmp_path: Path) -> None:
 
 
 def test_build_runtime_summary_unknown_no_records(tmp_path: Path) -> None:
-    """无记录时显示 unknown。"""
+    """无记录时显示 unknown_never_run（M3B-3b 校准后状态名）。"""
     cap = _make_test_cap()
     binding = _make_test_binding()
 
     evidence = build_runtime_evidence(cap, binding, tmp_path)
     summary = build_runtime_summary_from_evidence(cap, binding, evidence)
-    assert summary.runtime_health == "unknown"
+    assert summary.runtime_health == "unknown_never_run"
 
 
 def test_build_runtime_summary_failed_queue_triggers_attention(tmp_path: Path) -> None:
@@ -384,8 +384,8 @@ def test_suggest_action_not_configured() -> None:
 
 
 def test_suggest_action_unknown() -> None:
-    """suggest_action: unknown 返回正确中文。"""
-    assert suggest_action("unknown", False, False) == "尚未发现运行记录"
+    """suggest_action: unknown_never_run 返回正确中文（M3B-3b 校准后）。"""
+    assert suggest_action("unknown_never_run", False, False) == "尚未发现运行记录，运行能力后会更新"
 
 
 def test_suggest_action_stale() -> None:

@@ -32,7 +32,10 @@ Local dashboard for visualizing foundation capabilities, health, and usage.
 streamlit run src/opc_foundation/dashboard/app.py
 ```
 
-M3B-3 已支持真实运行数据接入，通过 runtime binding 精确匹配每个能力的健康状态。
+M3B-3 已支持真实运行数据接入，通过 runtime binding 精确匹配每个能力的健康状态。M3B-3b 进一步校准健康状态显示：
+- 工具能力（runtime.*）显示为「工具能力」，不计入异常
+- 已知限制（如 HKEX）显示为「已知限制」，不作为每日修复项
+- document_extraction 按文件类型精准归因（一个 PDF 失败不再扩散到全部文档类型）
 
 - [Control Center 文档](docs/foundation_control_center.md)
 - [Control Center 使用指南](docs/foundation_control_center_usage.md)

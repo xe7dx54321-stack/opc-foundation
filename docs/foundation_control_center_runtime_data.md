@@ -1,8 +1,8 @@
 # Control Center 运行时数据接入说明
 
 更新时间：2026-06-25
-状态：M3B-3 Ready
-版本：1.0
+状态：M3B-3b Ready（健康状态校准完成）
+版本：1.1
 
 ## 1. 为什么需要 runtime binding
 
@@ -417,7 +417,141 @@ Dashboard 会优先加载 local 版本，如果没有再加载主配置。
 
 ---
 
-## 8. 相关文档
+## 8. M3B-3b 健康状态校准
+
+### 8.1 校准目标
+
+M3B-3 接入真实数据后，发现 Dashboard 有以下误报问题：
+
+- 工具能力（runtime.*）被显示为「未配置」
+- HKEX 等已知限制被显示为「需关注」
+- research / SEC / CNINFO 还未运行被显示为「未知」（容易被误解为故障）
+- document_extraction 全员降级（一个 PDF 失败扩散到全部文档类型）
+
+M3B-3b 引入 **runtime_mode（运行模式）** 概念，校准 Dashboard 显示。
+
+### 8.2 运行模式
+
+在 `foundation_capabilities.yaml` 中为每个能力配置 `runtime_mode` 字段：
+
+```yaml
+- capability_id: runtime.jsonl
+  runtime_mode: utility  # 工具能力
+  ...
+
+- capability_id: official_filing.hkex_announcement
+  runtime_mode: known_limited  # 已知限制
+  ...
+```
+
+四种模式：
+
+| 模式 | 中文 | 适用场景 | 异常计入 |
+|---|---|---|---|
+| `data_source` | 数据能力 | research / official_filing / document_extraction | 是 |
+| `utility` | 工具能力 | runtime.* 工具函数 | ❌ 否 |
+| `known_limited` | 已知限制 | HKEX 等外部限制 | 降级不算 |
+| `manual_only` | 人工触发 | manual_url | 无记录不视为故障 |
+
+### 8.3 document_extraction 按文件类型精准归因
+
+M3B-3b 重构了匹配逻辑，document_extraction 类能力严格按文件扩展名匹配：
+
+```yaml
+- capability_id: document_extraction.pdf
+  file_extensions:
+    - .pdf  # 只匹配 .pdf 失败
+  ...
+
+- capability_id: document_extraction.html
+  file_extensions:
+    - .html
+    - .htm  # 匹配 .html 和 .htm
+  ...
+```
+
+匹配优先级：
+1. `file_extension` 字段
+2. `original_path` / `document_path` / `file_path` / `path` 后缀
+3. `raw_entry.path` / `raw_entry.file_path` 后缀
+4. `metadata.file_extension`
+5. `mime_type` 推断
+6. 都不行则不匹配（不扩散到其他能力）
+
+**关键校准**：匹配到 0 条就返回 0 条，**不 fallback**。这避免了一个 PDF 失败扩散到全部文档类型。
+
+### 8.4 HKEX 已知限制
+
+`official_filing.hkex_announcement` 的 `runtime_mode` 设为 `known_limited`：
+
+- 降级（degraded）**不**触发 needs_attention
+- failed_queue 积压可以展示，但标注为已知限制
+- 配置检查中不显示为 error
+- 健康监控中排在「需关注」之后
+
+### 8.5 未知 ≠ 失败
+
+校准后，状态从 `unknown` 改为 `unknown_never_run`，显示为「未知 · 尚未运行」：
+
+- 适用：已绑定运行数据路径但本地暂无记录的能力
+- 含义：「能力已绑定运行数据路径，但本地尚未发现运行记录。运行对应能力后，Dashboard 会自动读取状态。」
+- 不视为故障
+
+### 8.6 工具能力
+
+runtime.* 工具类能力的显示从「未配置」改为「工具能力」：
+
+- 适用：`runtime.archive_paths` / `runtime.jsonl` / `runtime.failed_queue` / `runtime.run_log` / `runtime.health_status`
+- 不计入未知、需关注、失败、降级
+- 配置检查中标注为「说明」（正常设计）
+
+### 8.7 配置检查三分类
+
+M3B-3b 后，配置检查区分三类：
+
+| 分类 | 含义 | 示例 |
+|---|---|---|
+| 错误 | 必须修复 | binding capability_id 不存在、重复 |
+| 警告 | 不影响运行，需知晓 | 运行文件不存在（data/ 不提交是正常的） |
+| 说明 | 正常设计 | 工具能力无 binding、HKEX known_limited |
+
+### 8.8 状态解释
+
+每个能力的状态解释通过 `runtime_mode` 和 `runtime_health` 综合生成：
+
+- 工具能力：「工具能力，不需要单独运行，也不会产生 source_health 记录。」
+- 已知限制：「该能力当前属于已知限制，不作为每日修复项；除非需要推进相关能力增强，否则无需重复关注。」
+- 人工触发：「该能力是人工触发能力，等待人工触发运行后才会产生记录。」
+- 未知 · 尚未运行：「能力已绑定运行数据路径，但本地尚未发现运行记录。」
+- document_extraction：「当前能力按文件类型归因：.pdf 失败只影响 document_extraction.pdf。」
+
+### 8.9 FAQ（新增）
+
+#### Q11：为什么工具能力显示「工具能力」而不是「未配置」？
+
+**A：** 工具能力（runtime.*）不需要单独运行，也不会产生 source_health 记录。显示「工具能力」是 M3B-3b 的校准，避免误报成「未配置」。
+
+#### Q12：为什么 HKEX 降级不触发需关注？
+
+**A：** HKEX 的 `runtime_mode` 是 `known_limited`，表示当前有外部限制（HKEXnews 客户端渲染）。按 M3B-3b 规则，已知限制的降级不算需关注，不作为每日修复项。
+
+#### Q13：一个 PDF 失败会不会影响 HTML/TXT/Markdown？
+
+**A：** 不会。M3B-3b 重构了匹配逻辑，document_extraction 类能力严格按文件扩展名匹配：
+- document_extraction.pdf 只看 .pdf 失败
+- document_extraction.html 只看 .html / .htm 失败
+- document_extraction.txt 只看 .txt 失败
+- document_extraction.markdown 只看 .md / .markdown 失败
+
+一个 PDF 失败只会触发 document_extraction.pdf，其他不受影响。
+
+#### Q14：怎么给一个能力设置 runtime_mode？
+
+**A：** 在 `configs/foundation_capabilities.yaml` 中给该能力添加 `runtime_mode` 字段，可选值：`data_source`（默认）/ `utility` / `known_limited` / `manual_only`。
+
+---
+
+## 9. 相关文档
 
 - [Foundation Control Center](foundation_control_center.md) — 中控台产品说明
 - [Foundation Control Center 使用指南](foundation_control_center_usage.md) — 使用指南

@@ -91,6 +91,7 @@ def load_capabilities_config(path: str | Path) -> CapabilityRegistry:
                 what_it_does=list(c.get("what_it_does", []) or []),
                 typical_usage=c.get("typical_usage", ""),
                 sources=list(c.get("sources", []) or []),
+                runtime_mode=c.get("runtime_mode", "data_source"),
             )
         )
 
