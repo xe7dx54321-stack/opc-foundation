@@ -1,0 +1,2284 @@
+# OPC Foundation Source Inventory
+# 用于登记后续准备上线的真实信息源
+# 本阶段只做配置登记，不真实访问网站，不启动采集
+
+version: 1
+updated_at: "2026-06-25"
+
+# ============================================
+# Source Groups - 信息源分组
+# ============================================
+source_groups:
+  - group_id: official_public_research
+    group_name: 投行官方公开研究
+    description: 投行官网公开研究、公开报告、公开观点入口
+    default_activation_priority: S
+    default_automation_mode: scheduled
+    default_schedule_profile: medium_daily
+
+  - group_id: official_podcast_transcript
+    group_name: 投行官方播客/文字稿
+    description: 投行官方播客节目及其文字稿版本
+    default_activation_priority: S
+    default_automation_mode: scheduled
+    default_schedule_profile: medium_daily
+
+  - group_id: bank_conference_transcripts
+    group_name: 投行会议纪要/公司IR
+    description: 投行主办会议的纪要、上市公司投资者关系页面
+    default_activation_priority: S
+    default_automation_mode: scheduled
+    default_schedule_profile: low_daily
+
+  - group_id: media_research_mentions
+    group_name: 媒体研报二次引用
+    description: 主流财经媒体对投行研报的二次引用和报道
+    default_activation_priority: A
+    default_automation_mode: scheduled
+    default_schedule_profile: high_daily
+
+  - group_id: analyst_actions
+    group_name: 分析师评级/目标价变动
+    description: 分析师评级变动、目标价调整等动作信息（仅登记metadata，不做投资判断）
+    default_activation_priority: A
+    default_automation_mode: scheduled
+    default_schedule_profile: high_daily
+
+  - group_id: chinese_rebroadcast
+    group_name: 中文财经二次传播
+    description: 中文财经媒体/自媒体对海外研报观点的二次传播
+    default_activation_priority: B
+    default_automation_mode: scheduled
+    default_schedule_profile: medium_daily
+
+  - group_id: blocked_high_risk_sources
+    group_name: 高风险禁止源
+    description: 明确禁止接入的高风险信息源
+    default_activation_priority: blocked
+    default_automation_mode: do_not_ingest
+    default_schedule_profile: blocked
+
+  - group_id: search_providers
+    group_name: 搜索补充源
+    description: 各类搜索API/provider，用于补充查询，不进入默认高频调度
+    default_activation_priority: supplement
+    default_automation_mode: on_demand
+    default_schedule_profile: on_demand
+
+  - group_id: community_dev_signals
+    group_name: 社区/开发者信号
+    description: GitHub Issues、Hacker News等技术社区信号，供Demand Radar或指定项目调用
+    default_activation_priority: supplement
+    default_automation_mode: dormant
+    default_schedule_profile: on_demand
+
+# ============================================
+# Sources - 信息源清单
+# ============================================
+sources:
+  # ----------------------------------------
+  # 1. 投行官方公开研究 (S/A)
+  # ----------------------------------------
+  - source_id: goldman_sachs_research
+    source_name: Goldman Sachs Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/insights/goldman-sachs-research"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: 只采集公开页面和摘要，不抓取客户平台付费研报
+
+  - source_id: goldman_sachs_reports
+    source_name: Goldman Sachs Reports
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/insights/reports"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 公开研报页面，仅采集摘要和标题
+
+  - source_id: goldman_sachs_top_of_mind
+    source_name: Goldman Sachs Top of Mind
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/insights/top-of-mind"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - research_summary
+      - thematic_report
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Goldman Sachs 主题研究报告系列
+
+  - source_id: goldman_sachs_insights
+    source_name: Goldman Sachs Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/insights"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - insights_page
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: Goldman Sachs 综合洞察页面
+
+  - source_id: goldman_sachs_greater_china
+    source_name: Goldman Sachs Greater China 我们的观点
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/greater-china/our-views"
+    institution: Goldman Sachs
+    region: china
+    content_type:
+      - research_summary
+      - china_focus
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 高盛中国观点页面，关注中国经济和资本市场
+
+  - source_id: morgan_stanley_insights
+    source_name: Morgan Stanley Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/insights"
+    institution: Morgan Stanley
+    region: global
+    content_type:
+      - insights_page
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: Morgan Stanley 综合洞察页面
+
+  - source_id: morgan_stanley_research
+    source_name: Morgan Stanley Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/institutional-research"
+    institution: Morgan Stanley
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Morgan Stanley Institutional Research 公开部分
+
+  - source_id: morgan_stanley_thoughts_on_market
+    source_name: Morgan Stanley Thoughts on the Market
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/ideas/thoughts-on-the-market"
+    institution: Morgan Stanley
+    region: global
+    content_type:
+      - market_commentary
+      - podcast_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Morgan Stanley 市场观点，同时有播客版本
+
+  - source_id: morgan_stanley_china
+    source_name: Morgan Stanley China
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/china"
+    institution: Morgan Stanley
+    region: china
+    content_type:
+      - china_focus
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Morgan Stanley 中国市场研究
+
+  - source_id: morgan_stanley_fund_research
+    source_name: Morgan Stanley 基金研究报告
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/im"
+    institution: Morgan Stanley Investment Management
+    region: global
+    content_type:
+      - fund_research
+      - investment_insights
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Morgan Stanley IM 公开基金研究报告
+
+  - source_id: jp_morgan_research
+    source_name: J.P. Morgan Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: J.P. Morgan
+    url: "https://www.jpmorgan.com/research"
+    institution: J.P. Morgan
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: J.P. Morgan Research 公开研报
+
+  - source_id: jp_morgan_global_research_reports
+    source_name: J.P. Morgan Global Research Reports
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: J.P. Morgan
+    url: "https://www.jpmorgan.com/insights/research"
+    institution: J.P. Morgan
+    region: global
+    content_type:
+      - global_research
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: J.P. Morgan 全球研究报告
+
+  - source_id: jp_morgan_insights
+    source_name: J.P. Morgan Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: J.P. Morgan
+    url: "https://www.jpmorgan.com/insights"
+    institution: J.P. Morgan
+    region: global
+    content_type:
+      - insights_page
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: J.P. Morgan 综合洞察页面
+
+  - source_id: jp_morgan_research_insights
+    source_name: J.P. Morgan Research Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: J.P. Morgan
+    url: "https://www.jpmorgan.com/research-insights"
+    institution: J.P. Morgan
+    region: global
+    content_type:
+      - research_insights
+      - podcast_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: J.P. Morgan Research Insights，部分有播客
+
+  - source_id: bofa_global_research
+    source_name: BofA Global Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Bank of America
+    url: "https://research.bofa.com"
+    institution: Bank of America
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: BofA Global Research 公开研报
+
+  - source_id: bofa_global_research_insights
+    source_name: BofA Global Research and Market Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Bank of America
+    url: "https://www.bankofamerica.com/market-insights"
+    institution: Bank of America
+    region: global
+    content_type:
+      - market_insights
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: BofA 市场洞察和研究摘要
+
+  - source_id: bofa_must_read_research
+    source_name: BofA Must Read Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Bank of America
+    url: "https://research.bofa.com/must-read"
+    institution: Bank of America
+    region: global
+    content_type:
+      - must_read
+      - featured_research
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: BofA Must Read 研报精选
+
+  - source_id: bofa_global_research_unlocked
+    source_name: BofA Global Research Unlocked
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: Bank of America
+    url: "https://www.bankofamerica.com/global-research-unlocked"
+    institution: Bank of America
+    region: global
+    content_type:
+      - podcast_transcript
+      - audio_summary
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: BofA 播客节目，有文字稿版本
+
+  - source_id: bofa_weekly_market_recap
+    source_name: BofA Weekly Market Recap
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Bank of America
+    url: "https://www.bankofamerica.com/weekly-recap"
+    institution: Bank of America
+    region: global
+    content_type:
+      - weekly_recap
+      - market_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周1次
+    recommended_time_windows:
+      - friday_evening
+    enabled_by_default: true
+    notes: BofA 每周市场回顾
+
+  - source_id: citi_research
+    source_name: Citi Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Citi
+    url: "https://www.citi.com/research"
+    institution: Citi
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Citi Research 公开研报
+
+  - source_id: citi_institute
+    source_name: Citi Institute
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Citi
+    url: "https://www.citiinstitute.com"
+    institution: Citi
+    region: global
+    content_type:
+      - institute_research
+      - thought_leadership
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Citi Institute 思想领导力研究
+
+  - source_id: citi_gps
+    source_name: Citi GPS
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Citi
+    url: "https://www.citi.com/citi-gps"
+    institution: Citi
+    region: global
+    content_type:
+      - gps_report
+      - global_trends
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周1-2次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Citi Global Perspectives & Solutions 主题报告
+
+  - source_id: citi_insights
+    source_name: Citi Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Citi
+    url: "https://www.citi.com/insights"
+    institution: Citi
+    region: global
+    content_type:
+      - insights_page
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Citi 综合洞察页面
+
+  - source_id: ubs_global_research
+    source_name: UBS Global Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: UBS
+    url: "https://www.ubs.com/global-research"
+    institution: UBS
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: UBS Global Research 公开研报
+
+  - source_id: ubs_cio_insights
+    source_name: UBS CIO Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: UBS
+    url: "https://www.ubs.com/cio-insights"
+    institution: UBS
+    region: global
+    content_type:
+      - cio_commentary
+      - investment_views
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: UBS CIO 投资观点和市场评论
+
+  - source_id: ubs_global_research_pod_hub
+    source_name: UBS Global Research Pod Hub
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: UBS
+    url: "https://www.ubs.com/pod-hub"
+    institution: UBS
+    region: global
+    content_type:
+      - podcast_hub
+      - audio_transcript
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: UBS 播客集散页面，多个研究播客
+
+  - source_id: ubs_investment_bank_insights
+    source_name: UBS Investment Bank Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: UBS
+    url: "https://www.ubs.com/ib-insights"
+    institution: UBS Investment Bank
+    region: global
+    content_type:
+      - ib_insights
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: UBS Investment Bank 洞察页面
+
+  - source_id: barclays_research
+    source_name: Barclays Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Barclays
+    url: "https://www.barclays.com/research"
+    institution: Barclays
+    region: global
+    content_type:
+      - research_summary
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Barclays Research 公开研报
+
+  - source_id: barclays_ib_research
+    source_name: Barclays Investment Bank Research
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Barclays
+    url: "https://www.barclays.com/investment-bank-research"
+    institution: Barclays Investment Bank
+    region: global
+    content_type:
+      - ib_research
+      - report_page
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Barclays Investment Bank 研究页面
+
+  - source_id: barclays_our_insights
+    source_name: Barclays Our Insights
+    source_group: official_public_research
+    source_category: 投行官方公开研究
+    capability_id: research.official_public_research
+    source_type: official_public_research
+    website: Barclays
+    url: "https://www.barclays.com/insights"
+    institution: Barclays
+    region: global
+    content_type:
+      - insights_page
+      - research_summary
+    access_mode: public_web
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Barclays 综合洞察页面
+
+  # ----------------------------------------
+  # 2. 投行官方播客/文字稿 (S/A)
+  # ----------------------------------------
+  - source_id: morgan_stanley_thoughts_podcast
+    source_name: Morgan Stanley Thoughts on the Market (Podcast)
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/podcasts/thoughts-on-the-market"
+    institution: Morgan Stanley
+    region: global
+    content_type:
+      - podcast_audio
+      - podcast_transcript
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Morgan Stanley 市场观点播客，通常有文字稿
+
+  - source_id: goldman_sachs_exchanges
+    source_name: Goldman Sachs Exchanges
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/podcasts/exchanges"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - podcast_audio
+      - podcast_transcript
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Goldman Sachs Exchanges 播客节目
+
+  - source_id: goldman_sachs_the_markets
+    source_name: Goldman Sachs The Markets
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/podcasts/the-markets"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - podcast_audio
+      - market_commentary
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Goldman Sachs 市场播客
+
+  - source_id: goldman_sachs_top_of_mind_podcast
+    source_name: Goldman Sachs Top of Mind (Podcast)
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/podcasts/top-of-mind"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - podcast_audio
+      - thematic_transcript
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 每周1-2次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Goldman Sachs Top of Mind 主题播客
+
+  - source_id: jp_morgan_research_insights_podcast
+    source_name: J.P. Morgan Research Insights (Podcast)
+    source_group: official_podcast_transcript
+    source_category: 投行官方播客/文字稿
+    capability_id: research.podcast_transcript
+    source_type: podcast
+    website: J.P. Morgan
+    url: "https://www.jpmorgan.com/podcasts/research-insights"
+    institution: J.P. Morgan
+    region: global
+    content_type:
+      - podcast_audio
+      - research_transcript
+    access_mode: podcast_rss
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: J.P. Morgan Research Insights 播客
+
+  # ----------------------------------------
+  # 3. 投行会议纪要/公司IR (S/A)
+  # ----------------------------------------
+  - source_id: morgan_stanley_tmt_conference
+    source_name: Morgan Stanley Technology, Media & Telecom Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: Morgan Stanley
+    url: "https://www.morganstanley.com/conferences/tmt"
+    institution: Morgan Stanley
+    region: global
+    content_type:
+      - conference_transcript
+      - presentation_deck
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Morgan Stanley TMT 会议纪要，关注科技公司presentation
+
+  - source_id: jp_morgan_healthcare_conference
+    source_name: J.P. Morgan Healthcare Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: J.P. Morgan
+    url: "https://www.jpmorgan.com/conferences/healthcare"
+    institution: J.P. Morgan
+    region: global
+    content_type:
+      - conference_transcript
+      - healthcare_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: JPM 医疗健康会议纪要
+
+  - source_id: goldman_sachs_communacopia
+    source_name: Goldman Sachs Communacopia + Technology Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: Goldman Sachs
+    url: "https://www.goldmansachs.com/conferences/communacopia"
+    institution: Goldman Sachs
+    region: global
+    content_type:
+      - conference_transcript
+      - tech_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: GS Communacopia 会议纪要
+
+  - source_id: ubs_global_tech_conference
+    source_name: UBS Global Technology Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: UBS
+    url: "https://www.ubs.com/conferences/global-tech"
+    institution: UBS
+    region: global
+    content_type:
+      - conference_transcript
+      - tech_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: UBS 全球科技会议纪要
+
+  - source_id: bofa_global_tech_conference
+    source_name: BofA Global Technology Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: Bank of America
+    url: "https://www.bankofamerica.com/conferences/global-tech"
+    institution: Bank of America
+    region: global
+    content_type:
+      - conference_transcript
+      - tech_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: BofA 全球科技会议纪要
+
+  - source_id: barclays_global_tech_conference
+    source_name: Barclays Global Technology Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: Barclays
+    url: "https://www.barclays.com/conferences/global-tech"
+    institution: Barclays
+    region: global
+    content_type:
+      - conference_transcript
+      - tech_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Barclays 全球科技会议纪要
+
+  - source_id: deutsche_bank_tech_conference
+    source_name: Deutsche Bank Technology Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: Deutsche Bank
+    url: "https://www.db.com/conferences/tech"
+    institution: Deutsche Bank
+    region: global
+    content_type:
+      - conference_transcript
+      - tech_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Deutsche Bank 科技会议纪要
+
+  - source_id: bernstein_strategic_decisions
+    source_name: Bernstein Strategic Decisions Conference
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: conference
+    website: Bernstein
+    url: "https://www.bernstein.com/conferences/strategic-decisions"
+    institution: Bernstein
+    region: global
+    content_type:
+      - conference_transcript
+      - strategic_presentation
+    access_mode: public_web
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: 会议期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Bernstein Strategic Decisions 会议纪要
+
+  - source_id: microsoft_ir
+    source_name: Microsoft Investor Relations
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: company_ir
+    website: Microsoft
+    url: "https://www.microsoft.com/investor"
+    institution: Microsoft
+    region: global
+    content_type:
+      - ir_presentation
+      - earnings_call
+    access_mode: company_ir
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: S
+    schedule_profile: low_daily
+    recommended_frequency: earnings期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Microsoft IR 页面，财报电话会议纪要
+
+  - source_id: texas_instruments_ir
+    source_name: Texas Instruments Investor Relations
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: company_ir
+    website: Texas Instruments
+    url: "https://www.ti.com/investor"
+    institution: Texas Instruments
+    region: global
+    content_type:
+      - ir_presentation
+      - earnings_call
+    access_mode: company_ir
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: earnings期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: TI IR 页面，财报电话会议纪要
+
+  - source_id: merck_ir
+    source_name: Merck Investor Relations
+    source_group: bank_conference_transcripts
+    source_category: 投行会议纪要/公司IR
+    capability_id: research.conference_transcript
+    source_type: company_ir
+    website: Merck
+    url: "https://www.merck.com/investor"
+    institution: Merck
+    region: global
+    content_type:
+      - ir_presentation
+      - earnings_call
+    access_mode: company_ir
+    legal_confidence: public_ir
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: low_daily
+    recommended_frequency: earnings期间高频，平时周检
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: Merck IR 页面，财报电话会议纪要
+
+  # ----------------------------------------
+  # 4. 媒体研报二次引用 (A)
+  # ----------------------------------------
+  - source_id: reuters
+    source_name: Reuters
+    source_group: media_research_mentions
+    source_category: 媒体研报二次引用
+    capability_id: research.media_mention
+    source_type: mainstream_media
+    website: Reuters
+    url: "https://www.reuters.com"
+    institution: Reuters
+    region: global
+    content_type:
+      - news_article
+      - research_mention
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-4次
+    recommended_time_windows:
+      - morning
+      - midday
+      - evening
+    enabled_by_default: true
+    notes: Reuters 新闻，关注引用投行研报的报道
+
+  - source_id: marketwatch
+    source_name: MarketWatch
+    source_group: media_research_mentions
+    source_category: 媒体研报二次引用
+    capability_id: research.media_mention
+    source_type: mainstream_media
+    website: MarketWatch
+    url: "https://www.marketwatch.com"
+    institution: MarketWatch
+    region: global
+    content_type:
+      - news_article
+      - research_mention
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-4次
+    recommended_time_windows:
+      - morning
+      - midday
+      - evening
+    enabled_by_default: true
+    notes: MarketWatch 财经新闻，关注引用投行研报的报道
+
+  - source_id: yahoo_finance
+    source_name: Yahoo Finance
+    source_group: media_research_mentions
+    source_category: 媒体研报二次引用
+    capability_id: research.media_mention
+    source_type: mainstream_media
+    website: Yahoo Finance
+    url: "https://finance.yahoo.com"
+    institution: Yahoo
+    region: global
+    content_type:
+      - news_article
+      - research_mention
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-4次
+    recommended_time_windows:
+      - morning
+      - midday
+      - evening
+    enabled_by_default: true
+    notes: Yahoo Finance 新闻，关注引用投行研报的报道
+
+  - source_id: business_insider
+    source_name: Business Insider
+    source_group: media_research_mentions
+    source_category: 媒体研报二次引用
+    capability_id: research.media_mention
+    source_type: mainstream_media
+    website: Business Insider
+    url: "https://www.businessinsider.com"
+    institution: Business Insider
+    region: global
+    content_type:
+      - news_article
+      - research_mention
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-4次
+    recommended_time_windows:
+      - morning
+      - midday
+      - evening
+    enabled_by_default: true
+    notes: Business Insider 财经新闻，关注引用投行研报的报道
+
+  - source_id: markets_insider
+    source_name: Markets Insider
+    source_group: media_research_mentions
+    source_category: 媒体研报二次引用
+    capability_id: research.media_mention
+    source_type: mainstream_media
+    website: Markets Insider
+    url: "https://markets.businessinsider.com"
+    institution: Business Insider
+    region: global
+    content_type:
+      - market_news
+      - research_mention
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-4次
+    recommended_time_windows:
+      - morning
+      - midday
+      - evening
+    enabled_by_default: true
+    notes: Markets Insider 市场新闻，关注引用投行研报的报道
+
+  # ----------------------------------------
+  # 5. 分析师评级/目标价变动 (A)
+  # ----------------------------------------
+  - source_id: investing_com_analyst_ratings
+    source_name: Investing.com Analyst Ratings
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: Investing.com
+    url: "https://www.investing.com/equities/ratings"
+    institution: Investing.com
+    region: global
+    content_type:
+      - analyst_rating
+      - target_price
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-3次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: Investing.com 分析师评级页面，仅登记评级变动metadata，不做投资判断
+
+  - source_id: benzinga_analyst_ratings
+    source_name: Benzinga Analyst Ratings
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: Benzinga
+    url: "https://www.benzinga.com/analytics/ratings"
+    institution: Benzinga
+    region: global
+    content_type:
+      - analyst_rating
+      - target_price
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-3次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: Benzinga 分析师评级页面
+
+  - source_id: marketwatch_upgrades_downgrades
+    source_name: MarketWatch Upgrades/Downgrades
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: MarketWatch
+    url: "https://www.marketwatch.com/tools/upgrades-downgrades"
+    institution: MarketWatch
+    region: global
+    content_type:
+      - upgrade_downgrade
+      - analyst_rating
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: MarketWatch 评级升降页面
+
+  - source_id: wsj_upgrades_downgrades
+    source_name: WSJ Market Data Upgrades/Downgrades
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: Wall Street Journal
+    url: "https://www.wsj.com/market-data/quotes/upgrades-downgrades"
+    institution: WSJ
+    region: global
+    content_type:
+      - upgrade_downgrade
+      - analyst_rating
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: WSJ 评级升降数据页面
+
+  - source_id: the_fly
+    source_name: The Fly
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: The Fly
+    url: "https://thefly.com"
+    institution: The Fly
+    region: global
+    content_type:
+      - analyst_rating
+      - target_price
+      - fly_news
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-3次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: The Fly 分析师评级快讯
+
+  - source_id: streetinsider
+    source_name: StreetInsider
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: StreetInsider
+    url: "https://www.streetinsider.com"
+    institution: StreetInsider
+    region: global
+    content_type:
+      - analyst_rating
+      - target_price
+      - insider_news
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: high_daily
+    recommended_frequency: 每天2-3次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: StreetInsider 分析师评级和内幕快讯
+
+  - source_id: briefing_com_upgrades
+    source_name: Briefing.com Upgrades/Downgrades
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: Briefing.com
+    url: "https://www.briefing.com/stock-ratings"
+    institution: Briefing.com
+    region: global
+    content_type:
+      - upgrade_downgrade
+      - analyst_rating
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: Briefing.com 评级升降页面
+
+  - source_id: tipranks
+    source_name: TipRanks
+    source_group: analyst_actions
+    source_category: 分析师评级/目标价变动
+    capability_id: research.analyst_action
+    source_type: analyst_rating
+    website: TipRanks
+    url: "https://www.tipranks.com"
+    institution: TipRanks
+    region: global
+    content_type:
+      - analyst_rating
+      - target_price
+      - analyst_score
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: A
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - midday
+    enabled_by_default: true
+    notes: TipRanks 分析师评级和评分
+
+  # ----------------------------------------
+  # 6. 中文财经二次传播 (B)
+  # ----------------------------------------
+  - source_id: china_fund_news
+    source_name: 中国基金报
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 中国基金报
+    url: "https://www.chinafundnews.com"
+    institution: 中国基金报
+    region: china
+    content_type:
+      - chinese_news
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: 中国基金报，关注引用海外研报观点的报道，不存疑似泄露PDF
+
+  - source_id: quanshang_china
+    source_name: 券商中国
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 券商中国
+    url: "https://www.quanshang.cn"
+    institution: 券商中国
+    region: china
+    content_type:
+      - chinese_news
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: 券商中国，关注引用海外研报观点的报道
+
+  - source_id: wallstreet_cn
+    source_name: 华尔街见闻
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 华尔街见闻
+    url: "https://wallstreetcn.com"
+    institution: 华尔街见闻
+    region: china
+    content_type:
+      - chinese_news
+      - research_rebroadcast
+      - vip_content
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: 华尔街见闻，关注公开文章，VIP内容需合规确认，不存疑似泄露PDF
+
+  - source_id: cls_cn
+    source_name: 财联社
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 联社
+    url: "https://www.cls.cn"
+    institution: 财联社
+    region: china
+    content_type:
+      - chinese_news
+      - flash_news
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天2-3次
+    recommended_time_windows:
+      - morning
+      - midday
+      - evening
+    enabled_by_default: true
+    notes: 财联社快讯，关注引用海外研报观点的报道
+
+  - source_id: wind_public
+    source_name: Wind 万得公开内容
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: Wind
+    url: "https://www.wind.com.cn"
+    institution: Wind
+    region: china
+    content_type:
+      - chinese_news
+      - data_terminal
+    access_mode: public_web
+    legal_confidence: licensed_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: Wind 公开内容，付费终端内容不采集
+
+  - source_id: gelonghui
+    source_name: 格隆汇
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 格隆汇
+    url: "https://www.gelonghui.com"
+    institution: 格隆汇
+    region: china
+    content_type:
+      - chinese_news
+      - hk_stock_focus
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: 格隆汇港股资讯，关注引用海外研报观点的报道
+
+  - source_id: zhitong_caijing
+    source_name: 智通财经
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 智通财经
+    url: "https://www.zhitongcaijing.com"
+    institution: 智通财经
+    region: china
+    content_type:
+      - chinese_news
+      - hk_stock_focus
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: mainstream_media
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1-2次
+    recommended_time_windows:
+      - morning
+      - evening
+    enabled_by_default: true
+    notes: 智通财经港股资讯
+
+  - source_id: us_stock_research
+    source_name: 美股研究社
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 美股研究社
+    url: "https://www.usstockresearch.com"
+    institution: 美股研究社
+    region: china
+    content_type:
+      - chinese_news
+      - us_stock_focus
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: rebroadcast
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: low_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 美股研究社，关注引用海外研报观点的报道
+
+  - source_id: hk_stock_research
+    source_name: 港股研究社
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 港股研究社
+    url: "https://www.hkstockresearch.com"
+    institution: 港股研究社
+    region: china
+    content_type:
+      - chinese_news
+      - hk_stock_focus
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: rebroadcast
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: low_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 港股研究社，关注引用海外研报观点的报道
+
+  - source_id: jiwen_vip_public
+    source_name: 见闻VIP公开文章
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.media_mention
+    source_type: chinese_media
+    website: 华尔街见闻VIP
+    url: "https://wallstreetcn.com/vip"
+    institution: 华尔街见闻
+    region: china
+    content_type:
+      - vip_public_article
+      - research_rebroadcast
+    access_mode: public_web
+    legal_confidence: rebroadcast
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 见闻VIP部分公开文章，付费内容不采集
+
+  - source_id: goldman_sachs_china_wechat
+    source_name: 高盛中国（微信公众号）
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.wechat_archive
+    source_type: wechat
+    website: 微信公众号
+    url: "wechat:goldman_sachs_china"
+    institution: Goldman Sachs
+    region: china
+    content_type:
+      - wechat_article
+      - china_focus
+    access_mode: manual
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 高盛中国公众号，官方发布内容，不存疑似泄露PDF
+
+  - source_id: morgan_stanley_china_wechat
+    source_name: 摩根士丹利中国（微信公众号）
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.wechat_archive
+    source_type: wechat
+    website: 微信公众号
+    url: "wechat:morgan_stanley_china"
+    institution: Morgan Stanley
+    region: china
+    content_type:
+      - wechat_article
+      - china_focus
+    access_mode: manual
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 摩根士丹利中国公众号，官方发布内容
+
+  - source_id: morgan_stanley_fund_wechat
+    source_name: 摩根士丹利基金研究报告（微信公众号）
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.wechat_archive
+    source_type: wechat
+    website: 微信公众号
+    url: "wechat:morgan_stanley_fund"
+    institution: Morgan Stanley IM
+    region: china
+    content_type:
+      - wechat_article
+      - fund_research
+    access_mode: manual
+    legal_confidence: official
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 摩根士丹利基金公众号，基金研究报告摘要
+
+  - source_id: yanbaoshe_wechat
+    source_name: 研报社（微信公众号）
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.wechat_archive
+    source_type: wechat
+    website: 微信公众号
+    url: "wechat:yanbaoshe"
+    institution: 研报社
+    region: china
+    content_type:
+      - wechat_article
+      - research_rebroadcast
+    access_mode: manual
+    legal_confidence: rebroadcast
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: medium_daily
+    recommended_frequency: 每天1次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 研报社公众号，关注公开文章，不存疑似泄露PDF
+
+  - source_id: touyan_circle_wechat
+    source_name: 投研圈类账号（微信公众号）
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.wechat_archive
+    source_type: wechat
+    website: 微信公众号
+    url: "wechat:touyan_circle"
+    institution: 投研圈
+    region: china
+    content_type:
+      - wechat_article
+      - research_rebroadcast
+    access_mode: manual
+    legal_confidence: rebroadcast
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 投研圈类公众号，关注观点转述和公开文章，不存疑似泄露PDF
+
+  - source_id: wechat_secondary_broadcast
+    source_name: 部分微信公众号二次传播源
+    source_group: chinese_rebroadcast
+    source_category: 中文财经二次传播
+    capability_id: research.wechat_archive
+    source_type: wechat
+    website: 微信公众号
+    url: "wechat:secondary_broadcast"
+    institution: 多个公众号
+    region: china
+    content_type:
+      - wechat_article
+      - research_rebroadcast
+    access_mode: manual
+    legal_confidence: rebroadcast
+    automation_mode: scheduled
+    activation_priority: B
+    schedule_profile: low_daily
+    recommended_frequency: 每周2-3次
+    recommended_time_windows:
+      - morning
+    enabled_by_default: true
+    notes: 关注观点转述和公开文章，不存疑似泄露PDF，具体账号在M3C-1详细配置
+
+  # ----------------------------------------
+  # 7. 高风险禁止源
+  # ----------------------------------------
+  - source_id: telegram_groups
+    source_name: Telegram群
+    source_group: blocked_high_risk_sources
+    source_category: 高风险禁止源
+    capability_id: blocked
+    source_type: blocked
+    website: Telegram
+    url: "blocked:telegram_groups"
+    institution: N/A
+    region: global
+    content_type:
+      - blocked
+    access_mode: dormant
+    legal_confidence: high_risk
+    automation_mode: do_not_ingest
+    activation_priority: blocked
+    schedule_profile: blocked
+    enabled_by_default: false
+    notes: 明确禁止接入，Telegram群泄露内容高风险
+
+  - source_id: cloud_drive_share
+    source_name: 网盘分享
+    source_group: blocked_high_risk_sources
+    source_category: 高风险禁止源
+    capability_id: blocked
+    source_type: blocked
+    website: 网盘
+    url: "blocked:cloud_drive_share"
+    institution: N/A
+    region: global
+    content_type:
+      - blocked
+    access_mode: dormant
+    legal_confidence: high_risk
+    automation_mode: do_not_ingest
+    activation_priority: blocked
+    schedule_profile: blocked
+    enabled_by_default: false
+    notes: 明确禁止接入，网盘泄露研报PDF高风险
+
+  - source_id: pdf_download_sites
+    source_name: 研报PDF下载站
+    source_group: blocked_high_risk_sources
+    source_category: 高风险禁止源
+    capability_id: blocked
+    source_type: blocked
+    website: 研报下载站
+    url: "blocked:pdf_download_sites"
+    institution: N/A
+    region: global
+    content_type:
+      - blocked
+    access_mode: dormant
+    legal_confidence: high_risk
+    automation_mode: do_not_ingest
+    activation_priority: blocked
+    schedule_profile: blocked
+    enabled_by_default: false
+    notes: 明确禁止接入，非法研报下载站高风险
+
+  - source_id: unknown_wechat_pdf
+    source_name: 不明来源公众号PDF包
+    source_group: blocked_high_risk_sources
+    source_category: 高风险禁止源
+    capability_id: blocked
+    source_type: blocked
+    website: 微信公众号
+    url: "blocked:unknown_wechat_pdf"
+    institution: N/A
+    region: china
+    content_type:
+      - blocked
+    access_mode: dormant
+    legal_confidence: high_risk
+    automation_mode: do_not_ingest
+    activation_priority: blocked
+    schedule_profile: blocked
+    enabled_by_default: false
+    notes: 明确禁止接入，不明来源公众号PDF包高风险，涉嫌泄露
+
+  - source_id: report_download_proxy
+    source_name: 研报代下载站
+    source_group: blocked_high_risk_sources
+    source_category: 高风险禁止源
+    capability_id: blocked
+    source_type: blocked
+    website: 代下载站
+    url: "blocked:report_download_proxy"
+    institution: N/A
+    region: global
+    content_type:
+      - blocked
+    access_mode: dormant
+    legal_confidence: high_risk
+    automation_mode: do_not_ingest
+    activation_priority: blocked
+    schedule_profile: blocked
+    enabled_by_default: false
+    notes: 明确禁止接入，研报代下载站高风险，涉嫌侵权
+
+  # ----------------------------------------
+  # 8. 搜索补充源
+  # ----------------------------------------
+  - source_id: tavily_search
+    source_name: Tavily Search
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Tavily
+    url: "https://tavily.com"
+    institution: Tavily
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度，供Demand Radar或指定项目调用
+
+  - source_id: brave_search
+    source_name: Brave Search
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Brave
+    url: "https://search.brave.com"
+    institution: Brave
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度
+
+  - source_id: serpapi
+    source_name: SerpAPI
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: SerpAPI
+    url: "https://serpapi.com"
+    institution: SerpAPI
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度
+
+  - source_id: bing_search
+    source_name: Bing
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Bing
+    url: "https://www.bing.com"
+    institution: Microsoft
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度
+
+  - source_id: google_cse
+    source_name: Google CSE
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Google
+    url: "https://programmablesearchengine.google.com"
+    institution: Google
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: Google Custom Search Engine，不进入默认TRAE高频调度
+
+  - source_id: searx
+    source_name: Searx
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Searx
+    url: "https://searx.be"
+    institution: Searx
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 开源聚合搜索，不进入默认TRAE高频调度
+
+  - source_id: duckduckgo
+    source_name: DuckDuckGo
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: DuckDuckGo
+    url: "https://duckduckgo.com"
+    institution: DuckDuckGo
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度
+
+  - source_id: yahoo_search
+    source_name: Yahoo Search
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Yahoo
+    url: "https://search.yahoo.com"
+    institution: Yahoo
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度
+
+  - source_id: baidu_search
+    source_name: Baidu Search
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Baidu
+    url: "https://www.baidu.com"
+    institution: Baidu
+    region: china
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 搜索补充源，不进入默认TRAE高频调度，中文搜索补充
+
+  - source_id: custom_search
+    source_name: Custom Search
+    source_group: search_providers
+    source_category: 搜索补充源
+    capability_id: supplement
+    source_type: search_provider
+    website: Custom
+    url: "custom:search"
+    institution: Custom
+    region: global
+    content_type:
+      - search_result
+    access_mode: search_provider
+    legal_confidence: unknown
+    automation_mode: on_demand
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 自定义搜索源，供特定项目使用，不进入默认TRAE高频调度
+
+  # ----------------------------------------
+  # 9. Community / Dev 信号
+  # ----------------------------------------
+  - source_id: github_issues
+    source_name: GitHub Issues
+    source_group: community_dev_signals
+    source_category: 社区/开发者信号
+    capability_id: supplement
+    source_type: community
+    website: GitHub
+    url: "https://github.com/issues"
+    institution: GitHub
+    region: global
+    content_type:
+      - github_issue
+      - dev_signal
+    access_mode: public_web
+    legal_confidence: unknown
+    automation_mode: dormant
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 默认不作为foundation自动采集源，可留给Demand Radar或指定项目调用
+
+  - source_id: hacker_news
+    source_name: Hacker News
+    source_group: community_dev_signals
+    source_category: 社区/开发者信号
+    capability_id: supplement
+    source_type: community
+    website: Hacker News
+    url: "https://news.ycombinator.com"
+    institution: Y Combinator
+    region: global
+    content_type:
+      - hn_post
+      - dev_signal
+    access_mode: public_web
+    legal_confidence: unknown
+    automation_mode: dormant
+    activation_priority: supplement
+    schedule_profile: on_demand
+    enabled_by_default: false
+    notes: 默认不作为foundation自动采集源，可留给Demand Radar或指定项目调用

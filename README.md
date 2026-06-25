@@ -41,6 +41,19 @@ M3B-3 已支持真实运行数据接入，通过 runtime binding 精确匹配每
 - [Control Center 使用指南](docs/foundation_control_center_usage.md)
 - [运行时数据接入说明](docs/foundation_control_center_runtime_data.md)
 
+## Foundation Source Inventory
+
+M3C-0A 新增 `foundation_source_inventory.example.yaml`，用于登记后续准备上线的真实信息源（87 个源，覆盖 9 个 source group）。
+
+- 投行官方公开研究（S 级）：Goldman Sachs、Morgan Stanley、J.P. Morgan、BofA、Citi、UBS、Barclays
+- 媒体研报二次引用（A 级）：Reuters、MarketWatch、Yahoo Finance、Business Insider
+- 分析师评级（A 级）：Investing.com、Benzinga、The Fly、StreetInsider、TipRanks
+- 中文财经二次传播（B 级）：中国基金报、券商中国、华尔街见闻、财联社、格隆汇、智通财经
+- 搜索补充源：Tavily、Brave、SerpAPI、Bing、Google CSE 等
+- 禁止接入源：Telegram 群、网盘分享、研报下载站等高风险渠道
+
+详见 [Source Inventory Report](docs/foundation_source_inventory_report.md)。后续 M3C-1 将基于此清单配置具体 connector 和 TRAE 调度。
+
 ## What it is
 
 A single installable Python package providing cross-project reusable capabilities:
