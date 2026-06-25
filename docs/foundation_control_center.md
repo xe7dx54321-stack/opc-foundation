@@ -32,18 +32,16 @@ Control Center 是可视化管理界面，不是新的数据源主线。
 
 ## 2. 页面结构
 
-Control Center 包含 8 个页面：
+Control Center 包含 4 个页面（M3B-2 后精简）：
 
 | 页面 | 功能 |
 |---|---|
-| 总览 Dashboard | 能力总数、各状态数量、使用情况汇总 |
-| 能力地图 Capability Map | 所有能力的详细信息，支持筛选 |
+| 能力地图 Capability Map | 所有能力的详细信息，支持筛选，点击查看详情弹窗 |
 | 项目工作流 Workflow Map | 项目→工作流→阶段→Agent→能力映射 |
 | 健康监控 Health Monitor | 每个能力的运行健康状态 |
-| 运行日志 Run History | 最近运行记录 |
-| 失败队列 Failed Queue | 失败项列表 |
-| 文档入口 Docs Hub | 核心文档和能力文档入口 |
-| 配置检查 Config Check | 配置文件完整性检查 |
+| 配置检查 Config Check | 配置文件完整性检查，包括 source inventory 校验 |
+
+> 已删除的页面：总览、运行日志、失败队列、文档入口
 
 ## 3. 数据来源
 
@@ -51,11 +49,12 @@ Control Center 包含 8 个页面：
 |---|---|
 | 能力台账 | `configs/foundation_capabilities.yaml` |
 | 使用关系 | `configs/capability_usage_registry.example.yaml`（或 local 版本） |
+| 运行手册 | `configs/capability_runbooks.yaml` |
 | 运行时绑定 | `configs/capability_runtime_bindings.yaml`（或 local 版本） |
+| 信息源清单 | `configs/foundation_source_inventory.example.yaml` |
 | 健康状态 | `data/*/index/source_health.jsonl`（通过 runtime binding 匹配） |
 | 运行日志 | `data/*/index/run_log.jsonl`（通过 runtime binding 匹配） |
 | 失败队列 | `data/*/index/failed_queue.jsonl`（通过 runtime binding 匹配） |
-| 文档入口 | `docs/` 目录 |
 
 Control Center 只读取数据，不写回 data 文件。
 
@@ -218,6 +217,9 @@ streamlit run src/opc_foundation/dashboard/app.py
 ✅ M3B-2: Control Center 增强（运行手册、能力详情、文档入口）
 ✅ M3B-3b: 健康状态校准（runtime_mode / document_extraction 文件类型归因）
 ✅ M3B-3: Control Center 真实运行数据接入（runtime binding、健康聚合）
+✅ M3C-0A: 全信息源清单配置（source inventory）
+✅ M3C-0B: Source Inventory 接入配置检查与上线计划
+M3C-1: 全信息源 connector 接入与 TRAE 调度
 M3C: Runtime 层接入已有主线
 M4: Research/News Source Harmonization
 M5: Partial Candidates
@@ -229,6 +231,8 @@ M6: th_capital_stock Consumption Bridge
 - [Control Center 使用指南](foundation_control_center_usage.md)
 - [Control Center 运行手册](foundation_control_center_runbook.md)
 - [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md)
+- [Source Inventory Report](foundation_source_inventory_report.md)
+- [Source Activation Plan](foundation_source_activation_plan.md)
 - [Foundation Capability Registry](foundation_capability_registry.md)
 - [Foundation Readiness Summary](foundation_readiness_summary.md)
 - [Runtime Foundation](runtime_foundation.md)

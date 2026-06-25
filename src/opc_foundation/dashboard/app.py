@@ -30,10 +30,13 @@ from opc_foundation.dashboard.loaders import (
     load_jsonl_safe,
     load_runbooks_config,
     load_runtime_bindings_config,
+    load_source_inventory_config,
     load_usage_registry,
+    summarize_source_inventory,
     validate_capabilities,
     validate_runbooks,
     validate_runtime_bindings,
+    validate_source_inventory,
 )
 from opc_foundation.dashboard.health import (
     build_dashboard_summary,
@@ -186,13 +189,13 @@ def _load_all_data(project_root: Path):
 
     功能说明（小白解读）：
         一次性加载所有 dashboard 需要的数据，避免重复读取文件。
-        包括：能力配置、使用注册表、运行手册、运行时绑定、运行时摘要。
+        包括：能力配置、使用注册表、运行手册、运行时绑定、运行时摘要、信息源清单。
 
     参数：
         project_root: 项目根目录
 
     返回：
-        (registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries) 五元组
+        (registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries, source_inventory) 六元组
     """
     cap_path = project_root / "configs" / "foundation_capabilities.yaml"
     registry = load_capabilities_config(cap_path)
@@ -222,7 +225,11 @@ def _load_all_data(project_root: Path):
             cap, binding, evidence
         )
 
-    return registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries
+    # 加载信息源清单（source inventory）
+    source_inventory_path = project_root / "configs" / "foundation_source_inventory.example.yaml"
+    source_inventory = load_source_inventory_config(source_inventory_path)
+
+    return registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries, source_inventory
 
 
 def _health_color(health: str) -> str:
@@ -3230,7 +3237,7 @@ body {
 
 
 
-def _render_config_check(st, registry, usage_registry, runbook_registry, runtime_binding_registry, project_root):
+def _render_config_check(st, registry, usage_registry, runbook_registry, runtime_binding_registry, source_inventory, project_root):
     """渲染配置检查页面。
 
     功能说明（小白解读）：
@@ -3241,6 +3248,7 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
         4. 未使用能力
         5. 未知引用检查
         6. Runtime Binding 检查
+        7. 信息源清单检查（M3C-0B 新增）
 
     参数：
         st:                     streamlit 模块
@@ -3248,6 +3256,7 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
         usage_registry:         使用注册表
         runbook_registry:       运行手册注册表
         runtime_binding_registry: 运行时绑定注册表
+        source_inventory:       信息源清单
         project_root:           项目根目录
     """
     st.header("配置检查")
@@ -3403,6 +3412,70 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
             # 已经在前面用 error 报过了，这里省略
             pass
 
+    # 7. 信息源清单检查（M3C-0B 新增）
+    st.subheader("7️⃣ 信息源清单检查")
+    source_validation = validate_source_inventory(source_inventory, registry)
+
+    # 展示摘要指标
+    col1, col2, col3, col4 = st.columns(4)
+    col1.metric("source group 数量", source_validation.group_count)
+    col2.metric("source 数量", source_validation.source_count)
+    col3.metric("默认启用", source_validation.enabled_count)
+    col4.metric("高风险禁止源", source_validation.high_risk_count)
+
+    col5, col6, col7, col8 = st.columns(4)
+    col5.metric("错误", source_validation.error_count, delta_color="inverse")
+    col6.metric("警告", source_validation.warning_count, delta_color="off")
+    col7.metric("说明", source_validation.info_count)
+    col8.metric("搜索补充源", source_validation.search_provider_count)
+
+    # 优先级分布
+    with st.expander("📊 优先级分布", expanded=False):
+        if source_validation.priority_counts:
+            priority_data = [
+                {"优先级": p, "数量": c}
+                for p, c in sorted(source_validation.priority_counts.items())
+            ]
+            st.table(priority_data)
+        else:
+            st.info("暂无数据")
+
+    # 自动化模式分布
+    with st.expander("⚙️ 自动化模式分布", expanded=False):
+        if source_validation.automation_counts:
+            automation_data = [
+                {"自动化模式": m, "数量": c}
+                for m, c in sorted(source_validation.automation_counts.items())
+            ]
+            st.table(automation_data)
+        else:
+            st.info("暂无数据")
+
+    # 检查结果表
+    st.subheader("检查结果")
+    if source_validation.checks:
+        # 转换为表格数据
+        level_labels = {"error": "🔴 错误", "warning": "🟡 警告", "info": "🔵 说明"}
+        check_rows = []
+        for c in source_validation.checks:
+            check_rows.append({
+                "级别": level_labels.get(c.level, c.level),
+                "检查项": c.check_name,
+                "结果": c.result,
+                "说明": c.detail,
+            })
+        st.table(check_rows)
+    else:
+        st.info("暂无检查结果")
+
+    # 总体结论
+    if source_validation.error_count > 0:
+        st.error("❌ 存在必须修复的问题，暂不建议进入上线脚本阶段。")
+    elif source_validation.warning_count > 0:
+        st.warning("⚠️ 存在需要注意的配置项，但不阻断后续规划。")
+    else:
+        st.success("✅ 信息源清单校验通过，可进入上线计划阶段。")
+
 
 def main():
     """Dashboard 主入口函数。
@@ -3441,7 +3514,7 @@ def main():
 
     # 加载数据
     project_root = _find_project_root()
-    registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries = _load_all_data(project_root)
+    registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries, source_inventory = _load_all_data(project_root)
 
     # 侧边栏导航
     st.sidebar.title("OPC Foundation 中控台")
@@ -3491,7 +3564,7 @@ def main():
     elif page == "健康监控":
         _render_health_monitor(st, registry, runtime_summaries)
     elif page == "配置检查":
-        _render_config_check(st, registry, usage_registry, runbook_registry, runtime_binding_registry, project_root)
+        _render_config_check(st, registry, usage_registry, runbook_registry, runtime_binding_registry, source_inventory, project_root)
 
 
 if __name__ == "__main__":

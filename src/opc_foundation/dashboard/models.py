@@ -572,3 +572,224 @@ class CapabilityRuntimeEvidence:
     latest_run_record: dict | None = None
     latest_failed_record: dict | None = None
     latest_report_path: str = ""
+
+
+# ===========================================================================
+# Source Inventory 相关数据模型（M3C-0B 新增）
+# ===========================================================================
+
+
+@dataclass(frozen=True)
+class SourceGroup:
+    """信息源分组（source group）。
+
+    功能说明（小白解读）：
+        把信息源按类别分组，比如"投行官方公开研究"、"媒体研报二次引用"等。
+        每个组有默认的优先级、自动化模式、调度档位。
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        group_id:                     分组 ID（如 official_public_research）
+        group_name:                   分组名称（如 投行官方公开研究）
+        description:                  分组描述
+        default_activation_priority:  默认激活优先级（S/A/B/C/supplement/blocked）
+        default_automation_mode:      默认自动化模式（scheduled/on_demand/...）
+        default_schedule_profile:     默认调度档位（high_daily/medium_daily/...）
+    """
+
+    group_id: str
+    group_name: str
+    description: str = ""
+    default_activation_priority: str = "A"
+    default_automation_mode: str = "scheduled"
+    default_schedule_profile: str = "medium_daily"
+
+
+@dataclass(frozen=True)
+class FoundationSource:
+    """单个信息源（source）。
+
+    功能说明（小白解读）：
+        一个具体的信息源，比如"Goldman Sachs Research"网站。
+        包含这个源的所有属性：ID、名称、分类、网站、接入方式、优先级等。
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        source_id:                源 ID（如 goldman_sachs_research）
+        source_name:              源名称（如 Goldman Sachs Research）
+        source_group:             所属分组 ID
+        source_category:          源分类（如 投行官方公开研究）
+        capability_id:            对应能力 ID（如 research.official_public_research）
+        source_type:              源类型（如 official_public_research）
+        website:                  网站名称
+        url:                      网站 URL
+        institution:              机构名称（如 Goldman Sachs）
+        region:                   区域（global/china/...）
+        content_type:             内容类型列表
+        access_mode:              接入方式（public_web/rss/...）
+        legal_confidence:         法律可信度（official/mainstream_media/...）
+        automation_mode:          自动化模式（scheduled/on_demand/...）
+        activation_priority:      激活优先级（S/A/B/C/supplement/blocked）
+        schedule_profile:         调度档位（high_daily/medium_daily/...）
+        recommended_frequency:    推荐采集频率
+        recommended_time_windows: 推荐采集时间窗口
+        enabled_by_default:       默认是否启用
+        notes:                    备注
+    """
+
+    source_id: str
+    source_name: str
+    source_group: str
+    source_category: str = ""
+    capability_id: str = ""
+    source_type: str = ""
+    website: str = ""
+    url: str = ""
+    institution: str = ""
+    region: str = "global"
+    content_type: list[str] = field(default_factory=list)
+    access_mode: str = ""
+    legal_confidence: str = "unknown"
+    automation_mode: str = "scheduled"
+    activation_priority: str = "A"
+    schedule_profile: str = "medium_daily"
+    recommended_frequency: str = ""
+    recommended_time_windows: list[str] = field(default_factory=list)
+    enabled_by_default: bool = True
+    notes: str = ""
+
+
+@dataclass
+class SourceInventory:
+    """信息源清单（source inventory）。
+
+    功能说明：
+        从 foundation_source_inventory.example.yaml 加载的完整清单。
+        包含所有 source groups 和 sources。
+        注意：这个类不是 frozen，因为加载过程中可能需要修改。
+
+    参数：
+        version:      配置版本
+        updated_at:   更新时间
+        groups:       分组列表
+        sources:      信息源列表
+        load_error:   加载错误信息（如果加载失败）
+    """
+
+    version: str = ""
+    updated_at: str = ""
+    groups: list[SourceGroup] = field(default_factory=list)
+    sources: list[FoundationSource] = field(default_factory=list)
+    load_error: str | None = None
+
+    def get_source(self, source_id: str) -> FoundationSource | None:
+        """根据源 ID 获取信息源对象。
+
+        功能说明：
+            在清单中查找指定信息源。
+            找不到返回 None。
+
+        参数：
+            source_id: 信息源 ID
+
+        返回：
+            FoundationSource 或 None
+        """
+        for s in self.sources:
+            if s.source_id == source_id:
+                return s
+        return None
+
+    def get_group(self, group_id: str) -> SourceGroup | None:
+        """根据分组 ID 获取分组对象。
+
+        功能说明：
+            在清单中查找指定分组。
+            找不到返回 None。
+
+        参数：
+            group_id: 分组 ID
+
+        返回：
+            SourceGroup 或 None
+        """
+        for g in self.groups:
+            if g.group_id == group_id:
+                return g
+        return None
+
+
+@dataclass(frozen=True)
+class SourceInventoryCheckItem:
+    """信息源清单检查项。
+
+    功能说明（小白解读）：
+        一条检查结果，比如"source_id 重复"、"URL 为空"等。
+        包含级别（错误/警告/说明）、检查项名称、结果、说明。
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        level:       级别（error/warning/info）
+        check_name:  检查项名称（中文）
+        result:      检查结果（中文，如 通过/不通过/需注意）
+        detail:      详细说明
+        source_id:   关联的 source_id（如果有）
+    """
+
+    level: str
+    check_name: str
+    result: str
+    detail: str = ""
+    source_id: str = ""
+
+
+@dataclass(frozen=True)
+class SourceInventoryValidationResult:
+    """信息源清单校验结果。
+
+    功能说明（小白解读）：
+        对 source inventory 进行校验后的完整结果。
+        包含所有检查项、错误数、警告数、说明数。
+        还包含统计摘要（group 数量、source 数量、优先级分布等）。
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        checks:               所有检查项列表
+        error_count:          错误数量
+        warning_count:        警告数量
+        info_count:           说明数量
+        group_count:          source group 数量
+        source_count:         source 数量
+        priority_counts:      优先级分布字典（S/A/B/C/supplement/blocked）
+        automation_counts:    自动化模式分布字典
+        enabled_count:        默认启用的源数量
+        high_risk_count:      高风险禁止源数量
+        search_provider_count: Search Provider 数量
+        community_count:      Community/Dev 源数量
+    """
+
+    checks: list[SourceInventoryCheckItem] = field(default_factory=list)
+    error_count: int = 0
+    warning_count: int = 0
+    info_count: int = 0
+    group_count: int = 0
+    source_count: int = 0
+    priority_counts: dict[str, int] = field(default_factory=dict)
+    automation_counts: dict[str, int] = field(default_factory=dict)
+    enabled_count: int = 0
+    high_risk_count: int = 0
+    search_provider_count: int = 0
+    community_count: int = 0
+
+    @property
+    def is_valid(self) -> bool:
+        """校验是否通过（没有错误）。
+
+        功能说明：
+            如果 error_count 为 0，说明没有必须修复的问题，返回 True。
+            有警告和说明不影响通过。
+
+        返回：
+            bool: True 表示没有错误
+        """
+        return self.error_count == 0

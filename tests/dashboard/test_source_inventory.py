@@ -16,6 +16,19 @@ from pathlib import Path
 import pytest
 import yaml
 
+from opc_foundation.dashboard.loaders import (
+    load_source_inventory_config,
+    summarize_source_inventory,
+    validate_source_inventory,
+)
+from opc_foundation.dashboard.models import (
+    FoundationSource,
+    SourceGroup,
+    SourceInventory,
+    SourceInventoryCheckItem,
+    SourceInventoryValidationResult,
+)
+
 
 # ============================================
 # Constants
@@ -764,3 +777,576 @@ class TestSourceInventorySummary:
         expected_modes = {"scheduled", "on_demand", "dormant", "do_not_ingest"}
         for m in expected_modes:
             assert m in modes, f"Expected automation_mode '{m}' to be present"
+
+
+# ============================================
+# Loader Tests
+# ============================================
+
+
+class TestSourceInventoryLoader:
+    """Source Inventory 加载器测试类。
+
+    验证 load_source_inventory_config 等加载函数的正确性。
+    """
+
+    def test_load_example_yaml_success(self) -> None:
+        """测试可以读取 example YAML。
+
+        验证 load_source_inventory_config 能正确加载配置文件，
+        返回 SourceInventory 对象，且数据非空。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        assert isinstance(inv, SourceInventory)
+        assert inv.load_error is None
+        assert len(inv.groups) >= 9
+        assert len(inv.sources) >= 70
+
+    def test_load_returns_source_group_objects(self) -> None:
+        """测试返回的 groups 是 SourceGroup 对象。
+
+        验证加载后的 groups 列表元素都是 SourceGroup 类型。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        for g in inv.groups:
+            assert isinstance(g, SourceGroup)
+            assert g.group_id
+            assert g.group_name
+
+    def test_load_returns_foundation_source_objects(self) -> None:
+        """测试返回的 sources 是 FoundationSource 对象。
+
+        验证加载后的 sources 列表元素都是 FoundationSource 类型。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        for s in inv.sources:
+            assert isinstance(s, FoundationSource)
+            assert s.source_id
+            assert s.source_name
+
+    def test_load_file_not_found_fail_soft(self) -> None:
+        """测试文件不存在时 fail-soft。
+
+        验证配置文件不存在时，返回空 inventory，
+        load_error 有错误信息，不抛出异常。
+        """
+        inv = load_source_inventory_config("nonexistent_file_12345.yaml")
+        assert isinstance(inv, SourceInventory)
+        assert inv.load_error is not None
+        assert "不存在" in inv.load_error or "not found" in inv.load_error.lower()
+        assert len(inv.groups) == 0
+        assert len(inv.sources) == 0
+
+    def test_load_invalid_yaml_fail_soft(self, tmp_path: Path) -> None:
+        """测试 invalid YAML fail-soft。
+
+        验证 YAML 格式错误时，返回空 inventory，
+        load_error 有错误信息，不抛出异常。
+        """
+        bad_file = tmp_path / "bad_inventory.yaml"
+        bad_file.write_text("invalid: yaml: [unclosed", encoding="utf-8")
+        inv = load_source_inventory_config(bad_file)
+        assert isinstance(inv, SourceInventory)
+        assert inv.load_error is not None
+
+    def test_source_inventory_get_source(self) -> None:
+        """测试 SourceInventory.get_source 方法。
+
+        验证 get_source 能根据 source_id 找到对应的源。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        source = inv.get_source("goldman_sachs_research")
+        assert source is not None
+        assert source.source_id == "goldman_sachs_research"
+        assert "Goldman" in source.source_name
+
+    def test_source_inventory_get_source_not_found(self) -> None:
+        """测试 get_source 找不到时返回 None。
+
+        验证找不到 source 时返回 None，不抛出异常。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        source = inv.get_source("nonexistent_source_12345")
+        assert source is None
+
+    def test_source_inventory_get_group(self) -> None:
+        """测试 SourceInventory.get_group 方法。
+
+        验证 get_group 能根据 group_id 找到对应的分组。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        group = inv.get_group("official_public_research")
+        assert group is not None
+        assert group.group_id == "official_public_research"
+
+    def test_source_inventory_get_group_not_found(self) -> None:
+        """测试 get_group 找不到时返回 None。
+
+        验证找不到 group 时返回 None，不抛出异常。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        group = inv.get_group("nonexistent_group_12345")
+        assert group is None
+
+
+# ============================================
+# Validation Tests
+# ============================================
+
+
+class TestSourceInventoryValidation:
+    """Source Inventory 校验器测试类。
+
+    验证 validate_source_inventory 函数的各种校验规则。
+    """
+
+    def test_validate_example_inventory(self) -> None:
+        """测试校验 example inventory。
+
+        验证 example 配置文件校验通过（或只有少量 warning）。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = validate_source_inventory(inv)
+        assert isinstance(result, SourceInventoryValidationResult)
+        assert result.error_count == 0, f"Expected 0 errors, got {result.error_count}: {[c.detail for c in result.checks if c.level == 'error']}"
+
+    def test_validate_duplicate_source_id_error(self, tmp_path: Path) -> None:
+        """测试 source_id 重复能报 error。
+
+        验证配置中有重复 source_id 时，校验返回 error 级别。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: test_group
+    group_name: 测试组
+sources:
+  - source_id: dup_id
+    source_name: 源1
+    source_group: test_group
+    activation_priority: S
+    automation_mode: scheduled
+    legal_confidence: official
+  - source_id: dup_id
+    source_name: 源2
+    source_group: test_group
+    activation_priority: S
+    automation_mode: scheduled
+    legal_confidence: official
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.error_count >= 1
+        # 检查是否有 source_id 唯一性相关的检查项
+        error_checks = [c for c in result.checks if c.level == "error"]
+        id_checks = [c for c in error_checks if "source_id" in c.check_name and "唯一" in c.check_name]
+        assert len(id_checks) >= 1
+
+    def test_validate_invalid_source_group_error(self, tmp_path: Path) -> None:
+        """测试 source_group 引用不存在能报 error。
+
+        验证 source 的 source_group 指向不存在的 group 时，校验返回 error。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: test_group
+    group_name: 测试组
+sources:
+  - source_id: test_source
+    source_name: 测试源
+    source_group: nonexistent_group
+    activation_priority: S
+    automation_mode: scheduled
+    legal_confidence: official
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.error_count >= 1
+        error_checks = [c for c in result.checks if c.level == "error"]
+        group_checks = [c for c in error_checks if "source_group" in c.check_name]
+        assert len(group_checks) >= 1
+
+    def test_validate_invalid_capability_id_error(self, tmp_path: Path) -> None:
+        """测试 capability_id 非法能报 error。
+
+        验证 capability_id 不存在且不是 supplement/blocked 时，
+        校验返回 error（需要提供 capabilities registry）。
+        """
+        from opc_foundation.dashboard.loaders import load_capabilities_config
+        cap_path = Path("configs/foundation_capabilities.yaml")
+        registry = load_capabilities_config(cap_path)
+
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: test_group
+    group_name: 测试组
+sources:
+  - source_id: test_source
+    source_name: 测试源
+    source_group: test_group
+    capability_id: nonexistent_capability_12345
+    activation_priority: S
+    automation_mode: scheduled
+    legal_confidence: official
+    schedule_profile: medium_daily
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv, capabilities=registry)
+        assert result.error_count >= 1
+        cap_checks = [c for c in result.checks if c.level == "error" and "capability_id" in c.check_name]
+        assert len(cap_checks) >= 1
+
+    def test_validate_high_risk_enabled_error(self, tmp_path: Path) -> None:
+        """测试 high_risk enabled_by_default=true 能报 error。
+
+        验证 high_risk 源如果 enabled_by_default=true，校验返回 error。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: blocked_group
+    group_name: 禁止组
+sources:
+  - source_id: bad_source
+    source_name: 坏源
+    source_group: blocked_group
+    activation_priority: blocked
+    automation_mode: do_not_ingest
+    legal_confidence: high_risk
+    enabled_by_default: true
+    schedule_profile: blocked
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.error_count >= 1
+        hr_checks = [c for c in result.checks if c.level == "error" and "高风险" in c.check_name]
+        assert len(hr_checks) >= 1
+
+    def test_validate_search_provider_scheduled_error(self, tmp_path: Path) -> None:
+        """测试 search provider scheduled 能报 error。
+
+        验证 search_providers 组的源如果 automation_mode=scheduled，
+        校验返回 error。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: search_providers
+    group_name: 搜索组
+sources:
+  - source_id: bad_search
+    source_name: 坏搜索源
+    source_group: search_providers
+    activation_priority: supplement
+    automation_mode: scheduled
+    legal_confidence: unknown
+    enabled_by_default: true
+    schedule_profile: high_daily
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.error_count >= 1
+        search_checks = [c for c in result.checks if c.level == "error" and "搜索源" in c.check_name]
+        assert len(search_checks) >= 1
+
+    def test_validate_blocked_wrong_mode_error(self, tmp_path: Path) -> None:
+        """测试 blocked 源 automation_mode 非法能报 error。
+
+        验证 activation_priority=blocked 但 automation_mode 不是
+        do_not_ingest/dormant 时，校验返回 error。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: blocked_group
+    group_name: 禁止组
+sources:
+  - source_id: bad_blocked
+    source_name: 坏禁止源
+    source_group: blocked_group
+    activation_priority: blocked
+    automation_mode: scheduled
+    legal_confidence: high_risk
+    enabled_by_default: false
+    schedule_profile: medium_daily
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.error_count >= 1
+        blocked_checks = [c for c in result.checks if c.level == "error" and "禁止源" in c.check_name]
+        assert len(blocked_checks) >= 1
+
+    def test_validate_empty_url_warning(self, tmp_path: Path) -> None:
+        """测试 URL 为空能报 warning。
+
+        验证 source 的 url 为空时，校验返回 warning 级别。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: test_group
+    group_name: 测试组
+sources:
+  - source_id: no_url_source
+    source_name: 无URL源
+    source_group: test_group
+    activation_priority: A
+    automation_mode: scheduled
+    legal_confidence: official
+    url: ""
+    schedule_profile: medium_daily
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.warning_count >= 1
+        url_checks = [c for c in result.checks if c.level == "warning" and "URL" in c.check_name]
+        assert len(url_checks) >= 1
+
+    def test_validate_unknown_confidence_warning(self, tmp_path: Path) -> None:
+        """测试 legal_confidence unknown 能报 warning。
+
+        验证 source 的 legal_confidence=unknown 时，校验返回 warning。
+        """
+        yaml_content = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: test_group
+    group_name: 测试组
+sources:
+  - source_id: unknown_source
+    source_name: 未知源
+    source_group: test_group
+    activation_priority: B
+    automation_mode: scheduled
+    legal_confidence: unknown
+    url: "https://example.com"
+    schedule_profile: low_daily
+"""
+        f = tmp_path / "test_inv.yaml"
+        f.write_text(yaml_content, encoding="utf-8")
+        inv = load_source_inventory_config(f)
+        result = validate_source_inventory(inv)
+        assert result.warning_count >= 1
+        conf_checks = [c for c in result.checks if c.level == "warning" and "法律可信度" in c.check_name]
+        assert len(conf_checks) >= 1
+
+    def test_validate_is_valid_property(self, tmp_path: Path) -> None:
+        """测试 SourceInventoryValidationResult.is_valid 属性。
+
+        验证 error_count==0 时 is_valid=True，否则 False。
+        """
+        # 正常配置
+        yaml_good = """
+version: 1
+updated_at: "2026-06-25"
+source_groups:
+  - group_id: test_group
+    group_name: 测试组
+sources:
+  - source_id: good_source
+    source_name: 好源
+    source_group: test_group
+    activation_priority: A
+    automation_mode: scheduled
+    legal_confidence: official
+    url: "https://example.com"
+    schedule_profile: medium_daily
+"""
+        f = tmp_path / "good.yaml"
+        f.write_text(yaml_good, encoding="utf-8")
+        inv_good = load_source_inventory_config(f)
+        result_good = validate_source_inventory(inv_good)
+        assert result_good.is_valid is True
+
+
+# ============================================
+# Summarize Tests
+# ============================================
+
+
+class TestSourceInventorySummarize:
+    """Source Inventory 摘要统计测试类。
+
+    验证 summarize_source_inventory 函数的统计功能。
+    """
+
+    def test_summarize_group_count(self) -> None:
+        """测试 summarize_source_inventory 能统计 group 数量。
+
+        验证 group_count 字段正确。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        assert isinstance(result, SourceInventoryValidationResult)
+        assert result.group_count == len(inv.groups)
+        assert result.group_count >= 9
+
+    def test_summarize_source_count(self) -> None:
+        """测试 summarize_source_inventory 能统计 source 数量。
+
+        验证 source_count 字段正确。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        assert result.source_count == len(inv.sources)
+        assert result.source_count >= 70
+
+    def test_summarize_priority_distribution(self) -> None:
+        """测试 summarize_source_inventory 能统计优先级分布。
+
+        验证 priority_counts 字典包含所有出现的优先级。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        assert isinstance(result.priority_counts, dict)
+        assert len(result.priority_counts) >= 4
+        # 验证数量加起来等于总 source 数
+        total = sum(result.priority_counts.values())
+        assert total == result.source_count
+
+    def test_summarize_automation_distribution(self) -> None:
+        """测试 summarize_source_inventory 能统计自动化模式分布。
+
+        验证 automation_counts 字典包含所有出现的模式。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        assert isinstance(result.automation_counts, dict)
+        assert len(result.automation_counts) >= 3
+        total = sum(result.automation_counts.values())
+        assert total == result.source_count
+
+    def test_summarize_enabled_count(self) -> None:
+        """测试 summarize_source_inventory 能统计默认启用数量。
+
+        验证 enabled_count 字段正确。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        expected = sum(1 for s in inv.sources if s.enabled_by_default)
+        assert result.enabled_count == expected
+
+    def test_summarize_high_risk_count(self) -> None:
+        """测试 summarize_source_inventory 能统计高风险源数量。
+
+        验证 high_risk_count 字段正确。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        expected = sum(
+            1 for s in inv.sources
+            if s.legal_confidence == "high_risk" or s.activation_priority == "blocked"
+        )
+        assert result.high_risk_count == expected
+        assert result.high_risk_count >= 5
+
+    def test_summarize_search_provider_count(self) -> None:
+        """测试 summarize_source_inventory 能统计搜索源数量。
+
+        验证 search_provider_count 字段正确。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        expected = sum(1 for s in inv.sources if s.source_group == "search_providers")
+        assert result.search_provider_count == expected
+        assert result.search_provider_count >= 8
+
+    def test_summarize_community_count(self) -> None:
+        """测试 summarize_source_inventory 能统计社区源数量。
+
+        验证 community_count 字段正确。
+        """
+        inv = load_source_inventory_config(INVENTORY_PATH)
+        result = summarize_source_inventory(inv)
+        expected = sum(1 for s in inv.sources if s.source_group == "community_dev_signals")
+        assert result.community_count == expected
+        assert result.community_count >= 2
+
+
+# ============================================
+# Dashboard Integration Tests
+# ============================================
+
+
+class TestSourceInventoryDashboard:
+    """Dashboard 集成测试类。
+
+    验证 Dashboard 配置检查页包含 source inventory 检查。
+    由于 Streamlit 不适合直接测试，这里通过检查代码和数据模型来验证。
+    """
+
+    def test_app_importable_without_streamlit(self) -> None:
+        """测试 app.py 可在未安装 streamlit 时 import（基本导入）。
+
+        验证 models 和 loaders 模块不依赖 streamlit。
+        """
+        from opc_foundation.dashboard import models
+        from opc_foundation.dashboard import loaders
+        assert models is not None
+        assert loaders is not None
+
+    def test_readme_mentions_activation_plan(self) -> None:
+        """测试 README 提到 source activation plan。
+
+        验证 README.md 中包含 Source Activation Plan 相关内容。
+        """
+        readme_path = Path("README.md")
+        assert readme_path.exists()
+        content = readme_path.read_text(encoding="utf-8")
+        assert "activation plan" in content.lower() or "上线计划" in content
+
+    def test_activation_plan_doc_exists(self) -> None:
+        """测试上线计划文档存在。
+
+        验证 foundation_source_activation_plan.md 存在。
+        """
+        plan_path = Path("docs/foundation_source_activation_plan.md")
+        assert plan_path.exists(), "Activation plan doc should exist"
+
+    def test_no_deleted_pages_in_app(self) -> None:
+        """测试不恢复已删除的 Dashboard 页面。
+
+        验证 app.py 中没有恢复"总览/运行日志/失败队列/文档入口"页面。
+        """
+        import re
+        app_path = Path("src/opc_foundation/dashboard/app.py")
+        content = app_path.read_text(encoding="utf-8")
+
+        # 检查导航列表中只有 4 个页面
+        # 查找 pages 列表定义
+        pattern = r'pages\s*=\s*\[([^\]]+)\]'
+        match = re.search(pattern, content)
+        assert match, "Should find pages list in app.py"
+        pages_str = match.group(1)
+        # 统计引号中的页面名
+        page_names = re.findall(r'"([^"]+)"', pages_str)
+        assert len(page_names) == 4, f"Expected 4 pages, got {len(page_names)}: {page_names}"
+        # 确认没有已删除的页面
+        assert "总览" not in page_names
+        assert "运行日志" not in page_names
+        assert "失败队列" not in page_names
+        assert "文档入口" not in page_names

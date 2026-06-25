@@ -24,8 +24,13 @@ from .models import (
     CapabilityUsageStage,
     CapabilityUsageWorkflow,
     CommonFailure,
+    FoundationSource,
     RuntimeBindingRegistry,
     RunbookRegistry,
+    SourceGroup,
+    SourceInventory,
+    SourceInventoryCheckItem,
+    SourceInventoryValidationResult,
 )
 
 
@@ -532,3 +537,547 @@ def check_binding_files_exist(
             result[b.capability_id] = missing
 
     return result
+
+
+# ===========================================================================
+# Source Inventory 加载和校验（M3C-0B 新增）
+# ===========================================================================
+
+
+# 合法枚举值
+VALID_ACTIVATION_PRIORITIES = {"S", "A", "B", "C", "supplement", "blocked"}
+VALID_AUTOMATION_MODES = {"scheduled", "on_demand", "manual_only", "dormant", "do_not_ingest"}
+VALID_SCHEDULE_PROFILES = {
+    "high_daily", "medium_daily", "low_daily", "weekly",
+    "on_demand", "manual_only", "dormant", "blocked",
+}
+VALID_LEGAL_CONFIDENCES = {
+    "official", "licensed_media", "public_ir",
+    "mainstream_media", "rebroadcast", "unknown", "high_risk",
+}
+VALID_ACCESS_MODES = {
+    "public_web", "rss", "podcast_rss", "company_ir",
+    "media_page", "search_provider", "manual", "dormant",
+}
+
+# supplement/blocked/on_demand 类型的 capability_id 白名单
+SPECIAL_CAPABILITY_IDS = {"supplement", "blocked"}
+
+
+def load_source_inventory_config(path: str | Path) -> SourceInventory:
+    """从 YAML 文件加载信息源清单。
+
+    功能说明（小白解读）：
+        读取 foundation_source_inventory.example.yaml 文件，
+        把 YAML 数据转换成 SourceInventory 数据模型。
+        文件不存在或格式错误时，返回空的 inventory（fail-soft）。
+
+    参数：
+        path: YAML 文件路径
+
+    返回：
+        SourceInventory 对象
+        如果文件不存在或格式错误，返回空 inventory，load_error 字段有错误信息
+    """
+    inventory = SourceInventory()
+
+    try:
+        file_path = Path(path)
+        if not file_path.exists():
+            inventory.load_error = f"文件不存在: {path}"
+            return inventory
+
+        with open(file_path, encoding="utf-8") as f:
+            data = yaml.safe_load(f) or {}
+
+        inventory.version = str(data.get("version", ""))
+        inventory.updated_at = str(data.get("updated_at", ""))
+
+        # 加载 groups
+        for g_data in data.get("source_groups", []) or []:
+            group = SourceGroup(
+                group_id=str(g_data.get("group_id", "")),
+                group_name=str(g_data.get("group_name", "")),
+                description=str(g_data.get("description", "")),
+                default_activation_priority=str(g_data.get("default_activation_priority", "A")),
+                default_automation_mode=str(g_data.get("default_automation_mode", "scheduled")),
+                default_schedule_profile=str(g_data.get("default_schedule_profile", "medium_daily")),
+            )
+            inventory.groups.append(group)
+
+        # 加载 sources
+        for s_data in data.get("sources", []) or []:
+            source = FoundationSource(
+                source_id=str(s_data.get("source_id", "")),
+                source_name=str(s_data.get("source_name", "")),
+                source_group=str(s_data.get("source_group", "")),
+                source_category=str(s_data.get("source_category", "")),
+                capability_id=str(s_data.get("capability_id", "")),
+                source_type=str(s_data.get("source_type", "")),
+                website=str(s_data.get("website", "")),
+                url=str(s_data.get("url", "")),
+                institution=str(s_data.get("institution", "")),
+                region=str(s_data.get("region", "global")),
+                content_type=list(s_data.get("content_type", []) or []),
+                access_mode=str(s_data.get("access_mode", "")),
+                legal_confidence=str(s_data.get("legal_confidence", "unknown")),
+                automation_mode=str(s_data.get("automation_mode", "scheduled")),
+                activation_priority=str(s_data.get("activation_priority", "A")),
+                schedule_profile=str(s_data.get("schedule_profile", "medium_daily")),
+                recommended_frequency=str(s_data.get("recommended_frequency", "")),
+                recommended_time_windows=list(s_data.get("recommended_time_windows", []) or []),
+                enabled_by_default=bool(s_data.get("enabled_by_default", True)),
+                notes=str(s_data.get("notes", "")),
+            )
+            inventory.sources.append(source)
+
+    except yaml.YAMLError as e:
+        inventory.load_error = f"YAML 格式错误: {e}"
+    except Exception as e:
+        inventory.load_error = f"加载失败: {e}"
+
+    return inventory
+
+
+def validate_source_inventory(
+    inventory: SourceInventory,
+    capabilities: CapabilityRegistry | None = None,
+) -> SourceInventoryValidationResult:
+    """校验信息源清单配置。
+
+    功能说明（小白解读）：
+        检查 source inventory 的配置是否正确，比如：
+        - source_id 是否重复
+        - source_group 是否存在
+        - capability_id 是否有效
+        - 枚举字段是否合法
+        - 高风险源是否默认禁用
+        - 搜索源是否配置成了 scheduled
+        等等。
+        返回校验结果，包含错误、警告、说明三种级别的检查项。
+
+    参数：
+        inventory:    信息源清单
+        capabilities: 能力注册表（可选，用于校验 capability_id）
+
+    返回：
+        SourceInventoryValidationResult 校验结果
+    """
+    checks: list[SourceInventoryCheckItem] = []
+
+    # 如果加载失败，直接返回错误
+    if inventory.load_error:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="信息源清单文件加载",
+            result="失败",
+            detail=inventory.load_error,
+        ))
+        return SourceInventoryValidationResult(
+            checks=checks,
+            error_count=1,
+        )
+
+    group_ids = {g.group_id for g in inventory.groups}
+    source_ids_seen: set[str] = set()
+    capability_ids = {c.capability_id for c in capabilities.capabilities} if capabilities else set()
+
+    # ============================================
+    # 1. source_id 重复检查
+    # ============================================
+    duplicate_ids: list[str] = []
+    for s in inventory.sources:
+        if s.source_id in source_ids_seen:
+            duplicate_ids.append(s.source_id)
+        else:
+            source_ids_seen.add(s.source_id)
+
+    if duplicate_ids:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="source_id 唯一性",
+            result="不通过",
+            detail=f"发现 {len(duplicate_ids)} 个重复的 source_id: {', '.join(sorted(duplicate_ids)[:5])}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="source_id 唯一性",
+            result="通过",
+            detail=f"共 {len(inventory.sources)} 个 source，全部唯一",
+        ))
+
+    # ============================================
+    # 2. source_group 引用检查
+    # ============================================
+    invalid_groups: list[tuple[str, str]] = []
+    for s in inventory.sources:
+        if s.source_group not in group_ids:
+            invalid_groups.append((s.source_id, s.source_group))
+
+    if invalid_groups:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="source_group 引用有效性",
+            result="不通过",
+            detail=f"发现 {len(invalid_groups)} 个 source 的 source_group 不存在，例如: {invalid_groups[0][0]} -> {invalid_groups[0][1]}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="source_group 引用有效性",
+            result="通过",
+            detail="所有 source 的 source_group 都存在",
+        ))
+
+    # ============================================
+    # 3. capability_id 检查（如果提供了 capabilities）
+    # ============================================
+    if capabilities:
+        invalid_caps: list[tuple[str, str]] = []
+        for s in inventory.sources:
+            # supplement/blocked/on_demand/dormant 的源可以用特殊 capability_id
+            if (
+                s.activation_priority in {"supplement", "blocked"}
+                or s.automation_mode in {"on_demand", "do_not_ingest", "dormant"}
+            ):
+                continue
+            if s.capability_id in SPECIAL_CAPABILITY_IDS:
+                continue
+            if s.capability_id and s.capability_id not in capability_ids:
+                invalid_caps.append((s.source_id, s.capability_id))
+
+        if invalid_caps:
+            checks.append(SourceInventoryCheckItem(
+                level="error",
+                check_name="capability_id 引用有效性",
+                result="不通过",
+                detail=f"发现 {len(invalid_caps)} 个 source 的 capability_id 不存在，例如: {invalid_caps[0][0]} -> {invalid_caps[0][1]}",
+            ))
+        else:
+            checks.append(SourceInventoryCheckItem(
+                level="info",
+                check_name="capability_id 引用有效性",
+                result="通过",
+                detail="所有 scheduled/blocked 源的 capability_id 都有效",
+            ))
+
+    # ============================================
+    # 4. 枚举字段合法性检查
+    # ============================================
+    enum_errors = _check_enum_fields(inventory)
+    checks.extend(enum_errors)
+
+    # ============================================
+    # 5. URL 为空检查（warning）
+    # ============================================
+    empty_url_sources = [s for s in inventory.sources if not s.url]
+    if empty_url_sources:
+        checks.append(SourceInventoryCheckItem(
+            level="warning",
+            check_name="URL 配置完整性",
+            result="需注意",
+            detail=f"发现 {len(empty_url_sources)} 个 source 的 URL 为空，例如: {empty_url_sources[0].source_id}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="URL 配置完整性",
+            result="通过",
+            detail="所有 source 都配置了 URL",
+        ))
+
+    # ============================================
+    # 6. legal_confidence=unknown 检查（warning）
+    # ============================================
+    unknown_confidence = [s for s in inventory.sources if s.legal_confidence == "unknown"]
+    if unknown_confidence:
+        checks.append(SourceInventoryCheckItem(
+            level="warning",
+            check_name="法律可信度评估",
+            result="需注意",
+            detail=f"发现 {len(unknown_confidence)} 个 source 的 legal_confidence 为 unknown，建议明确评估",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="法律可信度评估",
+            result="通过",
+            detail="所有 source 都有明确的法律可信度评估",
+        ))
+
+    # ============================================
+    # 7. high_risk / blocked 源 enabled_by_default=true 检查（error）
+    # ============================================
+    enabled_high_risk = [
+        s for s in inventory.sources
+        if (s.legal_confidence == "high_risk" or s.activation_priority == "blocked")
+        and s.enabled_by_default
+    ]
+    if enabled_high_risk:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="高风险源默认禁用",
+            result="不通过",
+            detail=f"发现 {len(enabled_high_risk)} 个 high_risk/blocked 源 enabled_by_default=true，例如: {enabled_high_risk[0].source_id}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="高风险源默认禁用",
+            result="通过",
+            detail="所有 high_risk/blocked 源都默认禁用",
+        ))
+
+    # ============================================
+    # 8. search provider automation_mode=scheduled 检查（error）
+    # ============================================
+    scheduled_search = [
+        s for s in inventory.sources
+        if s.source_group == "search_providers" and s.automation_mode == "scheduled"
+    ]
+    if scheduled_search:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="搜索源调度模式",
+            result="不通过",
+            detail=f"发现 {len(scheduled_search)} 个搜索源配置为 scheduled，应为 on_demand，例如: {scheduled_search[0].source_id}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="搜索源调度模式",
+            result="通过",
+            detail="所有搜索源都配置为 on_demand，不进入默认高频调度",
+        ))
+
+    # ============================================
+    # 9. community/dev 源 high_daily 检查（warning）
+    # ============================================
+    high_daily_community = [
+        s for s in inventory.sources
+        if s.source_group == "community_dev_signals" and s.schedule_profile == "high_daily"
+    ]
+    if high_daily_community:
+        checks.append(SourceInventoryCheckItem(
+            level="warning",
+            check_name="社区源调度频率",
+            result="需注意",
+            detail=f"发现 {len(high_daily_community)} 个社区源配置为 high_daily，建议降低频率，例如: {high_daily_community[0].source_id}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="社区源调度频率",
+            result="通过",
+            detail="所有社区源都未配置为 high_daily",
+        ))
+
+    # ============================================
+    # 10. blocked 源必须是 do_not_ingest 或 dormant 检查（error）
+    # ============================================
+    blocked_wrong_mode = [
+        s for s in inventory.sources
+        if s.activation_priority == "blocked" and s.automation_mode not in {"do_not_ingest", "dormant"}
+    ]
+    if blocked_wrong_mode:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="禁止源自动化模式",
+            result="不通过",
+            detail=f"发现 {len(blocked_wrong_mode)} 个 blocked 源的 automation_mode 不是 do_not_ingest/dormant，例如: {blocked_wrong_mode[0].source_id}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="禁止源自动化模式",
+            result="通过",
+            detail="所有 blocked 源都配置为 do_not_ingest 或 dormant",
+        ))
+
+    # ============================================
+    # 汇总统计
+    # ============================================
+    result = summarize_source_inventory(inventory)
+    # 把 checks 合并到 result 中
+    # 因为 SourceInventoryValidationResult 是 frozen，我们需要重新构建
+    error_count = sum(1 for c in checks if c.level == "error")
+    warning_count = sum(1 for c in checks if c.level == "warning")
+    info_count = sum(1 for c in checks if c.level == "info")
+
+    return SourceInventoryValidationResult(
+        checks=checks,
+        error_count=error_count,
+        warning_count=warning_count,
+        info_count=info_count,
+        group_count=result.group_count,
+        source_count=result.source_count,
+        priority_counts=result.priority_counts,
+        automation_counts=result.automation_counts,
+        enabled_count=result.enabled_count,
+        high_risk_count=result.high_risk_count,
+        search_provider_count=result.search_provider_count,
+        community_count=result.community_count,
+    )
+
+
+def _check_enum_fields(inventory: SourceInventory) -> list[SourceInventoryCheckItem]:
+    """检查枚举字段合法性。
+
+    功能说明：
+        辅助函数，检查所有枚举字段是否在合法范围内。
+        返回 error 级别的检查项列表。
+
+    参数：
+        inventory: 信息源清单
+
+    返回：
+        检查项列表
+    """
+    checks: list[SourceInventoryCheckItem] = []
+
+    # activation_priority
+    invalid_priority = [
+        s.source_id for s in inventory.sources
+        if s.activation_priority not in VALID_ACTIVATION_PRIORITIES
+    ]
+    if invalid_priority:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="activation_priority 枚举合法性",
+            result="不通过",
+            detail=f"发现 {len(invalid_priority)} 个非法值，例如: {invalid_priority[0]}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="activation_priority 枚举合法性",
+            result="通过",
+            detail=f"所有 source 的 activation_priority 都合法（共 {len(inventory.sources)} 个）",
+        ))
+
+    # automation_mode
+    invalid_automation = [
+        s.source_id for s in inventory.sources
+        if s.automation_mode not in VALID_AUTOMATION_MODES
+    ]
+    if invalid_automation:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="automation_mode 枚举合法性",
+            result="不通过",
+            detail=f"发现 {len(invalid_automation)} 个非法值，例如: {invalid_automation[0]}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="automation_mode 枚举合法性",
+            result="通过",
+            detail="所有 source 的 automation_mode 都合法",
+        ))
+
+    # schedule_profile
+    invalid_schedule = [
+        s.source_id for s in inventory.sources
+        if s.schedule_profile not in VALID_SCHEDULE_PROFILES
+    ]
+    if invalid_schedule:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="schedule_profile 枚举合法性",
+            result="不通过",
+            detail=f"发现 {len(invalid_schedule)} 个非法值，例如: {invalid_schedule[0]}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="schedule_profile 枚举合法性",
+            result="通过",
+            detail="所有 source 的 schedule_profile 都合法",
+        ))
+
+    # legal_confidence
+    invalid_confidence = [
+        s.source_id for s in inventory.sources
+        if s.legal_confidence not in VALID_LEGAL_CONFIDENCES
+    ]
+    if invalid_confidence:
+        checks.append(SourceInventoryCheckItem(
+            level="error",
+            check_name="legal_confidence 枚举合法性",
+            result="不通过",
+            detail=f"发现 {len(invalid_confidence)} 个非法值，例如: {invalid_confidence[0]}",
+        ))
+    else:
+        checks.append(SourceInventoryCheckItem(
+            level="info",
+            check_name="legal_confidence 枚举合法性",
+            result="通过",
+            detail="所有 source 的 legal_confidence 都合法",
+        ))
+
+    return checks
+
+
+def summarize_source_inventory(inventory: SourceInventory) -> SourceInventoryValidationResult:
+    """统计信息源清单摘要。
+
+    功能说明（小白解读）：
+        统计 source inventory 的各种指标，比如：
+        - group 数量、source 数量
+        - 优先级分布（S/A/B/C/supplement/blocked 各多少个）
+        - 自动化模式分布（scheduled/on_demand/dormant 各多少个）
+        - 默认启用的源数量
+        - 高风险源数量
+        - 搜索源数量
+        - 社区源数量
+        用于 Dashboard 配置检查页面展示摘要。
+
+    参数：
+        inventory: 信息源清单
+
+    返回：
+        SourceInventoryValidationResult 对象（只有统计字段，没有 checks）
+    """
+    priority_counts: dict[str, int] = {}
+    automation_counts: dict[str, int] = {}
+    enabled_count = 0
+    high_risk_count = 0
+    search_provider_count = 0
+    community_count = 0
+
+    for s in inventory.sources:
+        # 优先级统计
+        p = s.activation_priority
+        priority_counts[p] = priority_counts.get(p, 0) + 1
+
+        # 自动化模式统计
+        m = s.automation_mode
+        automation_counts[m] = automation_counts.get(m, 0) + 1
+
+        # 默认启用
+        if s.enabled_by_default:
+            enabled_count += 1
+
+        # 高风险
+        if s.legal_confidence == "high_risk" or s.activation_priority == "blocked":
+            high_risk_count += 1
+
+        # 搜索源
+        if s.source_group == "search_providers":
+            search_provider_count += 1
+
+        # 社区源
+        if s.source_group == "community_dev_signals":
+            community_count += 1
+
+    return SourceInventoryValidationResult(
+        group_count=len(inventory.groups),
+        source_count=len(inventory.sources),
+        priority_counts=priority_counts,
+        automation_counts=automation_counts,
+        enabled_count=enabled_count,
+        high_risk_count=high_risk_count,
+        search_provider_count=search_provider_count,
+        community_count=community_count,
+    )

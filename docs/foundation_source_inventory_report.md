@@ -1,8 +1,8 @@
 # OPC Foundation Source Inventory Report
 
-**Version**: 1  
+**Version**: 1.1  
 **Updated**: 2026-06-25  
-**Status**: M3C-0A Ready（全信息源清单配置完成）
+**Status**: M3C-0B Ready（Source Inventory 接入配置检查与上线计划）
 
 ---
 
@@ -14,6 +14,8 @@
 - 本阶段只做配置登记，不真实访问网站，不启动采集
 - 按 source group 分类登记所有源
 - 每个源标注 capability_id、网站、接入方式、优先级、调度档位
+- M3C-0B 已接入 Dashboard 配置检查页，支持自动校验
+- 配套上线计划文档：[Source Activation Plan](foundation_source_activation_plan.md)
 
 ---
 
