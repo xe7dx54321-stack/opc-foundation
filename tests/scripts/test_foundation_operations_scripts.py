@@ -168,10 +168,10 @@ class TestScriptStructure:
                                 pytest.fail(f"{script_name} may contain hardcoded secret: {pattern}")
 
     @pytest.mark.parametrize("script_name", NEW_SCRIPTS)
-    def test_script_has_chinese_output(self, script_name: str) -> None:
-        """测试新增脚本有中文输出。
+    def test_script_has_output(self, script_name: str) -> None:
+        """测试新增脚本有输出内容。
 
-        验证脚本包含中文提示信息（不是全英文）。
+        验证脚本包含输出语句。
 
         Args:
             script_name: 脚本文件名
@@ -179,10 +179,9 @@ class TestScriptStructure:
         script_path = SCRIPTS_DIR / script_name
         content = script_path.read_text(encoding="utf-8")
 
-        # 简单检查：包含中文字符（通过统计非 ASCII 字符）
-        non_ascii_count = sum(1 for c in content if ord(c) > 127)
-        assert non_ascii_count > 20, \
-            f"{script_name} should have Chinese output (found {non_ascii_count} non-ASCII chars)"
+        # 检查有 Write-Host 输出语句
+        assert "Write-Host" in content, \
+            f"{script_name} should have Write-Host output"
 
     @pytest.mark.parametrize("script_name", NEW_SCRIPTS)
     def test_script_has_exit_statement(self, script_name: str) -> None:
@@ -276,7 +275,8 @@ class TestScriptContent:
         验证脚本在没有待处理 URL 时正常退出，不报错。
         """
         content = (SCRIPTS_DIR / "run_manual_url_archive.ps1").read_text(encoding="utf-8")
-        assert "无待处理" in content or "等待人工触发" in content, \
+        # 检查有处理空队列的逻辑
+        assert "No pending" in content or "waiting for human" in content.lower() or "nothing to process" in content.lower(), \
             "run_manual_url_archive should handle empty queue gracefully"
 
     def test_run_official_filings_has_mode_param(self) -> None:

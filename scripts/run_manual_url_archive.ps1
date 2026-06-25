@@ -1,16 +1,13 @@
-# Manual URL Archive - 人工 URL 归档脚本
+# Manual URL Archive - Manual URL Queue Handler
 #
-# 作用：检查并处理 manual_url 待处理队列。
+# Purpose: Check and process manual_url pending queue.
 #
-# 使用方法：
+# Usage:
 #   .\scripts\run_manual_url_archive.ps1
 #   .\scripts\run_manual_url_archive.ps1 -Mode check
 #   .\scripts\run_manual_url_archive.ps1 -Mode process
 #
-# 小白解读：
-#   这个脚本用于处理人工收集的 URL 归档队列。
-#   没有待处理 URL 时会正常退出，不会报错。
-#   manual_url 以人工触发为主，不建议高频调度。
+# Note: manual_url is primarily human-triggered. No frequent scheduling recommended.
 
 param(
     [string]$Mode = "check"
@@ -18,12 +15,12 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 自动定位仓库根目录（脚本位于 scripts/ 下，上一级即仓库根）
+# Auto-locate repo root (script is in scripts/, parent is repo root)
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
 Set-Location $RepoRoot
 
-# 设置 PYTHONPATH，确保能找到 src/ 下的模块
+# Set PYTHONPATH to find src/ modules
 $env:PYTHONPATH = Join-Path $RepoRoot "src"
 
 Write-Host ""
@@ -31,56 +28,56 @@ Write-Host "Manual URL Archive - $Mode" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
-# manual_url 队列路径（示例路径，实际路径可能不同）
+# Manual URL queue path (example path, actual path may differ)
 $manualQueuePath = "data/manual_url/pending.jsonl"
 
 switch ($Mode) {
     "check" {
-        Write-Host "检查 manual_url 待处理队列..." -ForegroundColor Cyan
+        Write-Host "Checking manual_url pending queue..." -ForegroundColor Cyan
         Write-Host ""
 
         if (!(Test-Path $manualQueuePath)) {
-            Write-Host "[信息] 无待处理 URL，等待人工触发。" -ForegroundColor Green
-            Write-Host "       队列文件不存在：$manualQueuePath" -ForegroundColor Gray
+            Write-Host "[INFO] No pending URLs, waiting for human trigger." -ForegroundColor Green
+            Write-Host "       Queue file does not exist: $manualQueuePath" -ForegroundColor Gray
             exit 0
         }
 
         $pendingCount = (Get-Content $manualQueuePath | Where-Object { $_.Trim() -ne "" } | Measure-Object).Count
 
         if ($pendingCount -eq 0) {
-            Write-Host "[信息] 无待处理 URL，等待人工触发。" -ForegroundColor Green
+            Write-Host "[INFO] No pending URLs, waiting for human trigger." -ForegroundColor Green
             exit 0
         } else {
-            Write-Host "[信息] 待处理 URL 数量：$pendingCount" -ForegroundColor Yellow
-            Write-Host "       可手动执行 process 模式进行处理。" -ForegroundColor Yellow
+            Write-Host "[INFO] Pending URLs count: $pendingCount" -ForegroundColor Yellow
+            Write-Host "       Can manually run process mode to handle." -ForegroundColor Yellow
             exit 0
         }
     }
     "process" {
-        Write-Host "处理 manual_url 待处理队列..." -ForegroundColor Cyan
+        Write-Host "Processing manual_url pending queue..." -ForegroundColor Cyan
         Write-Host ""
 
         if (!(Test-Path $manualQueuePath)) {
-            Write-Host "[信息] 无待处理 URL，无需处理。" -ForegroundColor Green
+            Write-Host "[INFO] No pending URLs, nothing to process." -ForegroundColor Green
             exit 0
         }
 
         $pendingCount = (Get-Content $manualQueuePath | Where-Object { $_.Trim() -ne "" } | Measure-Object).Count
 
         if ($pendingCount -eq 0) {
-            Write-Host "[信息] 无待处理 URL，无需处理。" -ForegroundColor Green
+            Write-Host "[INFO] No pending URLs, nothing to process." -ForegroundColor Green
             exit 0
         }
 
-        Write-Host "[提示] 检测到 $pendingCount 条待处理 URL。" -ForegroundColor Yellow
-        Write-Host "       manual_url 归档功能尚未完全实现，" -ForegroundColor Yellow
-        Write-Host "       请等待后续版本支持。" -ForegroundColor Yellow
+        Write-Host "[INFO] Detected $pendingCount pending URLs." -ForegroundColor Yellow
+        Write-Host "       Manual URL archive feature not fully implemented yet," -ForegroundColor Yellow
+        Write-Host "       please wait for future version." -ForegroundColor Yellow
         exit 0
     }
     default {
-        Write-Host "不支持的模式：$Mode" -ForegroundColor Red
+        Write-Host "Unsupported mode: $Mode" -ForegroundColor Red
         Write-Host ""
-        Write-Host "支持的模式：check, process" -ForegroundColor Yellow
+        Write-Host "Supported modes: check, process" -ForegroundColor Yellow
         exit 1
     }
 }

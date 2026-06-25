@@ -1,20 +1,16 @@
-# Document Extraction Foundation - 生产运行脚本
+# Document Extraction Foundation - Production Run Script
 #
-# 作用：读取 production local config，运行 document extraction archive。
+# Purpose: Read production local config, run document extraction archive.
 #
-# 使用方法：
-#   .\scripts\run_document_extraction.ps1                              # 默认 run
-#   .\scripts\run_document_extraction.ps1 -Mode validate-config       # 验证配置
-#   .\scripts\run_document_extraction.ps1 -Mode dry-run               # 试运行
-#   .\scripts\run_document_extraction.ps1 -Mode run                   # 完整运行
-#   .\scripts\run_document_extraction.ps1 -Mode source-health         # 查看 source health
-#   .\scripts\run_document_extraction.ps1 -Mode report                # 查看日报
-#   .\scripts\run_document_extraction.ps1 -Mode retry-failed          # 重试失败队列
-#   .\scripts\run_document_extraction.ps1 -Config path/to/config.yaml # 自定义配置
-#
-# 小白解读：
-#   这个脚本就是帮你省去记长命令的麻烦。
-#   你只要告诉它"我要 run"或"我要 dry-run"，它就会帮你调用正确的 CLI 命令。
+# Usage:
+#   .\scripts\run_document_extraction.ps1                              # Default run
+#   .\scripts\run_document_extraction.ps1 -Mode validate-config       # Validate config
+#   .\scripts\run_document_extraction.ps1 -Mode dry-run               # Dry-run
+#   .\scripts\run_document_extraction.ps1 -Mode run                   # Full run
+#   .\scripts\run_document_extraction.ps1 -Mode source-health         # Source health
+#   .\scripts\run_document_extraction.ps1 -Mode report                # Daily report
+#   .\scripts\run_document_extraction.ps1 -Mode retry-failed         # Retry failed
+#   .\scripts\run_document_extraction.ps1 -Config path/to/config.yaml # Custom config
 
 param(
     [string]$Config = "configs/document_extraction.production.local.yaml",
@@ -25,26 +21,39 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 设置 PYTHONPATH 优先使用项目 src
-$env:PYTHONPATH = "src;$env:PYTHONPATH"
+# Auto-locate repo root (script is in scripts/, parent is repo root)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent $ScriptDir
+Set-Location $RepoRoot
 
-# 根据 Mode 判断是否需要配置文件
+# Set PYTHONPATH to find src/ modules
+$env:PYTHONPATH = Join-Path $RepoRoot "src"
+
+# Determine if config is needed based on Mode
 $needsConfig = @("validate-config", "dry-run", "run", "retry-failed") -contains $Mode
 
 if ($needsConfig) {
-    # 检查配置文件是否存在
+    # Check if config file exists
     if (!(Test-Path $Config)) {
         Write-Host "Missing config: $Config" -ForegroundColor Red
         Write-Host ""
-        Write-Host "请按以下步骤操作：" -ForegroundColor Yellow
-        Write-Host "  1. 复制 configs/document_extraction.production.example.yaml 到 $Config"
-        Write-Host "  2. 编辑 $Config，填入真实 source 路径"
-        Write-Host "  3. 重新运行本脚本"
+        Write-Host "Production config not set up yet. Please follow these steps:" -ForegroundColor Yellow
+        Write-Host "  1. Copy configs/document_extraction.production.example.yaml to $Config" -ForegroundColor Yellow
+        Write-Host "  2. Edit $Config with real source paths" -ForegroundColor Yellow
+        Write-Host "  3. Run this script again" -ForegroundColor Yellow
         exit 1
     }
 }
 
-# 根据 Mode 调用对应 CLI 命令
+$StartTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Document Extraction - $Mode" -ForegroundColor Cyan
+Write-Host "Start time: $StartTime" -ForegroundColor Cyan
+Write-Host "Config: $Config" -ForegroundColor Cyan
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Call corresponding CLI command based on Mode
 switch ($Mode) {
     "validate-config" {
         Write-Host "Validating document extraction config..." -ForegroundColor Cyan
@@ -83,11 +92,20 @@ switch ($Mode) {
 }
 
 $exitCode = $LASTEXITCODE
+$EndTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "End time: $EndTime" -ForegroundColor Cyan
+
 if ($exitCode -eq 0) {
-    Write-Host ""
-    Write-Host "Done." -ForegroundColor Green
+    Write-Host "Status: Success" -ForegroundColor Green
+} elseif ($exitCode -eq 2) {
+    Write-Host "Status: Partial (non-blocking)" -ForegroundColor Yellow
+    Write-Host "Please check report and failed_queue for details." -ForegroundColor Yellow
 } else {
-    Write-Host ""
-    Write-Host "Failed with exit code: $exitCode" -ForegroundColor Red
+    Write-Host "Status: Failed (exit code: $exitCode)" -ForegroundColor Red
 }
+
+Write-Host "========================================" -ForegroundColor Cyan
 exit $exitCode

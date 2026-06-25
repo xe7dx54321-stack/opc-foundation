@@ -1,17 +1,13 @@
-# Research Source Foundation - 生产运行脚本
+# Research Archive Foundation - Production Run Script
 #
-# 作用：读取 production local config，运行 research archive。
+# Purpose: Read production local config, run research archive.
 #
-# 使用方法：
-#   .\scripts\run_research_archive.ps1                              # 默认 run
-#   .\scripts\run_research_archive.ps1 -Mode dry-run                # 试运行
-#   .\scripts\run_research_archive.ps1 -Mode run                    # 完整运行
-#   .\scripts\run_research_archive.ps1 -Mode source-health          # 查看 source health
-#   .\scripts\run_research_archive.ps1 -Config path/to/config.yaml  # 自定义配置
-#
-# 小白解读：
-#   这个脚本就是帮你省去记长命令的麻烦。
-#   你只要告诉它"我要 run"或"我要 dry-run"，它就会帮你调用正确的 CLI 命令。
+# Usage:
+#   .\scripts\run_research_archive.ps1                              # Default run
+#   .\scripts\run_research_archive.ps1 -Mode dry-run                # Dry-run
+#   .\scripts\run_research_archive.ps1 -Mode run                    # Full run
+#   .\scripts\run_research_archive.ps1 -Mode source-health          # Source health check
+#   .\scripts\run_research_archive.ps1 -Config path/to/config.yaml  # Custom config
 
 param(
     [string]$Config = "configs/research_sources.production.local.yaml",
@@ -20,30 +16,41 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 自动定位仓库根目录（脚本位于 scripts/ 下，上一级即仓库根）
+# Auto-locate repo root (script is in scripts/, parent is repo root)
 $ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $RepoRoot = Split-Path -Parent $ScriptDir
 Set-Location $RepoRoot
 
-# 设置 PYTHONPATH，确保能找到 src/ 下的模块
+# Set PYTHONPATH to find src/ modules
 $env:PYTHONPATH = Join-Path $RepoRoot "src"
 
-# 检查配置文件是否存在
+# Check if config exists
 if (!(Test-Path $Config)) {
     Write-Host ""
-    Write-Host "配置文件不存在：$Config" -ForegroundColor Red
+    Write-Host "Config file not found: $Config" -ForegroundColor Red
     Write-Host ""
-    Write-Host "当前能力尚未配置 production local 文件，请先复制 example 配置并填写本地配置。" -ForegroundColor Yellow
+    Write-Host "Production config not set up yet. Please follow these steps:" -ForegroundColor Yellow
     Write-Host ""
-    Write-Host "操作步骤：" -ForegroundColor Yellow
-    Write-Host "  1. 复制 configs/research_sources.production.example.yaml 到 $Config"
-    Write-Host "  2. 编辑 $Config，填入真实 source URL"
-    Write-Host "  3. 重新运行本脚本"
+    Write-Host "  1. Copy configs/research_sources.production.example.yaml to $Config" -ForegroundColor Yellow
+    Write-Host "  2. Edit $Config with real source URLs" -ForegroundColor Yellow
+    Write-Host "  3. Run this script again" -ForegroundColor Yellow
     exit 1
 }
 
-# 根据 Mode 调用对应 CLI 命令
+$StartTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "Research Archive - $Mode" -ForegroundColor Cyan
+Write-Host "Start time: $StartTime" -ForegroundColor Cyan
+Write-Host "Config: $Config"
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Call corresponding CLI command based on Mode
 switch ($Mode) {
+    "validate-config" {
+        Write-Host "Validating research archive config..." -ForegroundColor Cyan
+        python -m opc_foundation.research.cli validate-config --config $Config
+    }
     "dry-run" {
         Write-Host "Starting research archive dry-run..." -ForegroundColor Cyan
         python -m opc_foundation.research.cli dry-run --config $Config
@@ -59,17 +66,26 @@ switch ($Mode) {
     default {
         Write-Host "Unsupported mode: $Mode" -ForegroundColor Red
         Write-Host ""
-        Write-Host "Supported modes: dry-run, run, source-health" -ForegroundColor Yellow
+        Write-Host "Supported modes: validate-config, dry-run, run, source-health" -ForegroundColor Yellow
         exit 1
     }
 }
 
 $exitCode = $LASTEXITCODE
+$EndTime = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
+
+Write-Host ""
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "End time: $EndTime" -ForegroundColor Cyan
+
 if ($exitCode -eq 0) {
-    Write-Host ""
-    Write-Host "Done." -ForegroundColor Green
+    Write-Host "Status: Success" -ForegroundColor Green
+} elseif ($exitCode -eq 2) {
+    Write-Host "Status: Partial (non-blocking)" -ForegroundColor Yellow
+    Write-Host "Please check report and failed_queue for details." -ForegroundColor Yellow
 } else {
-    Write-Host ""
-    Write-Host "Failed with exit code: $exitCode" -ForegroundColor Red
+    Write-Host "Status: Failed (exit code: $exitCode)" -ForegroundColor Red
 }
+
+Write-Host "========================================" -ForegroundColor Cyan
 exit $exitCode

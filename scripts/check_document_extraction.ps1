@@ -1,8 +1,8 @@
-# Document Extraction Foundation - 归档产物检查脚本
+# Document Extraction Foundation - Archive Check Script
 #
-# 作用：检查 document extraction archive 产物是否存在，输出基本健康信息。
+# Purpose: Check if document extraction archive products exist, output basic health info.
 #
-# 使用方法：
+# Usage:
 #   .\scripts\check_document_extraction.ps1
 #   .\scripts\check_document_extraction.ps1 -ArchiveRoot ./data/document_extraction
 
@@ -12,22 +12,27 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 设置 PYTHONPATH 优先使用项目 src
-$env:PYTHONPATH = "src;$env:PYTHONPATH"
+# Auto-locate repo root (script is in scripts/, parent is repo root)
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent $ScriptDir
+Set-Location $RepoRoot
+
+# Set PYTHONPATH to find src/ modules
+$env:PYTHONPATH = Join-Path $RepoRoot "src"
 
 Write-Host ""
 Write-Host "Document Extraction Foundation - Archive Check" -ForegroundColor Cyan
 Write-Host "Archive Root: $ArchiveRoot"
 Write-Host ""
 
-# 检查根目录是否存在
+# Check if root directory exists
 if (!(Test-Path $ArchiveRoot)) {
     Write-Host "[WARNING] Archive root does not exist: $ArchiveRoot" -ForegroundColor Yellow
-    Write-Host "         可能还没有运行过 document extraction。" -ForegroundColor Yellow
+    Write-Host "         May not have run document extraction yet." -ForegroundColor Yellow
     exit 0
 }
 
-# 定义需要检查的关键文件
+# Key files to check
 $indexDir = Join-Path $ArchiveRoot "index"
 $reportsDir = Join-Path $ArchiveRoot "reports"
 $metadataDir = Join-Path $ArchiveRoot "metadata"
@@ -61,7 +66,7 @@ foreach ($file in $criticalFiles) {
     }
 }
 
-# 检查各输出目录
+# Check output directories
 Write-Host ""
 $outputDirs = @(
     @{ Path = $reportsDir;  Name = "reports/";  Filter = "*.md" },
@@ -80,7 +85,7 @@ foreach ($dir in $outputDirs) {
     }
 }
 
-# 检查 failed_queue 是否有失败项（只计数，不视为脚本失败）
+# Check failed_queue (count only, not treated as script failure)
 $failedCount = 0
 $failedQueuePath = Join-Path $indexDir "failed_queue.jsonl"
 if (Test-Path $failedQueuePath) {
@@ -96,11 +101,11 @@ Write-Host ""
 
 if ($failedCount -gt 0) {
     Write-Host ("[INFO] failed_queue has " + $failedCount + " entries.") -ForegroundColor Yellow
-    Write-Host "       这不代表脚本失败，只代表有部分文档抽取失败，可以 retry-failed。" -ForegroundColor Yellow
+    Write-Host "       This does not mean script failure, some docs may have failed extraction." -ForegroundColor Yellow
     Write-Host ""
 }
 
-# 调用 source-health CLI（如果存在 source_health.jsonl）
+# Call source-health CLI if source_health.jsonl exists
 if (Test-Path (Join-Path $indexDir "source_health.jsonl")) {
     Write-Host "Calling source-health CLI..." -ForegroundColor Cyan
     Write-Host ""
@@ -110,7 +115,7 @@ if (Test-Path (Join-Path $indexDir "source_health.jsonl")) {
 if ($missingCritical -gt 0) {
     Write-Host ""
     Write-Host ("[WARNING] " + $missingCritical + " critical file(s) missing.") -ForegroundColor Yellow
-    exit 0  # 不以失败退出，只输出 warning
+    exit 0  # Don't exit with failure, just output warning
 }
 
 Write-Host "All critical files present." -ForegroundColor Green

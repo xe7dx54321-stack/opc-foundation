@@ -58,6 +58,8 @@ M3C-0B 已将 Source Inventory 接入 Dashboard 配置检查页，支持自动�
 
 M3C-1 已新增上线脚本与 TRAE 调度模板，详见 [Foundation TRAE Operations](docs/foundation_trae_operations.md)。
 
+M3C-2A 已完成首次全信息源基线运行，生成了真实的运行状态数据。详见 [Baseline Run Report](docs/foundation_baseline_run_report.md)。
+
 ## What it is
 
 A single installable Python package providing cross-project reusable capabilities:

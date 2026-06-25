@@ -1,8 +1,8 @@
 # OPC Foundation Source Activation Plan
 
-**Version**: 1.1  
-**Updated**: 2026-06-25  
-**Status**: M3C-1 Ready（上线脚本与 TRAE 调度模板）
+**Version**: 1.2  
+**Updated**: 2026-06-26  
+**Status**: M3C-2A Ready（首次全信息源基线运行完成）
 
 ---
 
