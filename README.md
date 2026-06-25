@@ -56,6 +56,8 @@ M3C-0A 新增 `foundation_source_inventory.example.yaml`，用于登记后续准
 
 M3C-0B 已将 Source Inventory 接入 Dashboard 配置检查页，支持自动校验，并新增 [Source Activation Plan](docs/foundation_source_activation_plan.md) 上线计划文档。
 
+M3C-1 已新增上线脚本与 TRAE 调度模板，详见 [Foundation TRAE Operations](docs/foundation_trae_operations.md)。
+
 ## What it is
 
 A single installable Python package providing cross-project reusable capabilities:

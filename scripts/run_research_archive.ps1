@@ -1,4 +1,4 @@
-﻿# Research Source Foundation - 生产运行脚本
+# Research Source Foundation - 生产运行脚本
 #
 # 作用：读取 production local config，运行 research archive。
 #
@@ -20,14 +20,22 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# 设置 PYTHONPATH 优先使用项目 src
-$env:PYTHONPATH = "src;$env:PYTHONPATH"
+# 自动定位仓库根目录（脚本位于 scripts/ 下，上一级即仓库根）
+$ScriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
+$RepoRoot = Split-Path -Parent $ScriptDir
+Set-Location $RepoRoot
+
+# 设置 PYTHONPATH，确保能找到 src/ 下的模块
+$env:PYTHONPATH = Join-Path $RepoRoot "src"
 
 # 检查配置文件是否存在
 if (!(Test-Path $Config)) {
-    Write-Host "Missing config: $Config" -ForegroundColor Red
     Write-Host ""
-    Write-Host "请按以下步骤操作：" -ForegroundColor Yellow
+    Write-Host "配置文件不存在：$Config" -ForegroundColor Red
+    Write-Host ""
+    Write-Host "当前能力尚未配置 production local 文件，请先复制 example 配置并填写本地配置。" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "操作步骤：" -ForegroundColor Yellow
     Write-Host "  1. 复制 configs/research_sources.production.example.yaml 到 $Config"
     Write-Host "  2. 编辑 $Config，填入真实 source URL"
     Write-Host "  3. 重新运行本脚本"

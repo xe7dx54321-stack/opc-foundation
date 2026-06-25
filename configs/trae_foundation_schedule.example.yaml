@@ -1,0 +1,189 @@
+# ============================================================
+# TRAE Foundation Schedule - 调度模板（示例配置）
+# ============================================================
+#
+# 用途：给用户手动配置 TRAE 自动任务时参考。
+# 注意：本文件是 example 模板，不会真正写入 TRAE，不调用外部 API。
+#
+# 使用方法：
+#   1. 复制本文件为 trae_foundation_schedule.local.yaml
+#   2. 根据实际需求调整 enabled_by_default 和 schedule_times
+#   3. 在 TRAE 中手动配置对应任务
+#
+# 设计原则：
+#   - Search Provider 默认 on_demand，不进入定时任务
+#   - Community / Dev 默认 on_demand 或 dormant，不进入默认定时任务
+#   - blocked / high_risk 源不得进入定时任务
+#   - document_extraction 必须晚于上游采集任务运行
+#
+# ============================================================
+
+version: 1
+updated_at: "2026-06-25"
+timezone: local_machine
+
+# ============================================================
+# 任务列表
+# ============================================================
+
+tasks:
+
+  # ========================================================
+  # 第一批上线：S 级官方公开研究
+  # ========================================================
+
+  - task_id: foundation_official_public_research
+    task_name: Foundation 官方公开研究归档
+    source_groups:
+      - official_public_research
+      - official_podcast_transcript
+      - bank_conference_transcripts
+    command: powershell -ExecutionPolicy Bypass -File scripts/run_research_archive.ps1 -Mode run
+    check_command: powershell -ExecutionPolicy Bypass -File scripts/check_research_archive.ps1
+    schedule_times:
+      - "07:30"
+      - "13:30"
+      - "20:30"
+    enabled_by_default: true
+    notes: |
+      覆盖 S 级官方公开研究、播客文字稿和会议纪要源。
+      包含 Goldman Sachs、Morgan Stanley、J.P. Morgan、BofA、Citi、UBS、Barclays 等。
+
+  # ========================================================
+  # 第二批上线：A 级媒体引用与分析师动作
+  # ========================================================
+
+  - task_id: foundation_media_and_analyst_actions
+    task_name: Foundation 媒体引用与分析师动作归档
+    source_groups:
+      - media_research_mentions
+      - analyst_actions
+    command: powershell -ExecutionPolicy Bypass -File scripts/run_research_archive.ps1 -Mode run
+    check_command: powershell -ExecutionPolicy Bypass -File scripts/check_research_archive.ps1
+    schedule_times:
+      - "09:20"
+      - "15:20"
+      - "21:20"
+    enabled_by_default: true
+    notes: |
+      覆盖 A 级媒体研报二次引用和分析师评级/目标价变动。
+      包含 Reuters、MarketWatch、Yahoo Finance、Business Insider 等。
+
+  # ========================================================
+  # 第三批上线：B 级中文财经二次传播
+  # ========================================================
+
+  - task_id: foundation_chinese_rebroadcast
+    task_name: Foundation 中文财经二次传播归档
+    source_groups:
+      - chinese_rebroadcast
+    command: powershell -ExecutionPolicy Bypass -File scripts/run_wechat_archive.ps1
+    check_command: powershell -ExecutionPolicy Bypass -File scripts/check_wechat_archive.ps1
+    schedule_times:
+      - "08:20"
+      - "12:20"
+      - "18:20"
+      - "22:20"
+    enabled_by_default: true
+    notes: |
+      覆盖 B 级中文财经媒体和二次传播源。
+      包含中国基金报、券商中国、华尔街见闻、财联社、格隆汇、智通财经等。
+
+  # ========================================================
+  # 官方披露归档
+  # ========================================================
+
+  - task_id: foundation_official_filings
+    task_name: Foundation 官方披露归档
+    source_groups:
+      - official_filings
+    command: powershell -ExecutionPolicy Bypass -File scripts/run_official_filings.ps1 -Mode run
+    check_command: powershell -ExecutionPolicy Bypass -File scripts/check_official_filings.ps1
+    schedule_times:
+      - "08:00"
+      - "12:45"
+      - "17:30"
+      - "22:30"
+    enabled_by_default: true
+    notes: |
+      覆盖 SEC EDGAR、CNINFO、HKEX 官方披露。
+      HKEX 保持 known_limited，不因 empty_source 阻断整体任务。
+
+  # ========================================================
+  # 文档抽取后处理（必须晚于上游采集）
+  # ========================================================
+
+  - task_id: foundation_document_extraction
+    task_name: Foundation 文档抽取后处理
+    source_groups:
+      - document_extraction
+    command: powershell -ExecutionPolicy Bypass -File scripts/run_document_extraction.ps1
+    check_command: powershell -ExecutionPolicy Bypass -File scripts/check_document_extraction.ps1
+    schedule_times:
+      - "08:40"
+      - "13:05"
+      - "18:00"
+      - "23:00"
+    enabled_by_default: true
+    notes: |
+      必须晚于上游采集任务运行。
+      对所有已归档文档进行结构化抽取和索引。
+
+  # ========================================================
+  # 人工 URL 归档（默认禁用）
+  # ========================================================
+
+  - task_id: foundation_manual_url_check
+    task_name: Foundation 人工 URL 检查
+    source_groups:
+      - manual_url
+    command: powershell -ExecutionPolicy Bypass -File scripts/run_manual_url_archive.ps1
+    schedule_times:
+      - "23:20"
+    enabled_by_default: false
+    notes: |
+      manual_url 以人工触发为主，不建议高频调度。
+      没有 pending URL 时正常退出，状态为"等待人工触发"。
+
+  # ========================================================
+  # Control Center 健康检查
+  # ========================================================
+
+  - task_id: foundation_control_center_check
+    task_name: Foundation 控制中心健康检查
+    command: powershell -ExecutionPolicy Bypass -File scripts/check_foundation_control_center.ps1
+    schedule_times:
+      - "09:10"
+      - "18:30"
+      - "23:40"
+    enabled_by_default: true
+    notes: |
+      只读检查 Control Center 所需配置是否完整。
+      不启动 Streamlit，不访问网站，不写 data。
+
+  # ========================================================
+  # 每日状态收口
+  # ========================================================
+
+  - task_id: foundation_daily_status
+    task_name: Foundation 每日状态收口
+    command: powershell -ExecutionPolicy Bypass -File scripts/check_foundation_daily_status.ps1
+    schedule_times:
+      - "23:55"
+    enabled_by_default: true
+    notes: |
+      生成每日 foundation 状态收口报告。
+      报告输出到 data/foundation_control_center/reports/ 目录。
+      data/ 不提交 Git。
+
+# ============================================================
+# 不进入默认定时任务的 source groups
+# ============================================================
+#
+# 以下 source group 不进入默认 scheduled 任务：
+#
+# - search_providers：on_demand，根据需要手动触发
+# - community_dev_signals：on_demand 或 dormant，按需启用
+# - blocked / high_risk 源：禁止接入，不进入调度
+#
+# ============================================================

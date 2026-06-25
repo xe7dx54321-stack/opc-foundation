@@ -1,8 +1,8 @@
 # OPC Foundation Source Activation Plan
 
-**Version**: 1  
+**Version**: 1.1  
 **Updated**: 2026-06-25  
-**Status**: M3C-0B Ready（Source Inventory 接入配置检查与上线计划）
+**Status**: M3C-1 Ready（上线脚本与 TRAE 调度模板）
 
 ---
 
@@ -262,61 +262,68 @@ Foundation 之前只有 capability 层面的抽象（如 `research.official_publ
 
 ---
 
-## 11. 后续 M3C-1 如何生成 TRAE 调度模板
+## 11. M3C-1 上线脚本与 TRAE 调度模板
 
-### 11.1 M3C-1 目标
+### 11.1 M3C-1 完成状态
 
-基于 source inventory 配置，生成 TRAE 调度任务模板，实现真正的自动化采集。
+M3C-1 已完成：上线脚本与 TRAE 调度模板。
 
-### 11.2 关键步骤
+详见 [Foundation TRAE Operations](foundation_trae_operations.md)。
+
+### 11.2 新增脚本
+
+| 脚本 | 用途 |
+|---|---|
+| `scripts/run_research_archive.ps1` | 运行研究归档（覆盖 5 个 source group） |
+| `scripts/check_research_archive.ps1` | 检查研究归档产物 |
+| `scripts/run_official_filings.ps1` | 运行官方披露归档 |
+| `scripts/check_official_filings.ps1` | 检查官方披露归档产物 |
+| `scripts/run_manual_url_archive.ps1` | 处理人工 URL 队列 |
+| `scripts/check_foundation_control_center.ps1` | Control Center 配置健康检查 |
+| `scripts/check_foundation_daily_status.ps1` | 每日状态收口报告 |
+
+### 11.3 TRAE 调度模板
+
+配置文件：`configs/trae_foundation_schedule.example.yaml`
+
+默认启用 7 个定时任务：
+
+| 任务 | 时间 | 覆盖范围 |
+|---|---|---|
+| 官方公开研究归档 | 07:30 / 13:30 / 20:30 | S 级官方研究 + 播客 + 会议纪要 |
+| 媒体引用与分析师动作 | 09:20 / 15:20 / 21:20 | A 级媒体引用 + 分析师动作 |
+| 中文财经二次传播 | 08:20 / 12:20 / 18:20 / 22:20 | B 级中文传播源 |
+| 官方披露归档 | 08:00 / 12:45 / 17:30 / 22:30 | SEC / CNINFO / HKEX |
+| 文档抽取后处理 | 08:40 / 13:05 / 18:00 / 23:00 | 所有已归档文档 |
+| Control Center 健康检查 | 09:10 / 18:30 / 23:40 | 配置完整性检查 |
+| 每日状态收口 | 23:55 | 生成日报 |
+
+默认禁用：
+
+| 任务 | 原因 |
+|---|---|
+| 人工 URL 检查 | 以人工触发为主 |
+
+不进入默认定时任务：
+
+| 类别 | 原因 |
+|---|---|
+| Search Provider | on_demand，按需触发 |
+| Community / Dev | on_demand / dormant，先观察 |
+| Blocked / High Risk | 禁止接入 |
+
+### 11.4 后续 M3C-2 全信息源基线运行
+
+M3C-2 目标：让所有 scheduled 源稳定运行一周，建立基线数据。
 
 ```text
-1. 为每个 scheduled 源选择/实现 connector
-   - RSS 源 → RSSConnector
-   - 网页源 → WebScraperConnector
-   - API 源 → APIConnector
-   - 播客源 → PodcastConnector
-
-2. 配置 connector 参数
-   - URL / feed URL
-   - 认证方式（如果需要）
-   - 抓取范围（列表页/详情页）
-   - 提取规则（标题/正文/日期/作者）
-
-3. 配置调度参数
-   - schedule_profile → 具体 cron 表达式
-   - recommended_time_windows → 具体时间窗口
-   - 超时 / 重试 / 退避策略
-
-4. 配置质量门禁
-   - 去重策略（URL + 内容哈希）
-   - 质量评分规则
-   - 失败队列处理
-
-5. 生成 TRAE 任务 YAML
-   - 每个 source 一个任务
-   - 按 priority 和 schedule_profile 分组
-   - 依赖关系定义
-```
-
-### 11.3 输出产物
-
-```text
-configs/trae_tasks/
-  ├── s级_投行公开研究.yaml
-  ├── s级_会议纪要.yaml
-  ├── a级_媒体引用.yaml
-  ├── a级_分析师评级.yaml
-  └── b级_中文传播.yaml
-```
-
-### 11.4 上线顺序
-
-```text
-M3C-1 Phase 1: S 级投行公开研究（约 30 个）
-M3C-1 Phase 2: S 级会议纪要 + 播客（约 17 个）
-M3C-1 Phase 3: A 级媒体引用 + 分析师评级（约 13 个）
-M3C-1 Phase 4: B 级中文传播（约 17 个，需合规确认）
+1. 启用第一批 S 级 scheduled 任务
+2. 运行 3 天，观察稳定性
+3. 启用第二批 A 级 scheduled 任务
+4. 运行 2 天，观察稳定性
+5. 启用第三批 B 级 scheduled 任务
+6. 运行 7 天，建立基线数据
+7. 输出基线报告
 ```
 
 ---
