@@ -1,0 +1,861 @@
+# OPC Foundation 能力运行手册配置
+#
+# 功能说明（小白解读）：
+#     这个文件是每个能力的"使用说明书"。
+#     它告诉你：这个能力怎么配置、怎么运行、输出在哪、失败了怎么排查。
+#
+#     核心原则：Foundation provides infrastructure. Business systems keep judgment.
+#     这个配置不包含任何投资判断字段。
+#
+# 更新时间：2026-06-24
+# 版本：1.0
+
+version: "1.0"
+updated_at: "2026-06-24"
+
+runbooks:
+  # ===========================================================================
+  # 研究信息采集（8 条能力）
+  # ===========================================================================
+  - capability_id: research.rss_feed
+    title: RSS 订阅采集运行手册
+    summary: 从公开的 RSS/Atom 订阅源自动采集文章列表和正文，保存为 Markdown 格式。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+      retry_failed: python -m opc_foundation.research.cli retry-failed --archive-root data/research_archive
+    can_do:
+      - 订阅各种公开网站的 RSS 源
+      - 自动抓取新文章的标题、链接、发布时间、正文
+      - 保存为干净的 Markdown 格式 + 元数据
+      - 生成 source_health.jsonl 健康状态文件
+    cannot_do:
+      - 不做投资判断
+      - 不做 ticker impact
+      - 不生成交易信号
+      - 不做文章质量评分
+    common_failures:
+      - error_type: empty_source
+        meaning: 某个 RSS 源没有获取到候选文章
+        check: 检查该源的 URL 是否正确、feed 是否还在更新
+      - error_type: connector_error
+        meaning: 连接器执行失败，无法获取内容
+        check: 查看 failed_queue.jsonl 定位失败项，检查网络连接
+      - error_type: parse_error
+        meaning: RSS feed 解析失败
+        check: 检查 feed 格式是否正确，是否需要更新解析逻辑
+    troubleshooting_steps:
+      - 先运行 validate-config 检查配置文件是否正确
+      - 再运行 dry-run 查看候选数量，确认源是否正常
+      - 查看 source_health.jsonl 判断每个源的状态
+      - 查看 failed_queue.jsonl 定位失败项
+      - 查看 reports 目录中的最近报告
+      - 如仍无法解决，查看 docs/research_source_foundation.md 文档
+    docs:
+      - docs/research_source_foundation.md
+      - docs/research_source_production_readiness.md
+      - docs/research_source_live_smoke_registry.md
+
+  - capability_id: research.wechat_archive
+    title: 公众号文章运行手册
+    summary: 读取已经归档好的微信公众号文章索引，纳入统一的研究信息库。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type wechat_archive
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type wechat_archive
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+    can_do:
+      - 消费微信模块已经归档好的公众号文章
+      - 不直接抓取微信，只读取已归档的元数据
+      - 和 RSS 采集输出格式一致，方便统一处理
+    cannot_do:
+      - 不直接抓取微信公众号
+      - 不做投资判断
+      - 不做文章质量评分
+    common_failures:
+      - error_type: missing_archive
+        meaning: 微信归档文件不存在或为空
+        check: 检查 wechat_archive 模块是否已运行，data/wechat_archive 目录是否存在
+      - error_type: parse_error
+        meaning: 微信归档格式解析失败
+        check: 检查归档文件格式是否正确
+    troubleshooting_steps:
+      - 确认 wechat_archive 模块已运行并生成归档文件
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+      - 查看 docs/wechat_archive_consumer_contract.md 了解消费协议
+    docs:
+      - docs/research_source_foundation.md
+      - docs/wechat_archive_consumer_contract.md
+
+  - capability_id: research.manual_url
+    title: 手动网址投喂运行手册
+    summary: 手工输入一批网址，系统自动逐个抓取并归档为 Markdown。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - examples/manual_urls.example.csv
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type manual_url
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type manual_url
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+      retry_failed: python -m opc_foundation.research.cli retry-failed --archive-root data/research_archive
+    can_do:
+      - 接收手动输入的 URL 列表
+      - 自动提取正文、标题、发布时间
+      - 保存为 Markdown + 元数据
+    cannot_do:
+      - 不做投资判断
+      - 不自动发现新 URL
+      - 不做 JS 渲染（只处理静态页面）
+    common_failures:
+      - error_type: url_invalid
+        meaning: URL 格式无效或无法访问
+        check: 检查 URL 是否正确、是否需要登录
+      - error_type: extraction_failed
+        meaning: 正文提取失败
+        check: 检查页面是否为静态内容，是否需要 JS 渲染
+      - error_type: timeout
+        meaning: 页面加载超时
+        check: 检查网络连接，考虑增加超时时间
+    troubleshooting_steps:
+      - 检查 manual_urls.csv 文件格式是否正确
+      - 运行 validate-config 检查配置
+      - 查看 failed_queue.jsonl 定位失败 URL
+      - 手动访问失败 URL 确认是否可访问
+    docs:
+      - docs/research_source_foundation.md
+      - examples/manual_urls.example.csv
+
+  - capability_id: research.official_public_research
+    title: 官方研究页面运行手册
+    summary: 从官方公开的研究页面列表页采集文章，如券商/机构官网的研究文章。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type official_public
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type official_public
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+    can_do:
+      - 抓取券商/机构/公司官网的研究文章列表
+      - 逐个提取文章正文和元数据
+      - 只处理静态页面，不做 JS 渲染
+    cannot_do:
+      - 不做投资判断
+      - 不做 JS 渲染
+      - 不登录内部系统
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到文章列表
+        check: 检查列表页 URL 是否正确、页面结构是否变化
+      - error_type: parse_error
+        meaning: 页面解析失败
+        check: 检查页面 HTML 结构，可能需要更新解析逻辑
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+      - 手动访问源 URL 确认页面结构
+    docs:
+      - docs/research_source_foundation.md
+
+  - capability_id: research.podcast_transcript
+    title: 播客文字稿运行手册
+    summary: 从公开播客页面采集 transcript（文字稿）元数据，只采集公开的文字稿。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type podcast_transcript
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type podcast_transcript
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+    can_do:
+      - 抓取播客的 episode 列表和文字稿页面
+      - 提取标题、发布时间、嘉宾、文字稿
+      - 只采集公开的文字稿，不做语音转写
+    cannot_do:
+      - 不做语音转写（OCR）
+      - 不做投资判断
+      - 不登录付费播客平台
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到播客 episode
+        check: 检查播客 RSS 或列表页 URL 是否正确
+      - error_type: no_transcript
+        meaning: 某个 episode 没有公开文字稿
+        check: 该 episode 可能没有公开文字稿，跳过即可
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+    docs:
+      - docs/research_source_foundation.md
+
+  - capability_id: research.conference_transcript
+    title: 会议纪要运行手册
+    summary: 从公开会议/活动页面采集纪要和演讲材料，如 investor day、业绩会、行业会议。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type conference_transcript
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type conference_transcript
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+    can_do:
+      - 抓取 investor day、业绩会、行业会议的公开页面
+      - 提取会议时间、参会人、演讲主题、文字纪要
+      - 只采集公开信息，不进内部系统
+    cannot_do:
+      - 不登录内部系统
+      - 不做投资判断
+      - 不做 JS 渲染
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到会议列表
+        check: 检查会议列表页 URL 是否正确
+      - error_type: parse_error
+        meaning: 会议纪要解析失败
+        check: 检查页面结构是否变化
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+    docs:
+      - docs/research_source_foundation.md
+
+  - capability_id: research.analyst_action
+    title: 分析师评级变动运行手册
+    summary: 采集公开的分析师评级变动和目标价调整，只记录原始数据。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type analyst_action
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type analyst_action
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+    can_do:
+      - 从公开页面抓取分析师的评级变化（买入/卖出/持有）
+      - 记录目标价调整、评级变动日期、分析师姓名
+      - 只记录原始数据，不判断利好利空
+    cannot_do:
+      - 不判断利好利空
+      - 不做投资判断
+      - 不做 ticker impact
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到分析师评级数据
+        check: 检查源 URL 是否正确、页面结构是否变化
+      - error_type: parse_error
+        meaning: 评级数据解析失败
+        check: 检查页面 HTML 结构
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+    docs:
+      - docs/research_source_foundation.md
+
+  - capability_id: research.media_mention
+    title: 媒体报道引用运行手册
+    summary: 采集媒体报道中对分析师/研报/观点的引用，只记录公开报道中的原始信息。
+    maturity_label: 可试运行
+    owner_agent: Research Source Agent
+    config_templates:
+      - configs/research_sources.example.yaml
+      - configs/research_sources.production.example.yaml
+    local_config_path: configs/research_sources.production.local.yaml
+    primary_output: data/research_archive/index/documents.latest.jsonl
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+    commands:
+      validate_config: python -m opc_foundation.research.cli validate-config --config configs/research_sources.production.local.yaml
+      dry_run: python -m opc_foundation.research.cli dry-run --config configs/research_sources.production.local.yaml --source-type media_mention
+      run: python -m opc_foundation.research.cli run --config configs/research_sources.production.local.yaml --source-type media_mention
+      source_health: python -m opc_foundation.research.cli source-health --archive-root data/research_archive
+      report: python -m opc_foundation.research.cli report --archive-root data/research_archive
+    can_do:
+      - 从媒体文章中提取提到的分析师观点、研报引用
+      - 记录来源媒体、报道时间、被引用的人和观点
+      - 只记录公开报道中的原始信息
+    cannot_do:
+      - 不做投资判断
+      - 不判断观点正负面
+      - 不做 sentiment 分析
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到媒体报道数据
+        check: 检查源 URL 是否正确
+      - error_type: parse_error
+        meaning: 媒体报道解析失败
+        check: 检查页面结构是否变化
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+    docs:
+      - docs/research_source_foundation.md
+
+  # ===========================================================================
+  # 官方公告采集（3 条能力）
+  # ===========================================================================
+  - capability_id: official_filing.sec_edgar
+    title: SEC EDGAR 公告运行手册
+    summary: 从美国 SEC EDGAR 系统采集美股上市公司的公开公告，如 8-K、10-K、10-Q。
+    maturity_label: 可试运行
+    owner_agent: Official Filing Agent
+    config_templates:
+      - configs/official_filings.example.yaml
+      - configs/official_filings.production.example.yaml
+    local_config_path: configs/official_filings.production.local.yaml
+    primary_output: data/official_filings/index/filings.latest.jsonl
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    report_dir: data/official_filings/reports
+    commands:
+      validate_config: python -m opc_foundation.official_filings.cli validate-config --config configs/official_filings.production.local.yaml
+      dry_run: python -m opc_foundation.official_filings.cli dry-run --config configs/official_filings.production.local.yaml
+      run: python -m opc_foundation.official_filings.cli run --config configs/official_filings.production.local.yaml
+      source_health: python -m opc_foundation.official_filings.cli source-health --archive-root data/official_filings
+      report: python -m opc_foundation.official_filings.cli report --archive-root data/official_filings
+      retry_failed: python -m opc_foundation.official_filings.cli retry-failed --archive-root data/official_filings
+    can_do:
+      - 抓取 8-K（重大事件）、10-K（年报）、10-Q（季报）等
+      - 提取公告标题、发布日期、公司 CIK、文件链接
+      - 支持按公司和类型筛选
+      - 生成 filings.latest.jsonl 索引文件
+    cannot_do:
+      - 不做投资判断
+      - 不做 ticker impact
+      - 不生成交易信号
+      - 不分析公告内容
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到候选披露
+        check: 检查 CIK、时间范围、source 配置
+      - error_type: connector_error
+        meaning: SEC EDGAR 连接失败
+        check: 检查网络连接、SEC API 是否可用
+      - error_type: rate_limit
+        meaning: SEC API 请求频率限制
+        check: 检查请求频率，考虑增加间隔时间
+    troubleshooting_steps:
+      - 先运行 validate-config 检查配置文件是否正确
+      - 再运行 dry-run 查看候选数量
+      - 查看 source_health.jsonl 判断 source 状态
+      - 查看 failed_queue.jsonl 定位失败项
+      - 查看 reports 目录中的最近报告
+      - 如仍无法解决，查看 docs/official_filing_foundation.md 文档
+    docs:
+      - docs/official_filing_foundation.md
+      - docs/official_filing_production_readiness.md
+      - docs/official_filing_live_smoke_registry.md
+
+  - capability_id: official_filing.cninfo_announcement
+    title: 巨潮资讯公告运行手册
+    summary: 从巨潮资讯网采集 A 股上市公司的公开公告，深交所/上交所。
+    maturity_label: 可试运行
+    owner_agent: Official Filing Agent
+    config_templates:
+      - configs/official_filings.example.yaml
+      - configs/official_filings.production.example.yaml
+    local_config_path: configs/official_filings.production.local.yaml
+    primary_output: data/official_filings/index/filings.latest.jsonl
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    report_dir: data/official_filings/reports
+    commands:
+      validate_config: python -m opc_foundation.official_filings.cli validate-config --config configs/official_filings.production.local.yaml
+      dry_run: python -m opc_foundation.official_filings.cli dry-run --config configs/official_filings.production.local.yaml --source-type cninfo
+      run: python -m opc_foundation.official_filings.cli run --config configs/official_filings.production.local.yaml --source-type cninfo
+      source_health: python -m opc_foundation.official_filings.cli source-health --archive-root data/official_filings
+      report: python -m opc_foundation.official_filings.cli report --archive-root data/official_filings
+      retry_failed: python -m opc_foundation.official_filings.cli retry-failed --archive-root data/official_filings
+    can_do:
+      - 抓取深交所/上交所上市公司的所有公开公告
+      - 提取标题、发布日期、股票代码、公告类型
+      - 支持按板块、行业、类型筛选
+    cannot_do:
+      - 不做投资判断
+      - 不分析公告内容
+      - 不做 ticker impact
+    common_failures:
+      - error_type: empty_source
+        meaning: 没有获取到公告数据
+        check: 检查股票代码配置、时间范围
+      - error_type: connector_error
+        meaning: 巨潮资讯连接失败
+        check: 检查网络连接、巨潮资讯网站是否可访问
+      - error_type: parse_error
+        meaning: 公告数据解析失败
+        check: 检查页面结构是否变化
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+      - 查看 reports 目录中的最近报告
+    docs:
+      - docs/official_filing_foundation.md
+      - docs/official_filing_production_readiness.md
+
+  - capability_id: official_filing.hkex_announcement
+    title: 港交所公告运行手册
+    summary: 从港交所 HKEXnews 采集港股上市公司公告。当前因客户端渲染问题功能受限，处于降级状态。
+    maturity_label: 降级
+    owner_agent: Official Filing Agent
+    config_templates:
+      - configs/official_filings.example.yaml
+      - configs/official_filings.production.example.yaml
+    local_config_path: configs/official_filings.production.local.yaml
+    primary_output: data/official_filings/index/filings.latest.jsonl
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    report_dir: data/official_filings/reports
+    commands:
+      validate_config: python -m opc_foundation.official_filings.cli validate-config --config configs/official_filings.production.local.yaml
+      dry_run: python -m opc_foundation.official_filings.cli dry-run --config configs/official_filings.production.local.yaml --source-type hkex
+      run: python -m opc_foundation.official_filings.cli run --config configs/official_filings.production.local.yaml --source-type hkex
+      source_health: python -m opc_foundation.official_filings.cli source-health --archive-root data/official_filings
+      report: python -m opc_foundation.official_filings.cli report --archive-root data/official_filings
+    can_do:
+      - 尝试抓取港股上市公司的公开公告
+      - 提取标题、发布日期、股票代码
+      - 静态抓取，不做 JS 渲染
+    cannot_do:
+      - 不做 JS 渲染（港交所网站用 JS 动态渲染）
+      - 不做投资判断
+      - 不保证完整抓取（降级状态）
+    common_failures:
+      - error_type: js_render_required
+        meaning: 港交所网站需要 JS 渲染，静态抓取效果有限
+        check: 当前处于降级状态，产出较少，建议配合其他渠道使用
+      - error_type: empty_source
+        meaning: 没有获取到公告数据
+        check: 港交所网站结构变化，静态抓取可能失效
+    troubleshooting_steps:
+      - 了解当前处于降级状态，产出较少
+      - 建议配合其他渠道（如第三方数据源）使用
+      - 查看 source_health.jsonl 判断源状态
+      - 查看 failed_queue.jsonl 定位失败项
+    docs:
+      - docs/official_filing_foundation.md
+      - docs/official_filing_production_readiness.md
+
+  # ===========================================================================
+  # 文档内容抽取（4 条能力）
+  # ===========================================================================
+  - capability_id: document_extraction.pdf
+    title: PDF 文档抽取运行手册
+    summary: 从 PDF 文件中抽取干净的文本内容和元数据，OCR 默认关闭。
+    maturity_label: 可试运行
+    owner_agent: Document Extraction Agent
+    config_templates:
+      - configs/document_extraction.example.yaml
+      - configs/document_extraction.production.example.yaml
+    local_config_path: configs/document_extraction.production.local.yaml
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+    commands:
+      validate_config: python -m opc_foundation.document_extraction.cli validate-config --config configs/document_extraction.production.local.yaml
+      dry_run: python -m opc_foundation.document_extraction.cli dry-run --config configs/document_extraction.production.local.yaml
+      run: python -m opc_foundation.document_extraction.cli run --config configs/document_extraction.production.local.yaml
+      source_health: python -m opc_foundation.document_extraction.cli source-health --archive-root data/document_extraction
+      report: python -m opc_foundation.document_extraction.cli report --archive-root data/document_extraction
+      retry_failed: python -m opc_foundation.document_extraction.cli retry-failed --archive-root data/document_extraction
+    can_do:
+      - 读取本地或公开的 PDF 文件
+      - 提取正文文字、页码、文档元数据（作者/标题/日期）
+      - 计算内容哈希，生成 Markdown 版本
+      - OCR 图片文字识别默认关闭
+    cannot_do:
+      - 不做 OCR 图片文字识别（默认关闭）
+      - 不做投资判断
+      - 不分析 PDF 内容
+    common_failures:
+      - error_type: file_not_found
+        meaning: PDF 文件不存在或无法访问
+        check: 检查文件路径是否正确
+      - error_type: parse_error
+        meaning: PDF 解析失败
+        check: 检查 PDF 是否损坏、是否为加密文件
+      - error_type: ocr_disabled_partial
+        meaning: OCR 关闭导致部分内容无法提取
+        check: 如需 OCR，在配置中启用 OCR 功能
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 failed_queue.jsonl 定位失败文件
+      - 检查 PDF 文件是否损坏或加密
+      - 如需 OCR，在配置中启用 OCR 功能
+      - 查看 reports 目录中的最近报告
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+      - docs/document_extraction_live_smoke_registry.md
+
+  - capability_id: document_extraction.html
+    title: HTML 网页抽取运行手册
+    summary: 从 HTML 网页文件中提取干净的正文内容，去掉导航、广告等噪音。
+    maturity_label: 可试运行
+    owner_agent: Document Extraction Agent
+    config_templates:
+      - configs/document_extraction.example.yaml
+      - configs/document_extraction.production.example.yaml
+    local_config_path: configs/document_extraction.production.local.yaml
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+    commands:
+      validate_config: python -m opc_foundation.document_extraction.cli validate-config --config configs/document_extraction.production.local.yaml
+      dry_run: python -m opc_foundation.document_extraction.cli dry-run --config configs/document_extraction.production.local.yaml
+      run: python -m opc_foundation.document_extraction.cli run --config configs/document_extraction.production.local.yaml
+      source_health: python -m opc_foundation.document_extraction.cli source-health --archive-root data/document_extraction
+      report: python -m opc_foundation.document_extraction.cli report --archive-root data/document_extraction
+      retry_failed: python -m opc_foundation.document_extraction.cli retry-failed --archive-root data/document_extraction
+    can_do:
+      - 读取本地或公开的 HTML 文件
+      - 自动去掉导航、广告、侧边栏等噪音
+      - 提取正文标题、发布时间、作者、正文文字
+      - 输出为干净的 Markdown 格式
+    cannot_do:
+      - 不做 JS 渲染
+      - 不做投资判断
+      - 不分析 HTML 内容
+    common_failures:
+      - error_type: file_not_found
+        meaning: HTML 文件不存在
+        check: 检查文件路径是否正确
+      - error_type: parse_error
+        meaning: HTML 解析失败
+        check: 检查 HTML 格式是否正确
+      - error_type: empty_content
+        meaning: 提取的正文为空
+        check: 检查 HTML 是否主要是导航/广告，正文内容太少
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 failed_queue.jsonl 定位失败文件
+      - 检查 HTML 文件格式是否正确
+      - 查看 reports 目录中的最近报告
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+
+  - capability_id: document_extraction.txt
+    title: TXT 纯文本抽取运行手册
+    summary: 处理纯文本文件，统计字数和元数据。
+    maturity_label: 可试运行
+    owner_agent: Document Extraction Agent
+    config_templates:
+      - configs/document_extraction.example.yaml
+      - configs/document_extraction.production.example.yaml
+    local_config_path: configs/document_extraction.production.local.yaml
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+    commands:
+      validate_config: python -m opc_foundation.document_extraction.cli validate-config --config configs/document_extraction.production.local.yaml
+      dry_run: python -m opc_foundation.document_extraction.cli dry-run --config configs/document_extraction.production.local.yaml
+      run: python -m opc_foundation.document_extraction.cli run --config configs/document_extraction.production.local.yaml
+      source_health: python -m opc_foundation.document_extraction.cli source-health --archive-root data/document_extraction
+      report: python -m opc_foundation.document_extraction.cli report --archive-root data/document_extraction
+    can_do:
+      - 读取 .txt 纯文本文件
+      - 统计字符数、词数、段落数
+      - 计算内容哈希，生成元数据
+    cannot_do:
+      - 不做格式转换
+      - 不做投资判断
+      - 不分析文本内容
+    common_failures:
+      - error_type: file_not_found
+        meaning: TXT 文件不存在
+        check: 检查文件路径是否正确
+      - error_type: encoding_error
+        meaning: 文件编码问题
+        check: 检查文件编码，确保为 UTF-8
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 failed_queue.jsonl 定位失败文件
+      - 检查文件编码是否正确
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+
+  - capability_id: document_extraction.markdown
+    title: Markdown 文档抽取运行手册
+    summary: 处理 Markdown 文件，保留格式并统计元数据。
+    maturity_label: 可试运行
+    owner_agent: Document Extraction Agent
+    config_templates:
+      - configs/document_extraction.example.yaml
+      - configs/document_extraction.production.example.yaml
+    local_config_path: configs/document_extraction.production.local.yaml
+    primary_output: data/document_extraction/index/documents.latest.jsonl
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+    commands:
+      validate_config: python -m opc_foundation.document_extraction.cli validate-config --config configs/document_extraction.production.local.yaml
+      dry_run: python -m opc_foundation.document_extraction.cli dry-run --config configs/document_extraction.production.local.yaml
+      run: python -m opc_foundation.document_extraction.cli run --config configs/document_extraction.production.local.yaml
+      source_health: python -m opc_foundation.document_extraction.cli source-health --archive-root data/document_extraction
+      report: python -m opc_foundation.document_extraction.cli report --archive-root data/document_extraction
+    can_do:
+      - 读取 .md Markdown 文件
+      - 保留原有的标题、列表、链接等格式
+      - 统计字数、标题层级、链接数量
+      - 计算内容哈希
+    cannot_do:
+      - 不做格式转换
+      - 不做投资判断
+      - 不分析 Markdown 内容
+    common_failures:
+      - error_type: file_not_found
+        meaning: Markdown 文件不存在
+        check: 检查文件路径是否正确
+      - error_type: parse_error
+        meaning: Markdown 解析失败
+        check: 检查 Markdown 格式是否正确
+    troubleshooting_steps:
+      - 运行 validate-config 检查配置
+      - 查看 failed_queue.jsonl 定位失败文件
+      - 检查 Markdown 文件格式是否正确
+    docs:
+      - docs/document_extraction_foundation.md
+      - docs/document_extraction_production_readiness.md
+
+  # ===========================================================================
+  # 共享运行工具（5 条能力）—— 工具类能力，不需要单独运行
+  # ===========================================================================
+  - capability_id: runtime.archive_paths
+    title: 标准路径工具运行手册
+    summary: 统一构建各种文件路径的小工具，所有模块都用它来找文件。
+    maturity_label: MVP 可用
+    owner_agent: Runtime Agent
+    config_templates: []
+    local_config_path: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    report_dir: ""
+    commands: {}
+    can_do:
+      - 给一个根目录，自动算出索引文件、报告目录等所有路径
+      - 支持 Windows 和 Mac/Linux 路径
+      - 确保各模块路径规范一致
+    cannot_do:
+      - 不直接运行，被其他模块调用
+      - 不做投资判断
+    common_failures: []
+    troubleshooting_steps:
+      - 这是工具类能力，不需要单独运行
+      - 如果路径有问题，检查调用方是否正确使用
+      - 查看 docs/runtime_foundation.md 了解路径规范
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.jsonl
+    title: JSONL 读写工具运行手册
+    summary: 读写 JSONL 格式的通用工具，所有模块的索引文件、日志文件都用它读写。
+    maturity_label: MVP 可用
+    owner_agent: Runtime Agent
+    config_templates: []
+    local_config_path: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    report_dir: ""
+    commands: {}
+    can_do:
+      - 一行一条 JSON 的文件读写
+      - 自动创建目录，UTF-8 编码
+      - 遇到坏数据自动跳过，不会整文件崩
+      - 支持追加、读取、快照写入
+    cannot_do:
+      - 不直接运行，被其他模块调用
+      - 不做投资判断
+    common_failures: []
+    troubleshooting_steps:
+      - 这是工具类能力，不需要单独运行
+      - 如果 JSONL 读写有问题，检查调用方是否正确使用
+      - 查看 docs/runtime_foundation.md 了解 JSONL 规范
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.failed_queue
+    title: 失败队列工具运行手册
+    summary: 统一管理失败任务的小工具，所有模块都用它记录失败项。
+    maturity_label: MVP 可用
+    owner_agent: Runtime Agent
+    config_templates: []
+    local_config_path: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    report_dir: ""
+    commands: {}
+    can_do:
+      - 记录每次失败的是什么、为什么失败、失败了几次
+      - 格式统一，所有模块都能用
+      - 支持后续重跑失败项
+    cannot_do:
+      - 不直接运行，被其他模块调用
+      - 不做投资判断
+    common_failures: []
+    troubleshooting_steps:
+      - 这是工具类能力，不需要单独运行
+      - 如果失败队列有问题，检查调用方是否正确使用
+      - 查看 docs/runtime_foundation.md 了解失败队列规范
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.run_log
+    title: 运行日志工具运行手册
+    summary: 记录每次命令执行情况的日志工具，所有模块格式统一。
+    maturity_label: MVP 可用
+    owner_agent: Runtime Agent
+    config_templates: []
+    local_config_path: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    report_dir: ""
+    commands: {}
+    can_do:
+      - 记录每次跑了什么命令、成功还是失败
+      - 记录候选数、成功数、失败数、重复数
+      - 所有模块格式统一，方便汇总查看
+    cannot_do:
+      - 不直接运行，被其他模块调用
+      - 不做投资判断
+    common_failures: []
+    troubleshooting_steps:
+      - 这是工具类能力，不需要单独运行
+      - 如果运行日志有问题，检查调用方是否正确使用
+      - 查看 docs/runtime_foundation.md 了解运行日志规范
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md
+
+  - capability_id: runtime.health_status
+    title: 健康状态定义运行手册
+    summary: 统一的健康状态定义和判断规则，所有模块用同一套标准。
+    maturity_label: MVP 可用
+    owner_agent: Runtime Agent
+    config_templates: []
+    local_config_path: ""
+    primary_output: ""
+    health_file: ""
+    run_log_file: ""
+    failed_queue_file: ""
+    report_dir: ""
+    commands: {}
+    can_do:
+      - 定义什么是 healthy、degraded、failed 等状态
+      - 所有模块用同一套标准
+      - 保证健康判断口径一致
+    cannot_do:
+      - 不直接运行，是定义/规范
+      - 不做投资判断
+    common_failures: []
+    troubleshooting_steps:
+      - 这是工具类能力，不需要单独运行
+      - 如果健康状态判断有问题，检查调用方是否正确使用
+      - 查看 docs/runtime_foundation.md 了解健康状态定义
+    docs:
+      - docs/runtime_foundation.md
+      - docs/runtime_output_contract.md

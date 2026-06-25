@@ -15,13 +15,16 @@ import dataclasses
 from opc_foundation.dashboard.models import (
     Capability,
     CapabilityRegistry,
+    CapabilityRunbook,
     CapabilityRuntimeSummary,
     CapabilityTrack,
     CapabilityUsageProject,
     CapabilityUsageRegistry,
     CapabilityUsageStage,
     CapabilityUsageWorkflow,
+    CommonFailure,
     DashboardSummary,
+    RunbookRegistry,
 )
 
 PROHIBITED_FIELDS = {
@@ -173,3 +176,88 @@ def test_usage_models_construction() -> None:
         projects=[proj],
     )
     assert reg.projects[0].workflows[0].stages[0].capabilities[0] == "research.rss_feed"
+
+
+def test_common_failure_construction() -> None:
+    """CommonFailure 应能正确构造。"""
+    cf = CommonFailure(
+        error_type="empty_source",
+        meaning="源为空",
+        check="检查 URL",
+    )
+    assert cf.error_type == "empty_source"
+    assert cf.meaning == "源为空"
+    assert cf.check == "检查 URL"
+
+
+def test_capability_runbook_construction() -> None:
+    """CapabilityRunbook 应能正确构造。"""
+    cf = CommonFailure(error_type="empty_source", meaning="源为空", check="检查 URL")
+    rb = CapabilityRunbook(
+        capability_id="research.rss_feed",
+        title="RSS 订阅采集运行手册",
+        summary="从 RSS 源采集文章",
+        maturity_label="可试运行",
+        owner_agent="Research Source Agent",
+        config_templates=["configs/research_sources.example.yaml"],
+        local_config_path="configs/research_sources.production.local.yaml",
+        primary_output="data/research_archive/index/documents.latest.jsonl",
+        health_file="data/research_archive/index/source_health.jsonl",
+        run_log_file="data/research_archive/index/run_log.jsonl",
+        failed_queue_file="data/research_archive/index/failed_queue.jsonl",
+        report_dir="data/research_archive/reports",
+        commands={"run": "python -m opc_foundation.research.cli run"},
+        can_do=["订阅 RSS 源", "自动抓取文章"],
+        cannot_do=["不做投资判断"],
+        common_failures=[cf],
+        troubleshooting_steps=["先检查配置", "再查看日志"],
+        docs=["docs/research_source_foundation.md"],
+    )
+    assert rb.capability_id == "research.rss_feed"
+    assert rb.title == "RSS 订阅采集运行手册"
+    assert len(rb.common_failures) == 1
+    assert len(rb.commands) == 1
+    assert rb.is_tool_only is False
+
+
+def test_capability_runbook_is_tool_only_true() -> None:
+    """commands 为空时 is_tool_only 应为 True。"""
+    rb = CapabilityRunbook(capability_id="runtime.jsonl", commands={})
+    assert rb.is_tool_only is True
+
+
+def test_runbook_registry_construction() -> None:
+    """RunbookRegistry 应能正确构造。"""
+    rb = CapabilityRunbook(capability_id="research.rss_feed")
+    reg = RunbookRegistry(
+        version="1.0",
+        updated_at="2026-06-24",
+        runbooks=[rb],
+        load_error=None,
+    )
+    assert reg.version == "1.0"
+    assert len(reg.runbooks) == 1
+    assert reg.load_error is None
+
+
+def test_runbook_registry_get_runbook() -> None:
+    """RunbookRegistry.get_runbook 应能正确查找。"""
+    rb = CapabilityRunbook(capability_id="research.rss_feed")
+    reg = RunbookRegistry(runbooks=[rb])
+    found = reg.get_runbook("research.rss_feed")
+    assert found is not None
+    assert found.capability_id == "research.rss_feed"
+    assert reg.get_runbook("nonexistent") is None
+
+
+def test_runbook_models_no_prohibited_fields() -> None:
+    """运行手册相关 model 不得包含禁止字段。"""
+    all_models = [
+        CommonFailure,
+        CapabilityRunbook,
+        RunbookRegistry,
+    ]
+    for model in all_models:
+        fields = {f.name for f in dataclasses.fields(model)}
+        intersection = fields & PROHIBITED_FIELDS
+        assert not intersection, f"{model.__name__} 包含禁止字段: {intersection}"

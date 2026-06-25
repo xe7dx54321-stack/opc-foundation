@@ -31,6 +31,7 @@ class CapabilityTrack:
     name: str
     status: str
     description: str
+    name_en: str = ""
 
 
 @dataclass(frozen=True)
@@ -54,6 +55,7 @@ class Capability:
         run_log_file:       运行日志文件路径（run_log.jsonl）
         failed_queue_file:  失败队列文件路径（failed_queue.jsonl）
         docs:               相关文档路径列表
+        sources:            已接入的数据源列表（每个源有 name/status/url 等）
     """
 
     capability_id: str
@@ -68,6 +70,10 @@ class Capability:
     run_log_file: str
     failed_queue_file: str
     docs: list[str]
+    display_name: str = ""
+    what_it_does: list[str] = field(default_factory=list)
+    typical_usage: str = ""
+    sources: list[dict] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -89,6 +95,24 @@ class CapabilityRegistry:
     updated_at: str
     tracks: list[CapabilityTrack]
     capabilities: list[Capability]
+
+    def get_capability(self, capability_id: str) -> Capability | None:
+        """根据能力 ID 获取能力对象。
+
+        功能说明：
+            在注册表中查找指定能力。
+            找不到返回 None。
+
+        参数：
+            capability_id: 能力 ID
+
+        返回：
+            Capability 或 None
+        """
+        for cap in self.capabilities:
+            if cap.capability_id == capability_id:
+                return cap
+        return None
 
 
 @dataclass(frozen=True)
@@ -127,6 +151,7 @@ class CapabilityUsageWorkflow:
         workflow_id:   工作流 ID
         workflow_name: 工作流名称
         status:        工作流状态
+        description:   工作流描述（可选）
         stages:        阶段列表
     """
 
@@ -134,6 +159,7 @@ class CapabilityUsageWorkflow:
     workflow_name: str
     status: str
     stages: list[CapabilityUsageStage]
+    description: str = ""
 
 
 @dataclass(frozen=True)
@@ -147,6 +173,7 @@ class CapabilityUsageProject:
         project_id:   项目 ID
         project_name: 项目名称
         status:       项目状态（如 planned / candidate / active）
+        description:  项目描述（可选）
         workflows:    工作流列表
     """
 
@@ -154,6 +181,7 @@ class CapabilityUsageProject:
     project_name: str
     status: str
     workflows: list[CapabilityUsageWorkflow]
+    description: str = ""
 
 
 @dataclass(frozen=True)
@@ -248,3 +276,133 @@ class DashboardSummary:
     stale_count: int
     used_count: int
     unused_count: int
+
+
+# ===========================================================================
+# 运行手册相关数据模型（M3B-2 新增）
+# ===========================================================================
+
+
+@dataclass(frozen=True)
+class CommonFailure:
+    """常见失败类型。
+
+    功能说明：
+        记录某个能力常见的失败类型、含义和排查方向。
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        error_type: 错误类型标识（英文，便于搜索）
+        meaning:     错误含义（中文）
+        check:       排查方向（中文）
+    """
+
+    error_type: str
+    meaning: str = ""
+    check: str = ""
+
+
+@dataclass(frozen=True)
+class CapabilityRunbook:
+    """能力运行手册。
+
+    功能说明（小白解读）：
+        一个能力的完整运行手册，告诉你：
+        - 这个能力叫啥、能干啥
+        - 怎么配置、怎么运行
+        - 输出在哪、失败了怎么排查
+
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        capability_id:        能力 ID（必须存在于 foundation_capabilities.yaml）
+        title:                中文标题
+        summary:              中文摘要
+        maturity_label:       成熟度中文标签（如"可试运行"、"MVP 可用"）
+        owner_agent:          负责 Agent 名称
+        config_templates:     配置模板文件路径列表
+        local_config_path:    本地配置文件路径
+        primary_output:       主要输出文件路径
+        health_file:          健康状态文件路径
+        run_log_file:         运行日志文件路径
+        failed_queue_file:    失败队列文件路径
+        report_dir:           报告目录路径
+        commands:             运行命令字典（key 是命令类型，value 是命令字符串）
+        can_do:               能做什么（中文列表）
+        cannot_do:            不能做什么（中文列表）
+        common_failures:      常见失败列表
+        troubleshooting_steps:排查步骤（按顺序，中文）
+        docs:                 相关文档路径列表
+    """
+
+    capability_id: str
+    title: str = ""
+    summary: str = ""
+    maturity_label: str = ""
+    owner_agent: str = ""
+    config_templates: list[str] = field(default_factory=list)
+    local_config_path: str = ""
+    primary_output: str = ""
+    health_file: str = ""
+    run_log_file: str = ""
+    failed_queue_file: str = ""
+    report_dir: str = ""
+    commands: dict[str, str] = field(default_factory=dict)
+    can_do: list[str] = field(default_factory=list)
+    cannot_do: list[str] = field(default_factory=list)
+    common_failures: list[CommonFailure] = field(default_factory=list)
+    troubleshooting_steps: list[str] = field(default_factory=list)
+    docs: list[str] = field(default_factory=list)
+
+    @property
+    def is_tool_only(self) -> bool:
+        """判断是否是工具类能力（不需要单独运行）。
+
+        功能说明：
+            如果 commands 为空，说明这个能力是工具类，
+            被其他模块调用，不需要单独运行。
+
+        返回：
+            bool: True 表示是工具类能力
+        """
+        return len(self.commands) == 0
+
+
+@dataclass
+class RunbookRegistry:
+    """运行手册注册表。
+
+    功能说明：
+        从 capability_runbooks.yaml 加载的完整运行手册注册表。
+        包含所有能力的运行手册。
+        注意：这个类不是 frozen，因为加载过程中可能需要修改。
+
+    参数：
+        version:      配置版本
+        updated_at:   更新时间
+        runbooks:     运行手册列表
+        load_error:   加载错误信息（如果加载失败）
+    """
+
+    version: str = ""
+    updated_at: str = ""
+    runbooks: list[CapabilityRunbook] = field(default_factory=list)
+    load_error: str | None = None
+
+    def get_runbook(self, capability_id: str) -> CapabilityRunbook | None:
+        """根据能力 ID 获取运行手册。
+
+        功能说明：
+            在注册表中查找指定能力的运行手册。
+            找不到返回 None。
+
+        参数：
+            capability_id: 能力 ID
+
+        返回：
+            CapabilityRunbook 或 None
+        """
+        for rb in self.runbooks:
+            if rb.capability_id == capability_id:
+                return rb
+        return None

@@ -49,12 +49,59 @@ def test_build_usage_index() -> None:
 
 def test_find_unused_capabilities() -> None:
     """find_unused_capabilities 应找到未使用的能力。"""
-    cap_reg = load_capabilities_config(CONFIG_PATH)
-    usage_reg = load_usage_registry(USAGE_PATH)
-    unused = find_unused_capabilities(cap_reg.capabilities, usage_reg)
-    # 20 个能力中有些没被使用
-    assert len(unused) > 0
-    assert len(unused) < 20
+    # 构造测试数据：3 个能力，其中 1 个未被使用
+    caps = [
+        Capability(
+            capability_id="used.cap1", name="U1", track="research",
+            category="research_source", maturity_status="production_trial_ready",
+            description="", input_type="", primary_output="",
+            health_file="", run_log_file="", failed_queue_file="", docs=[],
+        ),
+        Capability(
+            capability_id="used.cap2", name="U2", track="research",
+            category="research_source", maturity_status="production_trial_ready",
+            description="", input_type="", primary_output="",
+            health_file="", run_log_file="", failed_queue_file="", docs=[],
+        ),
+        Capability(
+            capability_id="unused.cap", name="X", track="research",
+            category="research_source", maturity_status="production_trial_ready",
+            description="", input_type="", primary_output="",
+            health_file="", run_log_file="", failed_queue_file="", docs=[],
+        ),
+    ]
+    usage_reg = CapabilityUsageRegistry(
+        version="1",
+        updated_at="2026-06-24",
+        projects=[
+            CapabilityUsageProject(
+                project_id="proj1",
+                project_name="P1",
+                status="active",
+                workflows=[
+                    CapabilityUsageWorkflow(
+                        workflow_id="wf1",
+                        workflow_name="W1",
+                        status="active",
+                        stages=[
+                            CapabilityUsageStage(
+                                stage_id="s1",
+                                stage_name="S1",
+                                agent="A1",
+                                status="active",
+                                purpose="test",
+                                capabilities=["used.cap1", "used.cap2"],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+    unused = find_unused_capabilities(caps, usage_reg)
+    # unused.cap 应该在未使用列表中
+    assert len(unused) == 1
+    assert unused[0] == "unused.cap"
 
 
 def test_find_unknown_usage_references() -> None:

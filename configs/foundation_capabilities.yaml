@@ -9,9 +9,9 @@
 #     这个配置不包含任何投资判断字段。
 #
 # 更新时间：2026-06-24
-# 版本：1.0
+# 版本：1.1
 
-version: "1.0"
+version: "1.1"
 updated_at: "2026-06-24"
 
 # ===========================================================================
@@ -19,24 +19,28 @@ updated_at: "2026-06-24"
 # ===========================================================================
 tracks:
   - track_id: research
-    name: Research Source Foundation
+    name: 研究信息采集
+    name_en: Research Source Foundation
     status: production_trial_ready
-    description: "公开研究信息源归档基础设施：RSS、微信公众号归档、手工 URL、官方研究页面、播客 transcript、会议 transcript、分析师评级变动、媒体引用。只采集公开 metadata，不做投资判断。"
+    description: "采集公开的研究信息源——包括 RSS 订阅、公众号文章、官方研报、播客、会议纪要、分析师观点、媒体报道等。只采集公开信息，不做投资判断。"
 
   - track_id: official_filing
-    name: Official Filing Foundation
+    name: 官方公告采集
+    name_en: Official Filing Foundation
     status: production_trial_ready
-    description: "官方公告归档基础设施：SEC EDGAR、巨潮资讯（CNINFO）、港交所（HKEX）。只归档公开公告原文和 metadata，不做投资判断。"
+    description: "采集各国官方披露的上市公司公告——美股 SEC、A 股巨潮资讯、港股港交所。只归档公开公告原文，不做投资判断。"
 
   - track_id: document_extraction
-    name: Document Extraction Foundation
+    name: 文档内容抽取
+    name_en: Document Extraction Foundation
     status: production_trial_ready
-    description: "文档抽取基础设施：PDF、HTML、TXT、Markdown。把各种格式的文档抽成干净的文本和 metadata，不做投资判断。"
+    description: "把各种格式的文档（PDF/HTML/TXT/Markdown）抽成干净的文本和元数据。OCR 默认关闭，不做图片文字识别。"
 
   - track_id: runtime
-    name: Shared Runtime Foundation
+    name: 共享运行工具
+    name_en: Shared Runtime Foundation
     status: mvp_ready
-    description: "共享运行时基础设施：archive 路径、JSONL 读写、失败队列、运行日志、健康状态。所有 foundation 模块复用这一层。"
+    description: "所有模块共用的底层工具——路径管理、JSONL 读写、失败队列、运行日志、健康状态。"
 
 # ===========================================================================
 # capabilities: 能力列表（20 条）
@@ -44,15 +48,21 @@ tracks:
 capabilities:
 
   # -------------------------------------------------------------------------
-  # Research Source Foundation（8 条能力）
+  # 研究信息采集（8 条能力）
   # -------------------------------------------------------------------------
   - capability_id: research.rss_feed
+    display_name: RSS 订阅采集
     name: RSS Feed
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "从公开 RSS/Atom feed 采集研究文章，归档为 markdown + metadata。"
-    input_type: rss_feed
+    description: "从公开的 RSS/Atom 订阅源自动采集文章列表和正文。"
+    what_it_does:
+      - "订阅各种公开网站的 RSS 源"
+      - "自动抓取新文章的标题、链接、发布时间、正文"
+      - "保存为干净的 Markdown 格式 + 元数据"
+    typical_usage: "监控博客、新闻网站、公司 IR 页面的更新"
+    input_type: RSS/Atom 订阅地址
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -63,12 +73,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.wechat_archive
+    display_name: 公众号文章
     name: WeChat Archive
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "读取微信公众号归档索引（由 wechat 模块归档），不重新抓微信。只消费已归档的公开文章 metadata。"
-    input_type: wechat_archive
+    description: "读取已经归档好的微信公众号文章索引。"
+    what_it_does:
+      - "消费微信模块已经归档好的公众号文章"
+      - "不直接抓取微信，只读取已归档的元数据"
+      - "和 RSS 采集输出格式一致，方便统一处理"
+    typical_usage: "把公众号文章纳入统一的研究信息库"
+    input_type: 微信归档索引
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -79,12 +95,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.manual_url
+    display_name: 手动网址投喂
     name: Manual URL
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "用户手工投喂 URL 列表，逐个抓取并归档为 markdown + metadata。"
-    input_type: manual_url
+    description: "手工输入一批网址，系统自动逐个抓取并归档。"
+    what_it_does:
+      - "你给它一串网址，它一个个去抓"
+      - "自动提取正文、标题、发布时间"
+      - "保存为 Markdown + 元数据"
+    typical_usage: "看到好文章想存起来，批量丢进去就行"
+    input_type: 手动输入的 URL 列表
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -95,12 +117,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.official_public_research
+    display_name: 官方研究页面
     name: Official Public Research
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "从官方公开研究页面采集文章列表和详情，归档为 markdown + metadata。"
-    input_type: official_public_research
+    description: "从官方公开的研究页面列表页采集文章。"
+    what_it_does:
+      - "抓取券商/机构/公司官网的研究文章列表"
+      - "逐个提取文章正文和元数据"
+      - "只处理静态页面，不做 JS 渲染"
+    typical_usage: "定期抓取某机构官网的最新研究文章"
+    input_type: 官方研究列表页 URL
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -111,12 +139,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.podcast_transcript
+    display_name: 播客文字稿
     name: Podcast Transcript
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "从公开播客 episode 列表页或 RSS feed 采集 transcript metadata，归档为 markdown + metadata。"
-    input_type: podcast_transcript
+    description: "从公开播客页面采集 transcript（文字稿）元数据。"
+    what_it_does:
+      - "抓取播客的 episode 列表和文字稿页面"
+      - "提取标题、发布时间、嘉宾、文字稿"
+      - "只采集公开的文字稿，不做语音转写"
+    typical_usage: "跟踪投资播客、商业播客的文字内容"
+    input_type: 播客列表页或 RSS
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -127,12 +161,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.conference_transcript
+    display_name: 会议纪要
     name: Conference Transcript
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "从公开会议/event 页面采集 transcript 和 presentation metadata，归档为 markdown + metadata。"
-    input_type: conference_transcript
+    description: "从公开会议/活动页面采集纪要和演讲材料。"
+    what_it_does:
+      - "抓取 investor day、业绩会、行业会议的公开页面"
+      - "提取会议时间、参会人、演讲主题、文字纪要"
+      - "只采集公开信息，不进内部系统"
+    typical_usage: "跟踪上市公司业绩会、行业峰会的公开纪要"
+    input_type: 会议列表页 URL
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -143,12 +183,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.analyst_action
+    display_name: 分析师评级变动
     name: Analyst Action
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "从公开页面采集分析师评级变动和目标价调整的 raw metadata。只记录公开事件，不做投资建议，不判断利好利空。"
-    input_type: analyst_action
+    description: "采集公开的分析师评级变动和目标价调整。"
+    what_it_does:
+      - "从公开页面抓取分析师的评级变化（买入/卖出/持有）"
+      - "记录目标价调整、评级变动日期、分析师姓名"
+      - "只记录原始数据，不判断利好利空"
+    typical_usage: "跟踪华尔街分析师对某只股票的观点变化"
+    input_type: 分析师评级页面 URL
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -159,12 +205,18 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   - capability_id: research.media_mention
+    display_name: 媒体报道引用
     name: Media Mention
     track: research
-    category: source
+    category: 信息源
     maturity_status: production_trial_ready
-    description: "从公开媒体报道采集对投行观点/研报/分析师的引用 metadata。只记录公开报道，不做投资建议。"
-    input_type: media_mention
+    description: "采集媒体报道中对分析师/研报/观点的引用。"
+    what_it_does:
+      - "从媒体文章中提取提到的分析师观点、研报引用"
+      - "记录来源媒体、报道时间、被引用的人和观点"
+      - "只记录公开报道中的原始信息"
+    typical_usage: "跟踪某分析师或某研报被主流媒体引用的情况"
+    input_type: 媒体报道页面 URL
     primary_output: data/research_archive/index/documents.latest.jsonl
     health_file: data/research_archive/index/source_health.jsonl
     run_log_file: data/research_archive/index/run_log.jsonl
@@ -175,15 +227,21 @@ capabilities:
       - docs/research_source_live_smoke_registry.md
 
   # -------------------------------------------------------------------------
-  # Official Filing Foundation（3 条能力）
+  # 官方公告采集（3 条能力）
   # -------------------------------------------------------------------------
   - capability_id: official_filing.sec_edgar
+    display_name: 美股 SEC 公告
     name: SEC EDGAR
     track: official_filing
-    category: filing
+    category: 公告
     maturity_status: production_trial_ready
-    description: "从 SEC EDGAR 采集美股公开公告（8-K/10-K/10-Q 等），归档为原文 + metadata。"
-    input_type: sec_edgar
+    description: "从美国 SEC EDGAR 系统采集美股上市公司的公开公告。"
+    what_it_does:
+      - "抓取 8-K（重大事件）、10-K（年报）、10-Q（季报）等"
+      - "提取公告标题、发布日期、公司 CIK、文件链接"
+      - "支持按公司和类型筛选"
+    typical_usage: "每天定时拉取关注的美股公司最新公告"
+    input_type: SEC CIK 或公司配置
     primary_output: data/official_filings/index/filings.latest.jsonl
     health_file: data/official_filings/index/source_health.jsonl
     run_log_file: data/official_filings/index/run_log.jsonl
@@ -194,12 +252,18 @@ capabilities:
       - docs/official_filing_live_smoke_registry.md
 
   - capability_id: official_filing.cninfo_announcement
+    display_name: A 股巨潮公告
     name: CNINFO Announcement
     track: official_filing
-    category: filing
+    category: 公告
     maturity_status: production_trial_ready
-    description: "从巨潮资讯网采集 A 股公开公告，归档为原文 + metadata。"
-    input_type: cninfo_announcement
+    description: "从巨潮资讯网采集 A 股上市公司的公开公告。"
+    what_it_does:
+      - "抓取深交所/上交所上市公司的所有公开公告"
+      - "提取标题、发布日期、股票代码、公告类型"
+      - "支持按板块、行业、类型筛选"
+    typical_usage: "每天拉取自选股的最新公告提醒"
+    input_type: 巨潮资讯配置
     primary_output: data/official_filings/index/filings.latest.jsonl
     health_file: data/official_filings/index/source_health.jsonl
     run_log_file: data/official_filings/index/run_log.jsonl
@@ -210,12 +274,18 @@ capabilities:
       - docs/official_filing_live_smoke_registry.md
 
   - capability_id: official_filing.hkex_announcement
+    display_name: 港股港交所公告
     name: HKEX Announcement
     track: official_filing
-    category: filing
+    category: 公告
     maturity_status: degraded
-    description: "从港交所 HKEXnews 采集港股公开公告。当前因客户端渲染问题处于 degraded 状态，静态路径可用但产出有限。"
-    input_type: hkex_announcement
+    description: "从港交所 HKEXnews 采集港股上市公司公告。当前因客户端渲染问题功能受限。"
+    what_it_does:
+      - "尝试抓取港股上市公司的公开公告"
+      - "港交所网站用 JS 动态渲染，静态抓取效果有限"
+      - "当前处于降级状态，产出较少"
+    typical_usage: "辅助监控港股公告，建议配合其他渠道使用"
+    input_type: 港交所配置
     primary_output: data/official_filings/index/filings.latest.jsonl
     health_file: data/official_filings/index/source_health.jsonl
     run_log_file: data/official_filings/index/run_log.jsonl
@@ -226,15 +296,22 @@ capabilities:
       - docs/official_filing_live_smoke_registry.md
 
   # -------------------------------------------------------------------------
-  # Document Extraction Foundation（4 条能力）
+  # 文档内容抽取（4 条能力）
   # -------------------------------------------------------------------------
   - capability_id: document_extraction.pdf
+    display_name: PDF 文档抽取
     name: PDF Extraction
     track: document_extraction
-    category: document
+    category: 文档
     maturity_status: production_trial_ready
-    description: "从本地或公开 PDF 文件抽取干净文本和 metadata。OCR 默认关闭。"
-    input_type: pdf
+    description: "从 PDF 文件中抽取干净的文本内容和元数据。"
+    what_it_does:
+      - "读取本地或公开的 PDF 文件"
+      - "提取正文文字、页码、文档元数据（作者/标题/日期）"
+      - "计算内容哈希，生成 Markdown 版本"
+      - "OCR 图片文字识别默认关闭"
+    typical_usage: "把一堆研报 PDF 抽成可搜索的文本"
+    input_type: PDF 文件
     primary_output: data/document_extraction/index/documents.latest.jsonl
     health_file: data/document_extraction/index/source_health.jsonl
     run_log_file: data/document_extraction/index/run_log.jsonl
@@ -245,12 +322,19 @@ capabilities:
       - docs/document_extraction_live_smoke_registry.md
 
   - capability_id: document_extraction.html
+    display_name: HTML 网页抽取
     name: HTML Extraction
     track: document_extraction
-    category: document
+    category: 文档
     maturity_status: production_trial_ready
-    description: "从本地或公开 HTML 文件抽取干净文本和 metadata。"
-    input_type: html
+    description: "从 HTML 网页文件中提取干净的正文内容。"
+    what_it_does:
+      - "读取本地或公开的 HTML 文件"
+      - "自动去掉导航、广告、侧边栏等噪音"
+      - "提取正文标题、发布时间、作者、正文文字"
+      - "输出为干净的 Markdown 格式"
+    typical_usage: "把保存的网页变成干净的文章"
+    input_type: HTML 文件
     primary_output: data/document_extraction/index/documents.latest.jsonl
     health_file: data/document_extraction/index/source_health.jsonl
     run_log_file: data/document_extraction/index/run_log.jsonl
@@ -261,12 +345,18 @@ capabilities:
       - docs/document_extraction_live_smoke_registry.md
 
   - capability_id: document_extraction.txt
+    display_name: TXT 纯文本抽取
     name: TXT Extraction
     track: document_extraction
-    category: document
+    category: 文档
     maturity_status: production_trial_ready
-    description: "从纯文本文件抽取文本统计和 metadata。"
-    input_type: txt
+    description: "处理纯文本文件，统计字数和元数据。"
+    what_it_does:
+      - "读取 .txt 纯文本文件"
+      - "统计字符数、词数、段落数"
+      - "计算内容哈希，生成元数据"
+    typical_usage: "把零散的 txt 笔记纳入统一文档库"
+    input_type: TXT 纯文本文件
     primary_output: data/document_extraction/index/documents.latest.jsonl
     health_file: data/document_extraction/index/source_health.jsonl
     run_log_file: data/document_extraction/index/run_log.jsonl
@@ -277,12 +367,19 @@ capabilities:
       - docs/document_extraction_live_smoke_registry.md
 
   - capability_id: document_extraction.markdown
+    display_name: Markdown 文档抽取
     name: Markdown Extraction
     track: document_extraction
-    category: document
+    category: 文档
     maturity_status: production_trial_ready
-    description: "从 Markdown 文件抽取保留格式文本和文本统计 metadata。"
-    input_type: markdown
+    description: "处理 Markdown 文件，保留格式并统计元数据。"
+    what_it_does:
+      - "读取 .md Markdown 文件"
+      - "保留原有的标题、列表、链接等格式"
+      - "统计字数、标题层级、链接数量"
+      - "计算内容哈希"
+    typical_usage: "把 Markdown 笔记统一归档和去重"
+    input_type: Markdown 文件
     primary_output: data/document_extraction/index/documents.latest.jsonl
     health_file: data/document_extraction/index/source_health.jsonl
     run_log_file: data/document_extraction/index/run_log.jsonl
@@ -293,15 +390,21 @@ capabilities:
       - docs/document_extraction_live_smoke_registry.md
 
   # -------------------------------------------------------------------------
-  # Shared Runtime Foundation（5 条能力）
+  # 共享运行工具（5 条能力）
   # -------------------------------------------------------------------------
   - capability_id: runtime.archive_paths
+    display_name: 标准路径工具
     name: Archive Paths
     track: runtime
-    category: runtime
+    category: 工具
     maturity_status: mvp_ready
-    description: "标准 archive 路径构建器：根据 archive_root 和索引文件名构建所有标准路径。"
-    input_type: ""
+    description: "统一构建各种文件路径的小工具。"
+    what_it_does:
+      - "给一个根目录，自动算出索引文件、报告目录等所有路径"
+      - "支持 Windows 和 Mac/Linux 路径"
+      - "确保各模块路径规范一致"
+    typical_usage: "所有模块都用它来找文件，不用自己拼路径"
+    input_type: 根目录路径
     primary_output: ""
     health_file: ""
     run_log_file: ""
@@ -311,12 +414,19 @@ capabilities:
       - docs/runtime_output_contract.md
 
   - capability_id: runtime.jsonl
+    display_name: JSONL 读写工具
     name: JSONL Helper
     track: runtime
-    category: runtime
+    category: 工具
     maturity_status: mvp_ready
-    description: "通用 JSONL 读写 helper：append / read / snapshot / latest，UTF-8 编码，fail-soft 跳过坏行。"
-    input_type: ""
+    description: "读写 JSONL 格式的通用工具。"
+    what_it_does:
+      - "一行一条 JSON 的文件读写"
+      - "自动创建目录，UTF-8 编码"
+      - "遇到坏数据自动跳过，不会整文件崩"
+      - "支持追加、读取、快照写入"
+    typical_usage: "所有模块的索引文件、日志文件都用它读写"
+    input_type: JSONL 文件路径
     primary_output: ""
     health_file: ""
     run_log_file: ""
@@ -326,12 +436,18 @@ capabilities:
       - docs/runtime_output_contract.md
 
   - capability_id: runtime.failed_queue
+    display_name: 失败队列工具
     name: Failed Queue
     track: runtime
-    category: runtime
+    category: 工具
     maturity_status: mvp_ready
-    description: "通用失败队列 helper：FailedQueueRecord / append / load，记录失败项的通用信息。"
-    input_type: ""
+    description: "统一管理失败任务的小工具。"
+    what_it_does:
+      - "记录每次失败的是什么、为什么失败、失败了几次"
+      - "格式统一，所有模块都能用"
+      - "支持后续重跑失败项"
+    typical_usage: "采集失败了的任务先存这里，方便排查和重试"
+    input_type: 失败记录
     primary_output: ""
     health_file: ""
     run_log_file: ""
@@ -341,12 +457,18 @@ capabilities:
       - docs/runtime_output_contract.md
 
   - capability_id: runtime.run_log
+    display_name: 运行日志工具
     name: Run Log
     track: runtime
-    category: runtime
+    category: 工具
     maturity_status: mvp_ready
-    description: "通用运行日志 helper：RunLogRecord / append / load，记录每次 CLI 命令执行结果。"
-    input_type: ""
+    description: "记录每次命令执行情况的日志工具。"
+    what_it_does:
+      - "记录每次跑了什么命令、成功还是失败"
+      - "记录候选数、成功数、失败数、重复数"
+      - "所有模块格式统一，方便汇总查看"
+    typical_usage: "回头看历史运行情况，排查什么时候出了问题"
+    input_type: 运行记录
     primary_output: ""
     health_file: ""
     run_log_file: ""
@@ -356,12 +478,18 @@ capabilities:
       - docs/runtime_output_contract.md
 
   - capability_id: runtime.health_status
+    display_name: 健康状态定义
     name: Health Status
     track: runtime
-    category: runtime
+    category: 工具
     maturity_status: mvp_ready
-    description: "通用健康状态枚举和模型：healthy / degraded / failed / disabled / unknown。"
-    input_type: ""
+    description: "统一的健康状态定义和判断规则。"
+    what_it_does:
+      - "定义什么是 healthy、degraded、failed 等状态"
+      - "所有模块用同一套标准"
+      - "保证健康判断口径一致"
+    typical_usage: "让所有模块的健康状态有统一的说法"
+    input_type: 无（定义）
     primary_output: ""
     health_file: ""
     run_log_file: ""

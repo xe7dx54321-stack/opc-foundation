@@ -19,13 +19,16 @@ from opc_foundation.dashboard.loaders import (
     check_docs_exist,
     load_capabilities_config,
     load_jsonl_safe,
+    load_runbooks_config,
     load_usage_registry,
     validate_capabilities,
+    validate_runbooks,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "configs" / "foundation_capabilities.yaml"
 USAGE_PATH = PROJECT_ROOT / "configs" / "capability_usage_registry.example.yaml"
+RUNBOOKS_PATH = PROJECT_ROOT / "configs" / "capability_runbooks.yaml"
 
 
 def test_load_capabilities_config_success() -> None:
@@ -92,3 +95,127 @@ def test_check_docs_exist_all_present() -> None:
     missing = check_docs_exist(reg.capabilities, PROJECT_ROOT)
     # 可能有缺失，但不应崩溃
     assert isinstance(missing, dict)
+
+
+def test_load_runbooks_config_success() -> None:
+    """应成功读取 capability_runbooks.yaml。"""
+    reg = load_runbooks_config(RUNBOOKS_PATH)
+    assert reg.version != ""
+    assert len(reg.runbooks) == 20
+    assert reg.load_error is None
+
+
+def test_load_runbooks_config_missing_file() -> None:
+    """文件不存在应返回空 registry。"""
+    reg = load_runbooks_config("/nonexistent/runbooks.yaml")
+    assert reg.version == ""
+    assert len(reg.runbooks) == 0
+    assert reg.load_error is None
+
+
+def test_load_runbooks_config_bad_yaml(tmp_path: Path) -> None:
+    """YAML 格式错误应返回带 load_error 的空 registry。"""
+    p = tmp_path / "bad.yaml"
+    p.write_text("key: [unclosed", encoding="utf-8")
+    reg = load_runbooks_config(p)
+    assert reg.load_error is not None
+    assert len(reg.runbooks) == 0
+
+
+def test_load_runbooks_config_empty_file(tmp_path: Path) -> None:
+    """空文件应返回空 registry。"""
+    p = tmp_path / "empty.yaml"
+    p.write_text("", encoding="utf-8")
+    reg = load_runbooks_config(p)
+    assert len(reg.runbooks) == 0
+
+
+def test_validate_runbooks_no_errors() -> None:
+    """正确的配置应返回空错误列表。"""
+    cap_reg = load_capabilities_config(CONFIG_PATH)
+    rb_reg = load_runbooks_config(RUNBOOKS_PATH)
+    errors = validate_runbooks(rb_reg, cap_reg)
+    assert errors == []
+
+
+def test_validate_runbooks_unknown_capability() -> None:
+    """引用了未知 capability_id 应报错。"""
+    from opc_foundation.dashboard.models import (
+        Capability,
+        CapabilityRegistry,
+        CapabilityRunbook,
+        CapabilityTrack,
+        RunbookRegistry,
+    )
+
+    cap_reg = CapabilityRegistry(
+        version="1",
+        updated_at="",
+        tracks=[CapabilityTrack(track_id="research", name="Research", status="ready", description="")],
+        capabilities=[
+            Capability(
+                capability_id="research.rss_feed",
+                name="RSS",
+                track="research",
+                category="source",
+                maturity_status="ready",
+                description="",
+                input_type="",
+                primary_output="",
+                health_file="",
+                run_log_file="",
+                failed_queue_file="",
+                docs=[],
+            )
+        ],
+    )
+    rb_reg = RunbookRegistry(
+        runbooks=[
+            CapabilityRunbook(capability_id="research.unknown"),
+        ],
+    )
+    errors = validate_runbooks(rb_reg, cap_reg)
+    assert len(errors) == 1
+    assert "unknown" in errors[0]
+
+
+def test_validate_runbooks_duplicate_id() -> None:
+    """重复的 capability_id 应报错。"""
+    from opc_foundation.dashboard.models import (
+        Capability,
+        CapabilityRegistry,
+        CapabilityRunbook,
+        CapabilityTrack,
+        RunbookRegistry,
+    )
+
+    cap_reg = CapabilityRegistry(
+        version="1",
+        updated_at="",
+        tracks=[CapabilityTrack(track_id="research", name="Research", status="ready", description="")],
+        capabilities=[
+            Capability(
+                capability_id="research.rss_feed",
+                name="RSS",
+                track="research",
+                category="source",
+                maturity_status="ready",
+                description="",
+                input_type="",
+                primary_output="",
+                health_file="",
+                run_log_file="",
+                failed_queue_file="",
+                docs=[],
+            )
+        ],
+    )
+    rb_reg = RunbookRegistry(
+        runbooks=[
+            CapabilityRunbook(capability_id="research.rss_feed"),
+            CapabilityRunbook(capability_id="research.rss_feed"),
+        ],
+    )
+    errors = validate_runbooks(rb_reg, cap_reg)
+    assert len(errors) == 1
+    assert "重复" in errors[0]

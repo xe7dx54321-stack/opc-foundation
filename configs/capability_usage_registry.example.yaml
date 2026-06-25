@@ -17,41 +17,136 @@
 #     - 不包含任何投资判断字段
 #
 # 更新时间：2026-06-24
-# 版本：1.0
+# 版本：2.0
 
-version: "1.0"
+version: "2.0"
 updated_at: "2026-06-24"
 
 projects:
   # -------------------------------------------------------------------------
-  # th_capital_stock：TH Capital Stock 项目（planned 状态）
+  # th_capital_stock：TH Capital 二级市场项目
   # -------------------------------------------------------------------------
   - project_id: th_capital_stock
-    project_name: TH Capital Stock
-    status: planned
+    project_name: TH Capital 二级市场
+    status: active
+    description: "二级市场研究信息全链路流水线——从多源采集、内容加工、智能归档，到质量监控和下游供给。"
     workflows:
-      - workflow_id: disclosure_monitoring
-        workflow_name: Disclosure Monitoring
-        status: planned
+      # ---------------------------------------------------------------------
+      # 工作流 1：研究信息全链路流水线
+      # ---------------------------------------------------------------------
+      - workflow_id: research_pipeline
+        workflow_name: 研究信息全链路
+        status: active
+        description: "研究信息从采集到消费的完整业务流程，覆盖5个核心阶段。"
         stages:
-          - stage_id: collect_filings
-            stage_name: Collect Filings
+          - stage_id: source_collection
+            stage_name: ① 多源信息采集
+            agent: research_collector
+            status: active
+            purpose: "从 RSS、公众号、官网研报、播客、会议纪要、分析师评级、媒体报道等多渠道采集公开研究信息。"
+            capabilities:
+              - research.rss_feed
+              - research.wechat_archive
+              - research.official_public_research
+              - research.podcast_transcript
+              - research.conference_transcript
+              - research.analyst_action
+              - research.media_mention
+              - research.manual_url
+
+          - stage_id: content_extraction
+            stage_name: ② 内容标准化加工
+            agent: document_extractor
+            status: active
+            purpose: "把采集到的各种格式文档（PDF/HTML/TXT/Markdown）统一抽取为干净的结构化文本和元数据。"
+            capabilities:
+              - document_extraction.pdf
+              - document_extraction.html
+              - document_extraction.txt
+              - document_extraction.markdown
+
+          - stage_id: dedupe_archive
+            stage_name: ③ 智能去重与归档
+            agent: archive_manager
+            status: active
+            purpose: "基于内容哈希去重，按时间/来源/主题分类归档，维护统一的文档索引。"
+            capabilities:
+              - runtime.archive_paths
+              - runtime.jsonl
+
+          - stage_id: quality_monitor
+            stage_name: ④ 质量与健康监控
+            agent: quality_monitor
+            status: active
+            purpose: "持续监控各数据源健康状态、采集成功率、失败队列，确保数据质量和系统稳定。"
+            capabilities:
+              - runtime.health_status
+              - runtime.run_log
+              - runtime.failed_queue
+
+          - stage_id: downstream_supply
+            stage_name: ⑤ 下游系统供给
+            agent: downstream_supplier
+            status: active
+            purpose: "将标准化后的研究信息通过索引文件、API接口供给下游业务系统使用。"
+            capabilities:
+              - runtime.jsonl
+              - runtime.archive_paths
+
+      # ---------------------------------------------------------------------
+      # 工作流 2：官方公告全链路流水线
+      # ---------------------------------------------------------------------
+      - workflow_id: filing_pipeline
+        workflow_name: 官方公告全链路
+        status: active
+        description: "上市公司公告从采集到消费的完整业务流程，覆盖5个核心阶段。"
+        stages:
+          - stage_id: filing_collection
+            stage_name: ① 多市场公告采集
             agent: filing_collector
-            status: planned
-            purpose: "从 SEC/CNINFO/HKEX 采集官方公告，归档到 official_filings archive。"
+            status: active
+            purpose: "从美股 SEC、A 股巨潮资讯、港股港交所采集上市公司公开公告。"
             capabilities:
               - official_filing.sec_edgar
               - official_filing.cninfo_announcement
               - official_filing.hkex_announcement
 
-          - stage_id: extract_filing_documents
-            stage_name: Extract Filing Documents
+          - stage_id: filing_extraction
+            stage_name: ② 公告文档抽取
             agent: document_extractor
-            status: planned
-            purpose: "从采集到的公告文件中抽取干净文本，供下游分析。"
+            status: active
+            purpose: "把公告 PDF/HTML 抽成干净文本和结构化元数据，方便后续分析。"
             capabilities:
               - document_extraction.pdf
               - document_extraction.html
+
+          - stage_id: filing_archive
+            stage_name: ③ 公告分类归档
+            agent: archive_manager
+            status: active
+            purpose: "按公司、公告类型、时间维度分类归档，维护统一的公告索引。"
+            capabilities:
+              - runtime.archive_paths
+              - runtime.jsonl
+
+          - stage_id: filing_monitor
+            stage_name: ④ 合规与质量监控
+            agent: quality_monitor
+            status: active
+            purpose: "监控各市场公告采集的完整性、时效性和健康状态。"
+            capabilities:
+              - runtime.health_status
+              - runtime.run_log
+              - runtime.failed_queue
+
+          - stage_id: filing_supply
+            stage_name: ⑤ 下游研究供给
+            agent: downstream_supplier
+            status: active
+            purpose: "将公告数据供给下游研究分析系统，支持事件驱动、业绩跟踪等研究场景。"
+            capabilities:
+              - runtime.jsonl
+              - runtime.archive_paths
 
   # -------------------------------------------------------------------------
   # demand_radar：Demand Radar 项目（candidate 状态）
@@ -59,6 +154,7 @@ projects:
   - project_id: demand_radar
     project_name: Demand Radar
     status: candidate
+    description: "需求雷达项目，探索性研究。"
     workflows:
       - workflow_id: source_collection
         workflow_name: Source Collection

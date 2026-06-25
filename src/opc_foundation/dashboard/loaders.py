@@ -16,11 +16,14 @@ from ..runtime.jsonl import read_jsonl
 from .models import (
     Capability,
     CapabilityRegistry,
+    CapabilityRunbook,
     CapabilityTrack,
     CapabilityUsageProject,
     CapabilityUsageRegistry,
     CapabilityUsageStage,
     CapabilityUsageWorkflow,
+    CommonFailure,
+    RunbookRegistry,
 )
 
 
@@ -82,6 +85,10 @@ def load_capabilities_config(path: str | Path) -> CapabilityRegistry:
                 run_log_file=c.get("run_log_file", ""),
                 failed_queue_file=c.get("failed_queue_file", ""),
                 docs=list(c.get("docs", []) or []),
+                display_name=c.get("display_name", c.get("name", "")),
+                what_it_does=list(c.get("what_it_does", []) or []),
+                typical_usage=c.get("typical_usage", ""),
+                sources=list(c.get("sources", []) or []),
             )
         )
 
@@ -142,6 +149,7 @@ def load_usage_registry(path: str | Path) -> CapabilityUsageRegistry:
                     workflow_id=wf.get("workflow_id", ""),
                     workflow_name=wf.get("workflow_name", ""),
                     status=wf.get("status", ""),
+                    description=wf.get("description", ""),
                     stages=stages,
                 )
             )
@@ -150,6 +158,7 @@ def load_usage_registry(path: str | Path) -> CapabilityUsageRegistry:
                 project_id=proj.get("project_id", ""),
                 project_name=proj.get("project_name", ""),
                 status=proj.get("status", ""),
+                description=proj.get("description", ""),
                 workflows=workflows,
             )
         )
@@ -243,5 +252,126 @@ def validate_capabilities(registry: CapabilityRegistry) -> list[str]:
             errors.append(
                 f"capability {cap.capability_id} 引用了未知的 track: {cap.track}"
             )
+
+    return errors
+
+
+def load_runbooks_config(path: str | Path) -> RunbookRegistry:
+    """从 YAML 文件加载运行手册注册表。
+
+    功能说明（小白解读）：
+        读取 capability_runbooks.yaml，解析成 RunbookRegistry 对象。
+        这个文件就像是每个能力的"使用说明书"合集。
+        如果文件不存在，返回空 registry（version 为空，列表为空），不抛异常。
+
+    参数：
+        path: YAML 文件路径
+
+    返回：
+        RunbookRegistry 对象
+
+    异常处理：
+        文件不存在不抛异常，返回空 registry。
+        YAML 解析失败抛出 yaml.YAMLError（由调用方处理）。
+    """
+    p = Path(path)
+    if not p.exists():
+        return RunbookRegistry(
+            version="",
+            updated_at="",
+            runbooks=[],
+            load_error=None,
+        )
+
+    try:
+        with open(p, encoding="utf-8") as fh:
+            data = yaml.safe_load(fh) or {}
+    except yaml.YAMLError:
+        return RunbookRegistry(
+            version="",
+            updated_at="",
+            runbooks=[],
+            load_error=f"YAML 解析失败: {path}",
+        )
+
+    runbooks: list[CapabilityRunbook] = []
+    for rb_data in data.get("runbooks", []) or []:
+        common_failures: list[CommonFailure] = []
+        for cf in rb_data.get("common_failures", []) or []:
+            common_failures.append(
+                CommonFailure(
+                    error_type=cf.get("error_type", ""),
+                    meaning=cf.get("meaning", ""),
+                    check=cf.get("check", ""),
+                )
+            )
+
+        runbooks.append(
+            CapabilityRunbook(
+                capability_id=rb_data.get("capability_id", ""),
+                title=rb_data.get("title", ""),
+                summary=rb_data.get("summary", ""),
+                maturity_label=rb_data.get("maturity_label", ""),
+                owner_agent=rb_data.get("owner_agent", ""),
+                config_templates=list(rb_data.get("config_templates", []) or []),
+                local_config_path=rb_data.get("local_config_path", ""),
+                primary_output=rb_data.get("primary_output", ""),
+                health_file=rb_data.get("health_file", ""),
+                run_log_file=rb_data.get("run_log_file", ""),
+                failed_queue_file=rb_data.get("failed_queue_file", ""),
+                report_dir=rb_data.get("report_dir", ""),
+                commands=dict(rb_data.get("commands", {}) or {}),
+                can_do=list(rb_data.get("can_do", []) or []),
+                cannot_do=list(rb_data.get("cannot_do", []) or []),
+                common_failures=common_failures,
+                troubleshooting_steps=list(
+                    rb_data.get("troubleshooting_steps", []) or []
+                ),
+                docs=list(rb_data.get("docs", []) or []),
+            )
+        )
+
+    return RunbookRegistry(
+        version=str(data.get("version", "")),
+        updated_at=str(data.get("updated_at", "")),
+        runbooks=runbooks,
+        load_error=None,
+    )
+
+
+def validate_runbooks(
+    runbook_registry: RunbookRegistry,
+    capability_registry: CapabilityRegistry,
+) -> list[str]:
+    """校验运行手册注册表的完整性。
+
+    功能说明（小白解读）：
+        检查运行手册配置是否正确，主要验证两个规则：
+        1. 每个 runbook 的 capability_id 必须真实存在于 foundation_capabilities.yaml 中
+        2. capability_id 不能重复
+
+    参数：
+        runbook_registry:    运行手册注册表
+        capability_registry: 能力注册表（用于校验 capability_id 是否存在）
+
+    返回：
+        错误信息列表。空列表表示校验通过。
+    """
+    errors: list[str] = []
+
+    valid_cap_ids = {c.capability_id for c in capability_registry.capabilities}
+
+    seen: dict[str, int] = {}
+    for rb in runbook_registry.runbooks:
+        seen[rb.capability_id] = seen.get(rb.capability_id, 0) + 1
+
+        if rb.capability_id not in valid_cap_ids:
+            errors.append(
+                f"runbook 引用了未知的 capability_id: {rb.capability_id}"
+            )
+
+    for cap_id, count in seen.items():
+        if count > 1:
+            errors.append(f"runbook capability_id 重复: {cap_id} 出现了 {count} 次")
 
     return errors
