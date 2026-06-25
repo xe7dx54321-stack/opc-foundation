@@ -16,6 +16,7 @@ from ..runtime.jsonl import read_jsonl
 from .models import (
     Capability,
     CapabilityRegistry,
+    CapabilityRuntimeBinding,
     CapabilityRunbook,
     CapabilityTrack,
     CapabilityUsageProject,
@@ -23,6 +24,7 @@ from .models import (
     CapabilityUsageStage,
     CapabilityUsageWorkflow,
     CommonFailure,
+    RuntimeBindingRegistry,
     RunbookRegistry,
 )
 
@@ -375,3 +377,157 @@ def validate_runbooks(
             errors.append(f"runbook capability_id 重复: {cap_id} 出现了 {count} 次")
 
     return errors
+
+
+# ===========================================================================
+# Runtime Binding 相关加载函数（M3B-3 新增）
+# ===========================================================================
+
+
+def load_runtime_bindings_config(path: str | Path) -> RuntimeBindingRegistry:
+    """从 YAML 文件加载运行时绑定注册表。
+
+    功能说明（小白解读）：
+        读取 capability_runtime_bindings.yaml，解析成 RuntimeBindingRegistry 对象。
+        这个文件告诉 Dashboard 每个能力应该从哪些真实运行文件中读取数据。
+        如果文件不存在，返回空 registry，不抛异常（fail-soft）。
+
+    参数：
+        path: YAML 文件路径
+
+    返回：
+        RuntimeBindingRegistry 对象
+
+    异常处理：
+        文件不存在不抛异常，返回空 registry。
+        YAML 解析失败返回空 registry，并记录 load_error。
+    """
+    p = Path(path)
+    if not p.exists():
+        return RuntimeBindingRegistry(
+            version="",
+            updated_at="",
+            bindings=[],
+            load_error=None,
+        )
+
+    try:
+        with open(p, encoding="utf-8") as fh:
+            data = yaml.safe_load(fh) or {}
+    except yaml.YAMLError:
+        return RuntimeBindingRegistry(
+            version="",
+            updated_at="",
+            bindings=[],
+            load_error=f"YAML 解析失败: {path}",
+        )
+
+    bindings: list[CapabilityRuntimeBinding] = []
+    for b_data in data.get("bindings", []) or []:
+        bindings.append(
+            CapabilityRuntimeBinding(
+                capability_id=b_data.get("capability_id", ""),
+                archive_root=b_data.get("archive_root", ""),
+                source_types=list(b_data.get("source_types", []) or []),
+                source_ids=list(b_data.get("source_ids", []) or []),
+                file_extensions=list(b_data.get("file_extensions", []) or []),
+                health_file=b_data.get("health_file", ""),
+                run_log_file=b_data.get("run_log_file", ""),
+                failed_queue_file=b_data.get("failed_queue_file", ""),
+                report_dir=b_data.get("report_dir", ""),
+            )
+        )
+
+    return RuntimeBindingRegistry(
+        version=str(data.get("version", "")),
+        updated_at=str(data.get("updated_at", "")),
+        bindings=bindings,
+        load_error=None,
+    )
+
+
+def validate_runtime_bindings(
+    binding_registry: RuntimeBindingRegistry,
+    capability_registry: CapabilityRegistry,
+) -> list[str]:
+    """校验运行时绑定注册表的完整性。
+
+    功能说明（小白解读）：
+        检查 runtime binding 配置是否正确，主要验证：
+        1. 每个 binding 的 capability_id 必须真实存在于 foundation_capabilities.yaml 中
+        2. capability_id 不能重复
+        3. health_file / run_log_file / failed_queue_file 路径是否存在
+           （注意：不存在是 warning 不是 error，因为 data/ 不提交）
+
+    参数：
+        binding_registry:    运行时绑定注册表
+        capability_registry: 能力注册表（用于校验 capability_id 是否存在）
+
+    返回：
+        警告信息列表。空列表表示校验通过。
+        注意：这里返回的是 warnings，不是 errors，因为运行文件不存在很正常。
+    """
+    warnings: list[str] = []
+
+    valid_cap_ids = {c.capability_id for c in capability_registry.capabilities}
+
+    # 检查重复和未知 capability_id
+    seen: dict[str, int] = {}
+    for b in binding_registry.bindings:
+        seen[b.capability_id] = seen.get(b.capability_id, 0) + 1
+
+        if b.capability_id not in valid_cap_ids:
+            warnings.append(
+                f"runtime binding 引用了未知的 capability_id: {b.capability_id}"
+            )
+
+    for cap_id, count in seen.items():
+        if count > 1:
+            warnings.append(
+                f"runtime binding capability_id 重复: {cap_id} 出现了 {count} 次"
+            )
+
+    return warnings
+
+
+def check_binding_files_exist(
+    binding_registry: RuntimeBindingRegistry,
+    project_root: Path,
+) -> dict[str, list[str]]:
+    """检查每个 binding 指向的运行文件是否存在。
+
+    功能说明（小白解读）：
+        遍历所有 binding，检查它们的 health_file / run_log_file / failed_queue_file
+        在项目根目录下是否存在。
+        返回缺失文件的字典，用于配置检查页面展示 warning。
+
+    参数：
+        binding_registry: 运行时绑定注册表
+        project_root:     项目根目录
+
+    返回：
+        {capability_id: [缺失的文件路径列表]}
+        如果某 binding 的所有文件都存在，不会出现在结果中。
+    """
+    root = Path(project_root)
+    result: dict[str, list[str]] = {}
+
+    for b in binding_registry.bindings:
+        missing: list[str] = []
+
+        files_to_check = [
+            b.health_file,
+            b.run_log_file,
+            b.failed_queue_file,
+        ]
+
+        for f in files_to_check:
+            if f:  # 只检查非空路径
+                full = root / f
+                if not full.exists():
+                    missing.append(f)
+
+        if missing:
+            result[b.capability_id] = missing
+
+    return result

@@ -44,3 +44,6 @@ data/document_extraction/
 configs/document_extraction.local.yaml
 configs/document_extraction.production.local.yaml
 capability_usage_registry.local.yaml
+
+# Dashboard Runtime Bindings 本地配置（包含本地路径，不提交）
+configs/capability_runtime_bindings.local.yaml

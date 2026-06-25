@@ -406,3 +406,114 @@ class RunbookRegistry:
             if rb.capability_id == capability_id:
                 return rb
         return None
+
+
+# ===========================================================================
+# Runtime Binding 相关数据模型（M3B-3 新增）
+# ===========================================================================
+
+
+@dataclass(frozen=True)
+class CapabilityRuntimeBinding:
+    """能力运行时绑定配置。
+
+    功能说明（小白解读）：
+        告诉 Dashboard 某个 capability_id 应该从哪些真实运行文件中读取数据。
+        比如 research.rss_feed 这个能力，它的健康数据存在哪里，
+        运行日志存在哪里，失败队列存在哪里。
+
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        capability_id:       能力 ID（必须存在于 foundation_capabilities.yaml）
+        archive_root:        归档根目录（如 data/research_archive）
+        source_types:        匹配的 source_type 列表（如 ["rss_feed"]）
+        source_ids:          匹配的 source_id 列表（为空表示不限制）
+        file_extensions:     文件扩展名（用于文档抽取类能力，如 [".pdf"]）
+        health_file:         健康状态文件路径（source_health.jsonl）
+        run_log_file:        运行日志文件路径（run_log.jsonl）
+        failed_queue_file:   失败队列文件路径（failed_queue.jsonl）
+        report_dir:          报告目录路径
+    """
+
+    capability_id: str
+    archive_root: str = ""
+    source_types: list[str] = field(default_factory=list)
+    source_ids: list[str] = field(default_factory=list)
+    file_extensions: list[str] = field(default_factory=list)
+    health_file: str = ""
+    run_log_file: str = ""
+    failed_queue_file: str = ""
+    report_dir: str = ""
+
+
+@dataclass
+class RuntimeBindingRegistry:
+    """运行时绑定注册表。
+
+    功能说明：
+        从 capability_runtime_bindings.yaml 加载的完整绑定配置。
+        包含所有能力的运行时绑定信息。
+        注意：这个类不是 frozen，因为加载过程中可能需要修改。
+
+    参数：
+        version:      配置版本
+        updated_at:   更新时间
+        bindings:     绑定配置列表
+        load_error:   加载错误信息（如果加载失败）
+    """
+
+    version: str = ""
+    updated_at: str = ""
+    bindings: list[CapabilityRuntimeBinding] = field(default_factory=list)
+    load_error: str | None = None
+
+    def get_binding(self, capability_id: str) -> CapabilityRuntimeBinding | None:
+        """根据能力 ID 获取运行时绑定配置。
+
+        功能说明：
+            在注册表中查找指定能力的绑定配置。
+            找不到返回 None。
+
+        参数：
+            capability_id: 能力 ID
+
+        返回：
+            CapabilityRuntimeBinding 或 None
+        """
+        for b in self.bindings:
+            if b.capability_id == capability_id:
+                return b
+        return None
+
+
+@dataclass(frozen=True)
+class CapabilityRuntimeEvidence:
+    """能力运行时证据（从真实数据文件中匹配到的记录）。
+
+    功能说明（小白解读）：
+        从真实的 source_health / run_log / failed_queue 文件中，
+        按 binding 规则匹配到的所有记录。
+        这些记录是判断健康状态的"证据"。
+
+        用 frozen dataclass，创建后不可修改。
+
+    参数：
+        capability_id:            能力 ID
+        matched_health_records:   匹配到的健康状态记录列表
+        matched_run_records:      匹配到的运行日志记录列表
+        matched_failed_records:   匹配到的失败队列记录列表
+        latest_health_record:     最新的健康状态记录
+        latest_run_record:        最新的运行日志记录
+        latest_failed_record:     最新的失败队列记录
+        latest_report_path:       最新的报告文件路径
+    """
+
+    capability_id: str
+    matched_health_records: list[dict] = field(default_factory=list)
+    matched_run_records: list[dict] = field(default_factory=list)
+    matched_failed_records: list[dict] = field(default_factory=list)
+    latest_health_record: dict | None = None
+    latest_run_record: dict | None = None
+    latest_failed_record: dict | None = None
+    latest_report_path: str = ""

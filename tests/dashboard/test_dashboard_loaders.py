@@ -16,19 +16,23 @@ from __future__ import annotations
 from pathlib import Path
 
 from opc_foundation.dashboard.loaders import (
+    check_binding_files_exist,
     check_docs_exist,
     load_capabilities_config,
     load_jsonl_safe,
     load_runbooks_config,
+    load_runtime_bindings_config,
     load_usage_registry,
     validate_capabilities,
     validate_runbooks,
+    validate_runtime_bindings,
 )
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CONFIG_PATH = PROJECT_ROOT / "configs" / "foundation_capabilities.yaml"
 USAGE_PATH = PROJECT_ROOT / "configs" / "capability_usage_registry.example.yaml"
 RUNBOOKS_PATH = PROJECT_ROOT / "configs" / "capability_runbooks.yaml"
+RUNTIME_BINDINGS_PATH = PROJECT_ROOT / "configs" / "capability_runtime_bindings.yaml"
 
 
 def test_load_capabilities_config_success() -> None:
@@ -219,3 +223,197 @@ def test_validate_runbooks_duplicate_id() -> None:
     errors = validate_runbooks(rb_reg, cap_reg)
     assert len(errors) == 1
     assert "重复" in errors[0]
+
+
+# ===========================================================================
+# Runtime Binding 加载器测试（M3B-3 新增）
+# ===========================================================================
+
+
+def test_load_runtime_bindings_config_success() -> None:
+    """capability_runtime_bindings.yaml 存在且可加载。"""
+    reg = load_runtime_bindings_config(RUNTIME_BINDINGS_PATH)
+    assert reg.version != ""
+    assert len(reg.bindings) > 0
+    assert reg.load_error is None
+
+
+def test_load_runtime_bindings_config_all_capability_ids_valid() -> None:
+    """binding 的 capability_id 都存在于 foundation_capabilities.yaml。"""
+    cap_reg = load_capabilities_config(CONFIG_PATH)
+    binding_reg = load_runtime_bindings_config(RUNTIME_BINDINGS_PATH)
+    warnings = validate_runtime_bindings(binding_reg, cap_reg)
+    unknown_warnings = [w for w in warnings if "未知的 capability_id" in w]
+    assert unknown_warnings == []
+
+
+def test_load_runtime_bindings_config_missing_file() -> None:
+    """load_runtime_bindings_config 文件缺失时 fail-soft。"""
+    reg = load_runtime_bindings_config("/nonexistent/runtime_bindings.yaml")
+    assert reg.version == ""
+    assert len(reg.bindings) == 0
+    assert reg.load_error is None
+
+
+def test_load_runtime_bindings_config_bad_yaml(tmp_path: Path) -> None:
+    """invalid yaml fail-soft。"""
+    p = tmp_path / "bad.yaml"
+    p.write_text("key: [unclosed", encoding="utf-8")
+    reg = load_runtime_bindings_config(p)
+    assert reg.load_error is not None
+    assert len(reg.bindings) == 0
+
+
+def test_load_runtime_bindings_config_empty_file(tmp_path: Path) -> None:
+    """空文件应返回空 registry。"""
+    p = tmp_path / "empty.yaml"
+    p.write_text("", encoding="utf-8")
+    reg = load_runtime_bindings_config(p)
+    assert len(reg.bindings) == 0
+
+
+def test_validate_runtime_bindings_unknown_capability_id() -> None:
+    """validate_runtime_bindings 能识别 unknown capability_id。"""
+    from opc_foundation.dashboard.models import (
+        Capability,
+        CapabilityRegistry,
+        CapabilityRuntimeBinding,
+        CapabilityTrack,
+        RuntimeBindingRegistry,
+    )
+
+    cap_reg = CapabilityRegistry(
+        version="1",
+        updated_at="",
+        tracks=[CapabilityTrack(track_id="research", name="Research", status="ready", description="")],
+        capabilities=[
+            Capability(
+                capability_id="research.rss_feed",
+                name="RSS",
+                track="research",
+                category="source",
+                maturity_status="ready",
+                description="",
+                input_type="",
+                primary_output="",
+                health_file="",
+                run_log_file="",
+                failed_queue_file="",
+                docs=[],
+            )
+        ],
+    )
+    binding_reg = RuntimeBindingRegistry(
+        bindings=[
+            CapabilityRuntimeBinding(capability_id="research.unknown"),
+        ],
+    )
+    warnings = validate_runtime_bindings(binding_reg, cap_reg)
+    assert len(warnings) == 1
+    assert "未知的 capability_id" in warnings[0]
+
+
+def test_validate_runtime_bindings_duplicate_id() -> None:
+    """重复的 capability_id 应报 warning。"""
+    from opc_foundation.dashboard.models import (
+        Capability,
+        CapabilityRegistry,
+        CapabilityRuntimeBinding,
+        CapabilityTrack,
+        RuntimeBindingRegistry,
+    )
+
+    cap_reg = CapabilityRegistry(
+        version="1",
+        updated_at="",
+        tracks=[CapabilityTrack(track_id="research", name="Research", status="ready", description="")],
+        capabilities=[
+            Capability(
+                capability_id="research.rss_feed",
+                name="RSS",
+                track="research",
+                category="source",
+                maturity_status="ready",
+                description="",
+                input_type="",
+                primary_output="",
+                health_file="",
+                run_log_file="",
+                failed_queue_file="",
+                docs=[],
+            )
+        ],
+    )
+    binding_reg = RuntimeBindingRegistry(
+        bindings=[
+            CapabilityRuntimeBinding(capability_id="research.rss_feed"),
+            CapabilityRuntimeBinding(capability_id="research.rss_feed"),
+        ],
+    )
+    warnings = validate_runtime_bindings(binding_reg, cap_reg)
+    assert len(warnings) == 1
+    assert "重复" in warnings[0]
+
+
+def test_check_binding_files_exist_missing_health_file(tmp_path: Path) -> None:
+    """health_file 不存在时返回 warning。"""
+    from opc_foundation.dashboard.models import (
+        CapabilityRuntimeBinding,
+        RuntimeBindingRegistry,
+    )
+
+    binding_reg = RuntimeBindingRegistry(
+        bindings=[
+            CapabilityRuntimeBinding(
+                capability_id="test.cap",
+                health_file="data/nonexistent/source_health.jsonl",
+                run_log_file="",
+                failed_queue_file="",
+            ),
+        ],
+    )
+    missing = check_binding_files_exist(binding_reg, tmp_path)
+    assert "test.cap" in missing
+    assert "source_health.jsonl" in missing["test.cap"][0]
+
+
+def test_check_binding_files_exist_all_present(tmp_path: Path) -> None:
+    """所有文件都存在时不返回 warning。"""
+    from opc_foundation.dashboard.models import (
+        CapabilityRuntimeBinding,
+        RuntimeBindingRegistry,
+    )
+
+    data_dir = tmp_path / "data" / "test"
+    data_dir.mkdir(parents=True)
+    (data_dir / "source_health.jsonl").write_text("", encoding="utf-8")
+    (data_dir / "run_log.jsonl").write_text("", encoding="utf-8")
+    (data_dir / "failed_queue.jsonl").write_text("", encoding="utf-8")
+
+    binding_reg = RuntimeBindingRegistry(
+        bindings=[
+            CapabilityRuntimeBinding(
+                capability_id="test.cap",
+                health_file="data/test/source_health.jsonl",
+                run_log_file="data/test/run_log.jsonl",
+                failed_queue_file="data/test/failed_queue.jsonl",
+            ),
+        ],
+    )
+    missing = check_binding_files_exist(binding_reg, tmp_path)
+    assert "test.cap" not in missing
+
+
+def test_runtime_binding_registry_get_binding() -> None:
+    """RuntimeBindingRegistry.get_binding 应能正确查找。"""
+    from opc_foundation.dashboard.models import (
+        CapabilityRuntimeBinding,
+        RuntimeBindingRegistry,
+    )
+
+    b = CapabilityRuntimeBinding(capability_id="research.rss_feed")
+    reg = RuntimeBindingRegistry(bindings=[b])
+    found = reg.get_binding("research.rss_feed")
+    assert found is not None
+    assert found.capability_id == "research.rss_feed"
+    assert reg.get_binding("nonexistent") is None

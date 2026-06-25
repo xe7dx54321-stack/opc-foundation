@@ -24,15 +24,24 @@ from __future__ import annotations
 from pathlib import Path
 
 from opc_foundation.dashboard.loaders import (
+    check_binding_files_exist,
     check_docs_exist,
     load_capabilities_config,
     load_jsonl_safe,
     load_runbooks_config,
+    load_runtime_bindings_config,
     load_usage_registry,
     validate_capabilities,
     validate_runbooks,
+    validate_runtime_bindings,
 )
-from opc_foundation.dashboard.health import build_dashboard_summary, build_runtime_summary
+from opc_foundation.dashboard.health import (
+    build_dashboard_summary,
+    build_runtime_evidence,
+    build_runtime_summary,
+    build_runtime_summary_from_evidence,
+    suggest_action,
+)
 import streamlit.components.v1 as components
 from opc_foundation.dashboard.usage import (
     build_usage_index,
@@ -40,7 +49,12 @@ from opc_foundation.dashboard.usage import (
     find_unknown_usage_references,
 )
 from opc_foundation.dashboard.docs import collect_core_docs, collect_docs_from_capabilities
-from opc_foundation.dashboard.models import Capability, CapabilityRegistry, CapabilityUsageRegistry
+from opc_foundation.dashboard.models import (
+    Capability,
+    CapabilityRegistry,
+    CapabilityUsageRegistry,
+    RuntimeBindingRegistry,
+)
 
 # 品牌配色
 COLORS = {
@@ -139,13 +153,13 @@ def _load_all_data(project_root: Path):
 
     功能说明（小白解读）：
         一次性加载所有 dashboard 需要的数据，避免重复读取文件。
-        包括：能力配置、使用注册表、运行手册、运行时摘要。
+        包括：能力配置、使用注册表、运行手册、运行时绑定、运行时摘要。
 
     参数：
         project_root: 项目根目录
 
     返回：
-        (registry, usage_registry, runbook_registry, runtime_summaries) 四元组
+        (registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries) 五元组
     """
     cap_path = project_root / "configs" / "foundation_capabilities.yaml"
     registry = load_capabilities_config(cap_path)
@@ -160,14 +174,22 @@ def _load_all_data(project_root: Path):
     runbook_path = project_root / "configs" / "capability_runbooks.yaml"
     runbook_registry = load_runbooks_config(runbook_path)
 
-    # 构建运行时摘要
+    # 加载 runtime bindings（优先 local，没有用主配置）
+    runtime_bindings_path = project_root / "configs" / "capability_runtime_bindings.local.yaml"
+    if not runtime_bindings_path.exists():
+        runtime_bindings_path = project_root / "configs" / "capability_runtime_bindings.yaml"
+    runtime_binding_registry = load_runtime_bindings_config(runtime_bindings_path)
+
+    # 构建 runtime_evidence 和 runtime_summaries
     runtime_summaries = {}
     for cap in registry.capabilities:
-        runtime_summaries[cap.capability_id] = build_runtime_summary(
-            cap, project_root
+        binding = runtime_binding_registry.get_binding(cap.capability_id)
+        evidence = build_runtime_evidence(cap, binding, project_root)
+        runtime_summaries[cap.capability_id] = build_runtime_summary_from_evidence(
+            cap, binding, evidence
         )
 
-    return registry, usage_registry, runbook_registry, runtime_summaries
+    return registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries
 
 
 def _health_color(health: str) -> str:
@@ -255,19 +277,21 @@ def _render_overview(st, registry, usage_registry, runtime_summaries):
     )
 
 
-def _render_capability_map(st, registry, runbook_registry, runtime_summaries, project_root):
+def _render_capability_map(st, registry, runbook_registry, runtime_binding_registry, runtime_summaries, project_root):
     """渲染能力地图页面（卡片式大白话版本）。
 
     功能说明：
         按主线分组，用卡片形式展示每个能力。
         每张卡片有"查看详情"按钮，点击弹出完整运行手册。
+        每个能力卡片显示成熟度标签和运行健康标签。
 
     参数：
-        st:                streamlit 模块
-        registry:          能力注册表
-        runbook_registry:  运行手册注册表
-        runtime_summaries: 运行时摘要字典
-        project_root:      项目根目录
+        st:                     streamlit 模块
+        registry:               能力注册表
+        runbook_registry:       运行手册注册表
+        runtime_binding_registry: 运行时绑定注册表
+        runtime_summaries:      运行时摘要字典
+        project_root:           项目根目录
     """
     st.header("能力地图")
     st.caption("用大白话告诉你每个能力是干啥的，点击卡片上的「查看详情」看完整手册 ✨")
@@ -280,6 +304,7 @@ def _render_capability_map(st, registry, runbook_registry, runtime_summaries, pr
             active_modal,
             registry,
             runbook_registry,
+            runtime_binding_registry,
             runtime_summaries,
             project_root,
         )
@@ -305,7 +330,8 @@ def _render_capability_map(st, registry, runbook_registry, runtime_summaries, pr
             cols = st.columns(cols_per_row)
             for col, cap in zip(cols, batch):
                 with col:
-                    _render_capability_card(st, cap)
+                    runtime = runtime_summaries.get(cap.capability_id)
+                    _render_capability_card(st, cap, runtime)
                     # 查看详情按钮
                     if st.button(f"📖 查看详情 · {cap.capability_id}", key=f"detail_btn_{cap.capability_id}"):
                         st.session_state["active_detail_modal"] = cap.capability_id
@@ -314,16 +340,17 @@ def _render_capability_map(st, registry, runbook_registry, runtime_summaries, pr
         st.markdown("---")
 
 
-def _render_capability_card(st, cap):
+def _render_capability_card(st, cap, runtime=None):
     """渲染单个能力卡片。
 
     功能说明：
         用卡片形式展示一个能力的详细信息，包括：
-        名称、成熟度、一句话描述、能干啥、典型用途、输入输出。
+        名称、成熟度、运行健康、一句话描述、能干啥、典型用途、输入输出。
 
     参数：
-        st:  streamlit 模块
-        cap: 能力对象
+        st:       streamlit 模块
+        cap:      能力对象
+        runtime:  运行时摘要（可选）
     """
     # 成熟度颜色
     maturity_colors = {
@@ -334,8 +361,20 @@ def _render_capability_card(st, cap):
         "unknown": "#6b7280",                 # 灰色
         "not_configured": "#6b7280",          # 灰色
     }
-    color = maturity_colors.get(cap.maturity_status, "#6b7280")
-    status_text = _cn(cap.maturity_status)
+    maturity_color = maturity_colors.get(cap.maturity_status, "#6b7280")
+    maturity_text = _cn(cap.maturity_status)
+
+    # 运行健康状态
+    runtime_health = runtime.runtime_health if runtime else "unknown"
+    runtime_colors = {
+        "healthy": "#22c55e",
+        "degraded": "#eab308",
+        "failed": "#ef4444",
+        "unknown": "#6b7280",
+        "not_configured": "#6b7280",
+    }
+    runtime_color = runtime_colors.get(runtime_health, "#6b7280")
+    runtime_text = _cn(runtime_health)
 
     # 显示名称优先用 display_name，没有就用 name
     title = cap.display_name if cap.display_name else cap.name
@@ -351,15 +390,24 @@ def _render_capability_card(st, cap):
     ">
         <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
             <h3 style="margin: 0; font-size: 18px;">{title}</h3>
-            <span style="
-                background: {color};
-                color: white;
-                padding: 2px 10px;
-                border-radius: 12px;
-                font-size: 12px;
-                white-space: nowrap;
-                margin-left: 8px;
-            ">{status_text}</span>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+                <span style="
+                    background: {maturity_color};
+                    color: white;
+                    padding: 2px 10px;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                ">{maturity_text}</span>
+                <span style="
+                    background: {runtime_color};
+                    color: white;
+                    padding: 2px 10px;
+                    border-radius: 12px;
+                    font-size: 12px;
+                    white-space: nowrap;
+                ">{runtime_text}</span>
+            </div>
         </div>
         <div style="opacity: 0.7; font-size: 13px; margin-bottom: 12px;">
             <code style="padding: 2px 6px; border-radius: 4px; font-size: 12px;">{cap.capability_id}</code>
@@ -402,6 +450,7 @@ def _render_capability_detail_modal(
     cap_id: str,
     registry,
     runbook_registry,
+    runtime_binding_registry,
     runtime_summaries,
     project_root,
 ):
@@ -410,16 +459,17 @@ def _render_capability_detail_modal(
     功能说明（小白解读）：
         按照效果图重新设计弹窗，采用深色圆角卡片风格：
         - 顶部：图标、标题、运行状态、最后运行时间、连续成功次数
-        - 标签页导航：总览、配置与运行、输出位置、常见失败、排查步骤、相关文档
+        - 标签页导航：总览、配置与运行、输出位置、常见失败、排查步骤、相关文档、真实运行
         - 总览页面包含6个卡片：能力说明、能力边界、运行状态、配置信息、运行命令、快速提示
 
     参数：
-        st:                streamlit 模块
-        cap_id:            要展示的能力 ID
-        registry:          能力注册表
-        runbook_registry:  运行手册注册表
-        runtime_summaries: 运行时摘要字典
-        project_root:      项目根目录
+        st:                     streamlit 模块
+        cap_id:                 要展示的能力 ID
+        registry:               能力注册表
+        runbook_registry:       运行手册注册表
+        runtime_binding_registry: 运行时绑定注册表
+        runtime_summaries:      运行时摘要字典
+        project_root:           项目根目录
     """
     @st.dialog("能力详情", width="large")
     def show_detail(cap_id: str):
@@ -628,7 +678,7 @@ def _render_capability_detail_modal(
         )
 
         # --- 标签页导航 ---
-        tab_options = ["总览", "配置与运行", "输出位置", "常见失败", "排查步骤", "相关文档"]
+        tab_options = ["总览", "配置与运行", "输出位置", "常见失败", "排查步骤", "相关文档", "真实运行"]
         active_tab = st.session_state.get(f"detail_tab_{cap_id}", "总览")
 
         # 用 Streamlit 原生按钮实现标签页（更稳定可靠）
@@ -1049,6 +1099,178 @@ def _render_capability_detail_modal(
                             <div class="detail-card-title">暂无相关文档</div>
                         </div>
                         <div style="color: #94a3b8; font-size: 12px;">该能力目前没有关联文档。</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+
+        # --- 真实运行页面 ---
+        elif active_tab == "真实运行":
+            binding = runtime_binding_registry.get_binding(cap_id)
+            evidence = None
+            if binding:
+                from opc_foundation.dashboard.health import build_runtime_evidence
+                evidence = build_runtime_evidence(cap, binding, project_root)
+
+            # 运行数据接入状态
+            if binding is None:
+                binding_status = "未绑定"
+                binding_status_color = "#6b7280"
+                binding_status_bg = "rgba(107, 114, 128, 0.15)"
+            elif runtime and runtime.runtime_health == "not_configured":
+                binding_status = "未配置"
+                binding_status_color = "#6b7280"
+                binding_status_bg = "rgba(107, 114, 128, 0.15)"
+            elif runtime and runtime.runtime_health == "unknown":
+                binding_status = "已接入·无数据"
+                binding_status_color = "#3b82f6"
+                binding_status_bg = "rgba(59, 130, 246, 0.15)"
+            elif runtime and runtime.runtime_health == "healthy":
+                binding_status = "运行正常"
+                binding_status_color = "#22c55e"
+                binding_status_bg = "rgba(34, 197, 94, 0.15)"
+            elif runtime and runtime.runtime_health == "degraded":
+                binding_status = "运行降级"
+                binding_status_color = "#eab308"
+                binding_status_bg = "rgba(234, 179, 8, 0.15)"
+            elif runtime and runtime.runtime_health == "failed":
+                binding_status = "运行失败"
+                binding_status_color = "#ef4444"
+                binding_status_bg = "rgba(239, 68, 68, 0.15)"
+            else:
+                binding_status = "未知"
+                binding_status_color = "#6b7280"
+                binding_status_bg = "rgba(107, 114, 128, 0.15)"
+
+            # 最近三次运行状态点
+            recent_run = runtime.recent_run_count if runtime else 0
+            recent_fail = runtime.recent_failure_count if runtime else 0
+            run_dots_html = ""
+            for j in range(3):
+                if j < recent_fail:
+                    dot_c = "#ef4444"
+                elif j < recent_run:
+                    dot_c = "#22c55e"
+                else:
+                    dot_c = "#4b5563"
+                run_dots_html += f'<span style="width: 12px; height: 12px; border-radius: 50%; background: {dot_c}; display: inline-block; margin-right: 6px;"></span>'
+
+            # 最近运行时间
+            last_run_time = runtime.latest_run_at if runtime and runtime.latest_run_at else "从未运行"
+            if runtime and runtime.latest_run_at:
+                last_run_time_display = runtime.latest_run_at[:16].replace("T", " ")
+            else:
+                last_run_time_display = "从未运行"
+
+            # 最近状态
+            latest_status = runtime.latest_status if runtime and runtime.latest_status else "-"
+            latest_status_cn = _cn(latest_status) if latest_status != "-" else "-"
+            if latest_status == "success":
+                latest_status_color = "#22c55e"
+            elif latest_status in ["partial", "empty_source", "partial_data"]:
+                latest_status_color = "#eab308"
+            elif latest_status in ["failed", "timeout"]:
+                latest_status_color = "#ef4444"
+            else:
+                latest_status_color = "#6b7280"
+
+            # 失败队列数量
+            failed_queue_count = runtime.failed_queue_count if runtime else 0
+
+            # 最新错误
+            latest_error = runtime.latest_error if runtime and runtime.latest_error else "无"
+
+            # 最新报告路径
+            latest_report_path = evidence.latest_report_path if (evidence and evidence.latest_report_path) else "暂无报告"
+
+            st.markdown(
+                f"""
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <div class="detail-card-icon" style="background: rgba(59, 130, 246, 0.15); color: #3b82f6;">📊</div>
+                        <div class="detail-card-title">真实运行数据</div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">运行数据接入状态</div>
+                            <span style="display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; background: {binding_status_bg}; color: {binding_status_color};">
+                                <span style="width: 6px; height: 6px; border-radius: 50%; background: {binding_status_color}; margin-right: 6px;"></span>
+                                {binding_status}
+                            </span>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">最近运行时间</div>
+                            <div style="font-size: 13px; color: #cbd5e1;">{last_run_time_display}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">最近状态</div>
+                            <div style="font-size: 13px; color: {latest_status_color}; font-weight: 500;">{latest_status_cn}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">最近三次运行</div>
+                            <div>{run_dots_html}</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">失败队列数量</div>
+                            <div style="font-size: 13px; color: #cbd5e1;">{failed_queue_count} 条</div>
+                        </div>
+                        <div>
+                            <div style="font-size: 11px; color: #64748b; margin-bottom: 6px;">最新错误</div>
+                            <div style="font-size: 12px; color: #ef4444; word-break: break-all;">{latest_error}</div>
+                        </div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            st.markdown(
+                f"""
+                <div class="detail-card">
+                    <div class="detail-card-header">
+                        <div class="detail-card-icon" style="background: rgba(168, 85, 247, 0.15); color: #a855f7;">📄</div>
+                        <div class="detail-card-title">最近报告</div>
+                    </div>
+                    <div style="font-size: 12px; color: #94a3b8;">
+                        {latest_report_path}
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+
+            # Binding 配置信息
+            if binding:
+                st.markdown(
+                    f"""
+                    <div class="detail-card">
+                        <div class="detail-card-header">
+                            <div class="detail-card-icon" style="background: rgba(249, 115, 22, 0.15); color: #f97316;">⚙️</div>
+                            <div class="detail-card-title">运行时绑定配置</div>
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;">绑定的 source_types</div>
+                        <div style="margin-bottom: 12px;">
+                            {''.join([f'<span class="config-item">{st}</span>' for st in binding.source_types]) if binding.source_types else '<span style="color: #64748b;">无</span>'}
+                        </div>
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;">健康状态文件</div>
+                        <div style="font-size: 11px; color: #cbd5e1; font-family: monospace; margin-bottom: 8px;">{binding.health_file or '未配置'}</div>
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;">运行日志文件</div>
+                        <div style="font-size: 11px; color: #cbd5e1; font-family: monospace; margin-bottom: 8px;">{binding.run_log_file or '未配置'}</div>
+                        <div style="font-size: 11px; color: #64748b; margin-bottom: 8px;">失败队列文件</div>
+                        <div style="font-size: 11px; color: #cbd5e1; font-family: monospace;">{binding.failed_queue_file or '未配置'}</div>
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    """
+                    <div class="detail-card">
+                        <div class="detail-card-header">
+                            <div class="detail-card-icon" style="background: rgba(107, 114, 128, 0.15); color: #9ca3af;">⚙️</div>
+                            <div class="detail-card-title">未配置运行时绑定</div>
+                        </div>
+                        <div style="color: #94a3b8; font-size: 12px;">该能力尚未绑定真实运行数据。如需接入运行数据，请在 capability_runtime_bindings.yaml 中添加配置。</div>
                     </div>
                     """,
                     unsafe_allow_html=True,
@@ -2152,6 +2374,9 @@ def _render_health_monitor(st, registry, runtime_summaries):
         if len(error_display) > 20:
             error_display = error_display[:20] + "..."
 
+        # 建议动作
+        suggestion = suggest_action(c["runtime_health"], c["needs_attention"], c["stale"])
+
         table_rows += (
             '<tr>'
             + '<td><div class="cap-id-cell"><span class="health-dot" style="background: ' + dot_color + ';"></span><span class="cap-id-text">' + c["capability_id"] + '</span></div></td>'
@@ -2161,10 +2386,11 @@ def _render_health_monitor(st, registry, runtime_summaries):
             + '<td style="color: ' + status_color + ';">' + status_label + '</td>'
             + '<td><div class="run-time-cell"><div>' + run_time_ago + '</div><div class="run-time-sub">' + run_time_display + '</div></div></td>'
             + '<td><div class="run-dots">' + run_dots + '</div></td>'
-            + '<td><div class="run-dots">' + fail_dots + '</div></td>'
+            + '<td class="num-cell">' + str(c["recent_failure_count"]) + '</td>'
             + '<td class="num-cell">' + str(c["consecutive_failures"]) + '</td>'
             + '<td class="num-cell">' + str(c["failed_queue_count"]) + '</td>'
             + '<td class="error-cell">' + error_display + '</td>'
+            + '<td class="suggestion-cell">' + suggestion + '</td>'
             + '<td><button class="view-btn" onclick="alert(\'查看详情：' + c["capability_id"] + '\')">👁</button></td>'
             + '</tr>'
         )
@@ -2410,6 +2636,14 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+.suggestion-cell {
+    font-size: 11px;
+    color: #60a5fa;
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
 .view-btn {
     background: transparent;
     border: 1px solid #374151;
@@ -2569,15 +2803,16 @@ body {
                 <tr>
                     <th>能力 ID</th>
                     <th>能力名称</th>
-                    <th>Track</th>
-                    <th>运行健康状态</th>
-                    <th>最新状态</th>
-                    <th>最新运行时间</th>
-                    <th>最近运行 (3次)</th>
-                    <th>最近失败 (3次)</th>
-                    <th>连续失败</th>
-                    <th>失败队列</th>
-                    <th>最新错误信息</th>
+                    <th>所属模块</th>
+                    <th>运行健康</th>
+                    <th>最近状态</th>
+                    <th>最近运行时间</th>
+                    <th>最近三次运行</th>
+                    <th>最近失败次数</th>
+                    <th>连续失败次数</th>
+                    <th>失败队列数量</th>
+                    <th>最新错误</th>
+                    <th>建议动作</th>
                     <th>操作</th>
                 </tr>
             </thead>
@@ -2898,7 +3133,7 @@ body {
 
 
 
-def _render_config_check(st, registry, usage_registry, runbook_registry, project_root):
+def _render_config_check(st, registry, usage_registry, runbook_registry, runtime_binding_registry, project_root):
     """渲染配置检查页面。
 
     功能说明（小白解读）：
@@ -2908,13 +3143,15 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, project
         3. 文档存在性检查
         4. 未使用能力
         5. 未知引用检查
+        6. Runtime Binding 检查
 
     参数：
-        st:                 streamlit 模块
-        registry:           能力注册表
-        usage_registry:     使用注册表
-        runbook_registry:   运行手册注册表
-        project_root:       项目根目录
+        st:                     streamlit 模块
+        registry:               能力注册表
+        usage_registry:         使用注册表
+        runbook_registry:       运行手册注册表
+        runtime_binding_registry: 运行时绑定注册表
+        project_root:           项目根目录
     """
     st.header("配置检查")
     st.caption("一键检查所有配置是否正确，哪里红了修哪里 ✅")
@@ -2982,6 +3219,56 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, project
     else:
         st.success("✅ 没有未知引用。")
 
+    # 6. Runtime Binding 检查
+    st.subheader("6️⃣ 运行时绑定检查")
+    if runtime_binding_registry.load_error:
+        st.error(f"运行时绑定加载失败：{runtime_binding_registry.load_error}")
+    else:
+        # 检查 capability_runtime_bindings.yaml 是否存在
+        bindings_path_local = project_root / "configs" / "capability_runtime_bindings.local.yaml"
+        bindings_path_main = project_root / "configs" / "capability_runtime_bindings.yaml"
+        if bindings_path_local.exists():
+            st.info(f"ℹ️ 使用本地运行时绑定配置：capability_runtime_bindings.local.yaml")
+        elif bindings_path_main.exists():
+            st.success(f"✅ 运行时绑定配置文件存在（共 {len(runtime_binding_registry.bindings)} 个绑定）。")
+        else:
+            st.warning("⚠️ capability_runtime_bindings.yaml 不存在，所有能力将显示为未绑定。")
+
+        # 校验 binding capability_id 是否有效
+        binding_warnings = validate_runtime_bindings(runtime_binding_registry, registry)
+        if binding_warnings:
+            for warn in binding_warnings:
+                st.warning(warn)
+        else:
+            st.success("✅ 所有 binding 的 capability_id 都有效。")
+
+        # 检查 binding 文件路径是否存在（warning 不是 error）
+        missing_files = check_binding_files_exist(runtime_binding_registry, project_root)
+        if missing_files:
+            total_missing_files = sum(len(files) for files in missing_files.values())
+            st.warning(f"⚠️ 有 {len(missing_files)} 个 binding 的运行文件不存在（共 {total_missing_files} 个，这是正常的，因为 data/ 目录不提交）")
+            for cap_id, files in missing_files.items():
+                st.caption(f"- {cap_id}: {', '.join(files)}")
+        else:
+            st.success("✅ 所有 binding 指向的运行文件都存在。")
+
+        # 绑定覆盖率
+        cap_ids = {c.capability_id for c in registry.capabilities}
+        binding_ids = {b.capability_id for b in runtime_binding_registry.bindings}
+        covered = cap_ids & binding_ids
+        not_covered = cap_ids - binding_ids
+        extra_bindings = binding_ids - cap_ids
+
+        st.info(f"📊 绑定覆盖率：{len(covered)} / {len(cap_ids)} 个能力（{round(len(covered)/len(cap_ids)*100, 1) if cap_ids else 0}%）")
+
+        if not_covered:
+            st.info(f"ℹ️ 有 {len(not_covered)} 个能力尚未绑定真实运行数据：")
+            for cap_id in sorted(not_covered):
+                st.caption(f"- {cap_id}")
+
+        if extra_bindings:
+            st.warning(f"⚠️ 有 {len(extra_bindings)} 个 binding 不在能力注册表中：{', '.join(sorted(extra_bindings))}")
+
 
 def main():
     """Dashboard 主入口函数。
@@ -3020,7 +3307,7 @@ def main():
 
     # 加载数据
     project_root = _find_project_root()
-    registry, usage_registry, runbook_registry, runtime_summaries = _load_all_data(project_root)
+    registry, usage_registry, runbook_registry, runtime_binding_registry, runtime_summaries = _load_all_data(project_root)
 
     # 侧边栏导航
     st.sidebar.title("OPC Foundation 中控台")
@@ -3064,13 +3351,13 @@ def main():
 
     # 根据选择渲染对应页面
     if page == "能力地图":
-        _render_capability_map(st, registry, runbook_registry, runtime_summaries, project_root)
+        _render_capability_map(st, registry, runbook_registry, runtime_binding_registry, runtime_summaries, project_root)
     elif page == "项目工作流":
         _render_workflow_map(st, usage_registry, registry, runtime_summaries)
     elif page == "健康监控":
         _render_health_monitor(st, registry, runtime_summaries)
     elif page == "配置检查":
-        _render_config_check(st, registry, usage_registry, runbook_registry, project_root)
+        _render_config_check(st, registry, usage_registry, runbook_registry, runtime_binding_registry, project_root)
 
 
 if __name__ == "__main__":

@@ -11,11 +11,14 @@
 from __future__ import annotations
 
 import dataclasses
+from pathlib import Path
 
 from opc_foundation.dashboard.models import (
     Capability,
     CapabilityRegistry,
     CapabilityRunbook,
+    CapabilityRuntimeBinding,
+    CapabilityRuntimeEvidence,
     CapabilityRuntimeSummary,
     CapabilityTrack,
     CapabilityUsageProject,
@@ -24,6 +27,7 @@ from opc_foundation.dashboard.models import (
     CapabilityUsageWorkflow,
     CommonFailure,
     DashboardSummary,
+    RuntimeBindingRegistry,
     RunbookRegistry,
 )
 
@@ -40,6 +44,9 @@ PROHIBITED_FIELDS = {
     "position_size",
     "target_price",
 }
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+CONFIG_PATH = PROJECT_ROOT / "configs" / "foundation_capabilities.yaml"
 
 
 def test_capability_track_construction() -> None:
@@ -261,3 +268,128 @@ def test_runbook_models_no_prohibited_fields() -> None:
         fields = {f.name for f in dataclasses.fields(model)}
         intersection = fields & PROHIBITED_FIELDS
         assert not intersection, f"{model.__name__} 包含禁止字段: {intersection}"
+
+
+# ===========================================================================
+# Runtime Binding 模型测试（M3B-3 新增）
+# ===========================================================================
+
+
+def test_capability_runtime_binding_construction() -> None:
+    """CapabilityRuntimeBinding 应能正确构造。"""
+    b = CapabilityRuntimeBinding(
+        capability_id="research.rss_feed",
+        archive_root="data/research_archive",
+        source_types=["rss_feed"],
+        source_ids=[],
+        file_extensions=[],
+        health_file="data/research_archive/index/source_health.jsonl",
+        run_log_file="data/research_archive/index/run_log.jsonl",
+        failed_queue_file="data/research_archive/index/failed_queue.jsonl",
+        report_dir="data/research_archive/reports",
+    )
+    assert b.capability_id == "research.rss_feed"
+    assert len(b.source_types) == 1
+    assert b.health_file != ""
+
+
+def test_capability_runtime_binding_defaults() -> None:
+    """CapabilityRuntimeBinding 可选字段应有合理默认值。"""
+    b = CapabilityRuntimeBinding(capability_id="test.cap")
+    assert b.archive_root == ""
+    assert b.source_types == []
+    assert b.source_ids == []
+    assert b.file_extensions == []
+    assert b.health_file == ""
+    assert b.run_log_file == ""
+    assert b.failed_queue_file == ""
+    assert b.report_dir == ""
+
+
+def test_runtime_binding_registry_construction() -> None:
+    """RuntimeBindingRegistry 应能正确构造。"""
+    b = CapabilityRuntimeBinding(capability_id="research.rss_feed")
+    reg = RuntimeBindingRegistry(
+        version="1.0",
+        updated_at="2026-06-25",
+        bindings=[b],
+        load_error=None,
+    )
+    assert reg.version == "1.0"
+    assert len(reg.bindings) == 1
+    assert reg.load_error is None
+
+
+def test_runtime_binding_registry_get_binding() -> None:
+    """RuntimeBindingRegistry.get_binding 应能正确查找。"""
+    b = CapabilityRuntimeBinding(capability_id="research.rss_feed")
+    reg = RuntimeBindingRegistry(bindings=[b])
+    found = reg.get_binding("research.rss_feed")
+    assert found is not None
+    assert found.capability_id == "research.rss_feed"
+    assert reg.get_binding("nonexistent") is None
+
+
+def test_capability_runtime_evidence_construction() -> None:
+    """CapabilityRuntimeEvidence 应能正确构造。"""
+    e = CapabilityRuntimeEvidence(
+        capability_id="test.cap",
+        matched_health_records=[{"status": "healthy"}],
+        matched_run_records=[{"status": "success"}],
+        matched_failed_records=[],
+        latest_health_record={"status": "healthy"},
+        latest_run_record={"status": "success"},
+        latest_failed_record=None,
+        latest_report_path="",
+    )
+    assert e.capability_id == "test.cap"
+    assert len(e.matched_health_records) == 1
+    assert e.latest_health_record is not None
+
+
+def test_capability_runtime_evidence_defaults() -> None:
+    """CapabilityRuntimeEvidence 可选字段应有合理默认值。"""
+    e = CapabilityRuntimeEvidence(capability_id="test.cap")
+    assert e.matched_health_records == []
+    assert e.matched_run_records == []
+    assert e.matched_failed_records == []
+    assert e.latest_health_record is None
+    assert e.latest_run_record is None
+    assert e.latest_failed_record is None
+    assert e.latest_report_path == ""
+
+
+def test_runtime_binding_models_no_prohibited_fields() -> None:
+    """Runtime Binding 相关 model 不得包含禁止字段。"""
+    all_models = [
+        CapabilityRuntimeBinding,
+        RuntimeBindingRegistry,
+        CapabilityRuntimeEvidence,
+    ]
+    for model in all_models:
+        fields = {f.name for f in dataclasses.fields(model)}
+        intersection = fields & PROHIBITED_FIELDS
+        assert not intersection, f"{model.__name__} 包含禁止字段: {intersection}"
+
+
+def test_runtime_tool_capability_allowed_without_binding() -> None:
+    """runtime 工具类能力允许无 binding。
+
+    工具类能力（如 runtime.jsonl, runtime.queue）一般不需要绑定真实运行文件，
+    因为它们被其他模块调用，Dashboard 显示"未配置"是正常的。
+    """
+    from opc_foundation.dashboard.loaders import load_capabilities_config
+
+    cap_reg = load_capabilities_config(CONFIG_PATH)
+    runtime_caps = [c for c in cap_reg.capabilities if c.category == "runtime"]
+
+    binding_reg_path = Path(__file__).resolve().parents[2] / "configs" / "capability_runtime_bindings.yaml"
+    from opc_foundation.dashboard.loaders import load_runtime_bindings_config
+    binding_reg = load_runtime_bindings_config(binding_reg_path)
+
+    for cap in runtime_caps:
+        binding = binding_reg.get_binding(cap.capability_id)
+        if binding is None:
+            assert True
+        else:
+            assert isinstance(binding, CapabilityRuntimeBinding)

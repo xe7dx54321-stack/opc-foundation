@@ -32,8 +32,11 @@ Local dashboard for visualizing foundation capabilities, health, and usage.
 streamlit run src/opc_foundation/dashboard/app.py
 ```
 
+M3B-3 已支持真实运行数据接入，通过 runtime binding 精确匹配每个能力的健康状态。
+
 - [Control Center 文档](docs/foundation_control_center.md)
 - [Control Center 使用指南](docs/foundation_control_center_usage.md)
+- [运行时数据接入说明](docs/foundation_control_center_runtime_data.md)
 
 ## What it is
 

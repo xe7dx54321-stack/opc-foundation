@@ -1,0 +1,210 @@
+# OPC Foundation Capability Runtime Bindings
+#
+# 功能说明（小白解读）：
+#     这个文件告诉 Dashboard 每个 capability_id 应该从哪些真实运行文件中读取数据。
+#     比如 research.rss_feed 这个能力，它的健康数据存在哪里，运行日志存在哪里。
+#
+#     为什么需要这个文件？
+#     因为 foundation_capabilities.yaml 里的 health_file 是简化配置，
+#     而实际运行时，同一个 archive_root 下可能有多个 source_type，
+#     需要更精细的匹配规则来确定哪些记录属于哪个 capability。
+#
+#     匹配规则（优先级从高到低）：
+#     1. 先按 source_types 匹配（最常用）
+#     2. 如果 source_ids 非空，再按 source_id 精确匹配
+#     3. document_extraction 类能力可按 file_extensions 辅助匹配
+#
+#     注意：
+#     - capability_id 必须存在于 foundation_capabilities.yaml
+#     - 没有真实运行文件的能力可以不绑定，Dashboard 显示"未配置"或"未知"
+#     - runtime 工具类能力一般不需要绑定
+#     - 本地绑定请用 capability_runtime_bindings.local.yaml（已加入 .gitignore）
+#
+# 更新时间：2026-06-25
+# 版本：1.0
+
+version: "1.0"
+updated_at: "2026-06-25"
+
+# ===========================================================================
+# bindings: 能力与运行时数据的绑定关系
+# ===========================================================================
+bindings:
+
+  # -------------------------------------------------------------------------
+  # 研究信息采集（8 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: research.rss_feed
+    archive_root: data/research_archive
+    source_types:
+      - rss_feed
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.wechat_archive
+    archive_root: data/research_archive
+    source_types:
+      - wechat_article
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.manual_url
+    archive_root: data/research_archive
+    source_types:
+      - manual_url
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.official_public_research
+    archive_root: data/research_archive
+    source_types:
+      - official_public_research
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.podcast_transcript
+    archive_root: data/research_archive
+    source_types:
+      - podcast_transcript
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.conference_transcript
+    archive_root: data/research_archive
+    source_types:
+      - conference_transcript
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.analyst_action
+    archive_root: data/research_archive
+    source_types:
+      - analyst_action
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  - capability_id: research.media_mention
+    archive_root: data/research_archive
+    source_types:
+      - media_mention
+    source_ids: []
+    health_file: data/research_archive/index/source_health.jsonl
+    run_log_file: data/research_archive/index/run_log.jsonl
+    failed_queue_file: data/research_archive/index/failed_queue.jsonl
+    report_dir: data/research_archive/reports
+
+  # -------------------------------------------------------------------------
+  # 官方公告采集（3 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: official_filing.sec_edgar
+    archive_root: data/official_filings
+    source_types:
+      - sec_edgar
+    source_ids: []
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    report_dir: data/official_filings/reports
+
+  - capability_id: official_filing.cninfo_announcement
+    archive_root: data/official_filings
+    source_types:
+      - cninfo_announcement
+    source_ids: []
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    report_dir: data/official_filings/reports
+
+  - capability_id: official_filing.hkex_announcement
+    archive_root: data/official_filings
+    source_types:
+      - hkex_announcement
+    source_ids: []
+    health_file: data/official_filings/index/source_health.jsonl
+    run_log_file: data/official_filings/index/run_log.jsonl
+    failed_queue_file: data/official_filings/index/failed_queue.jsonl
+    report_dir: data/official_filings/reports
+
+  # -------------------------------------------------------------------------
+  # 文档内容抽取（4 条能力）
+  # -------------------------------------------------------------------------
+  - capability_id: document_extraction.pdf
+    archive_root: data/document_extraction
+    source_types:
+      - local_document
+      - official_filing_pdf
+      - public_report
+    source_ids: []
+    file_extensions:
+      - .pdf
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+
+  - capability_id: document_extraction.html
+    archive_root: data/document_extraction
+    source_types:
+      - local_document
+      - webpage
+    source_ids: []
+    file_extensions:
+      - .html
+      - .htm
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+
+  - capability_id: document_extraction.txt
+    archive_root: data/document_extraction
+    source_types:
+      - local_document
+    source_ids: []
+    file_extensions:
+      - .txt
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+
+  - capability_id: document_extraction.markdown
+    archive_root: data/document_extraction
+    source_types:
+      - local_document
+    source_ids: []
+    file_extensions:
+      - .md
+      - .markdown
+    health_file: data/document_extraction/index/source_health.jsonl
+    run_log_file: data/document_extraction/index/run_log.jsonl
+    failed_queue_file: data/document_extraction/index/failed_queue.jsonl
+    report_dir: data/document_extraction/reports
+
+  # -------------------------------------------------------------------------
+  # 共享运行工具（5 条能力）
+  # 工具类能力一般不需要绑定真实运行文件，因为它们被其他模块调用
+  # 这里留空，Dashboard 会显示"未配置"
+  # -------------------------------------------------------------------------

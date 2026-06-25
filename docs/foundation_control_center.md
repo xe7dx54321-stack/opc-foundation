@@ -1,7 +1,7 @@
 # OPC Foundation Control Center
 
-更新时间：2026-06-24
-状态：MVP Ready
+更新时间：2026-06-25
+状态：M3B-3 Ready（真实运行数据接入）
 
 ## 1. 目标
 
@@ -51,12 +51,25 @@ Control Center 包含 8 个页面：
 |---|---|
 | 能力台账 | `configs/foundation_capabilities.yaml` |
 | 使用关系 | `configs/capability_usage_registry.example.yaml`（或 local 版本） |
-| 健康状态 | `data/*/index/source_health.jsonl` |
-| 运行日志 | `data/*/index/run_log.jsonl` |
-| 失败队列 | `data/*/index/failed_queue.jsonl` |
+| 运行时绑定 | `configs/capability_runtime_bindings.yaml`（或 local 版本） |
+| 健康状态 | `data/*/index/source_health.jsonl`（通过 runtime binding 匹配） |
+| 运行日志 | `data/*/index/run_log.jsonl`（通过 runtime binding 匹配） |
+| 失败队列 | `data/*/index/failed_queue.jsonl`（通过 runtime binding 匹配） |
 | 文档入口 | `docs/` 目录 |
 
 Control Center 只读取数据，不写回 data 文件。
+
+### M3B-3 真实运行数据接入
+
+M3B-3 引入了 **runtime binding** 机制，实现了从真实运行数据中精确匹配每个能力的健康状态。
+
+核心变化：
+- 不再是简单的「一个能力对应一个 health_file」
+- 而是通过 `capability_runtime_bindings.yaml` 配置能力与 source_type/source_id 的映射关系
+- Dashboard 从同一个 archive 的数据文件中，按 binding 规则筛选出属于该能力的记录
+- 健康监控页展示真实运行状态，能力详情弹窗展示真实运行摘要
+
+详细说明见 [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md)。
 
 ## 4. 能力台账
 
@@ -142,8 +155,8 @@ failed                  # 失败
 运行健康状态（runtime_health）：
 
 ```text
-not_configured   # 没有配置 health_file
-unknown          # 文件不存在或无记录
+not_configured   # 没有配置 runtime binding
+unknown          # 有 binding 但没有匹配记录
 healthy          # 最近一次为 healthy/success
 degraded         # 最近一次为 degraded
 failed           # 最近一次为 failed
@@ -154,6 +167,18 @@ stale            # 最近运行时间超过 stale_days 天
 二者必须分开：
 - 能力成熟度 = 这个能力建设到什么程度
 - 运行健康 = 这个能力最近跑得好不好
+
+### M3B-3 健康聚合方式
+
+M3B-3 之后，健康状态通过 **runtime binding** 从真实运行数据中聚合：
+
+1. Dashboard 读取 `capability_runtime_bindings.yaml` 中的绑定配置
+2. 根据 `source_types` / `source_ids` 从 source_health / run_log / failed_queue 中筛选匹配记录
+3. 用匹配到的记录计算 runtime_health
+4. 没有 binding 的能力显示为 `not_configured`
+5. 有 binding 但没匹配到记录显示为 `unknown`（fail-soft）
+
+详细聚合规则见 [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md) 第 4 节。
 
 ## 7. 不做什么
 
@@ -189,7 +214,9 @@ streamlit run src/opc_foundation/dashboard/app.py
 ## 9. 后续路线
 
 ```text
-M3B-2: Control Center 增强（自动刷新、筛选优化、导出）
+✅ M3B-1: Control Center MVP（能力地图、健康监控、配置检查）
+✅ M3B-2: Control Center 增强（运行手册、能力详情、文档入口）
+✅ M3B-3: Control Center 真实运行数据接入（runtime binding、健康聚合）
 M3C: Runtime 层接入已有主线
 M4: Research/News Source Harmonization
 M5: Partial Candidates
@@ -199,6 +226,8 @@ M6: th_capital_stock Consumption Bridge
 ## 10. 相关文档
 
 - [Control Center 使用指南](foundation_control_center_usage.md)
+- [Control Center 运行手册](foundation_control_center_runbook.md)
+- [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md)
 - [Foundation Capability Registry](foundation_capability_registry.md)
 - [Foundation Readiness Summary](foundation_readiness_summary.md)
 - [Runtime Foundation](runtime_foundation.md)

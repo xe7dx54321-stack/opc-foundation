@@ -1,8 +1,8 @@
 # Foundation Control Center 运行手册
 
 更新时间：2026-06-25
-状态：MVP Ready
-版本：1.0
+状态：M3B-3 Ready（真实运行数据接入）
+版本：1.1
 
 ## 1. 这是什么（小白解读）
 
@@ -87,17 +87,29 @@ streamlit run src/opc_foundation/dashboard/app.py
 
 ---
 
-### 3.3 能力详情 ⭐（新功能）
+### 3.3 能力详情 ⭐（M3B-3 增强）
 
-一句话：每个能力的完整"使用说明书"。
+一句话：每个能力的完整"使用说明书" + 真实运行摘要。
 
-这是本次新增的核心页面，包含：
+M3B-3 之后，能力详情页不仅有使用说明，还会展示从真实运行数据中聚合的运行摘要。
+
+包含：
 
 #### 顶部信息
 - 能力标题和 capability_id
 - 负责的 Agent
 - 成熟度标签
-- 当前运行状态
+- 当前运行状态（从真实数据聚合，M3B-3 新增）
+
+#### 运行摘要（M3B-3 新增）
+- 最近运行时间
+- 最近成功时间
+- 最近失败时间
+- 连续失败次数
+- 失败队列积压数量
+- 最近 3 次运行状态
+- 最新错误信息
+- 最新报告链接（如果有）
 
 #### 能做什么 / 不能做什么
 - ✅ 能做什么：这个能力的功能范围
@@ -165,16 +177,18 @@ streamlit run src/opc_foundation/dashboard/app.py
 
 ---
 
-### 3.5 健康监控
+### 3.5 健康监控 ⭐（M3B-3 增强）
 
-一句话：所有能力的运行健康状态总表。
+一句话：所有能力的真实运行健康状态总表。
+
+M3B-3 之后，健康数据不再是笼统的整个 archive 状态，而是通过 **runtime binding** 精确匹配每个能力的真实运行记录。
 
 展示内容：
 - 顶部 7 个统计卡片（运行正常、降级、失败、需关注、过期、未知、未配置）
 - 搜索和筛选栏（按 capability_id / 名称、track、健康状态等）
 - 能力列表表格，包含：
   - 能力 ID 和名称
-  - 运行健康状态
+  - 运行健康状态（从真实运行数据中聚合）
   - 最新状态
   - 最新运行时间
   - 最近 3 次运行状态（圆点图）
@@ -182,8 +196,11 @@ streamlit run src/opc_foundation/dashboard/app.py
   - 连续失败次数
   - 失败队列积压数量
   - 最新错误信息
+  - 建议动作（中文提示）
 
 **什么时候看这个页面：** 系统出问题了，想快速找到哪个能力挂了。
+
+> **小提示：** 「未配置」表示没有 runtime binding（通常是工具类能力），「未知」表示有 binding 但还没运行过。这两个都不是错误，是正常状态。
 
 ---
 
@@ -226,38 +243,45 @@ streamlit run src/opc_foundation/dashboard/app.py
 
 ---
 
-### 3.9 配置检查 ⭐（增强版）
+### 3.9 配置检查 ⭐（M3B-3 增强）
 
 一句话：一键检查所有配置是否正确。
 
-包含 5 项检查：
+包含 6 项检查：
 
 1. **能力注册表校验**
    - 检查 capability_id 是否唯一
    - 检查每个能力的 track 是否存在
    - 通过会显示"共 X 个能力"
 
-2. **运行手册校验**（新增）
+2. **运行手册校验**
    - 检查运行手册的 capability_id 是否都在能力注册表中
    - 检查运行手册有没有重复 ID
    - 检查覆盖率：是不是所有能力都有运行手册
    - 100% 覆盖会显示绿色对勾
 
-3. **文档存在性检查**
+3. **Runtime Binding 检查**（M3B-3 新增）
+   - 检查 runtime binding 的 capability_id 是否都在能力注册表中
+   - 检查有没有重复的 capability_id
+   - 检查哪些 binding 指向的 data 文件不存在（warning，不是错误）
+   - 显示已绑定 / 未绑定的能力数量
+
+4. **文档存在性检查**
    - 检查每个能力配置的 docs 路径是否真实存在
    - 缺失的文档会列出来
 
-4. **未使用能力**
+5. **未使用能力**
    - 列出哪些能力暂时没被任何项目使用
    - 不是错误，只是提示信息
 
-5. **未知引用检查**
+6. **未知引用检查**
    - 检查项目工作流中是否引用了不存在的能力
    - 这个是红色错误，必须修复
 
 **什么时候看这个页面：**
 - 刚更新完配置文件，想确认对不对
 - 新增了能力，想确认有没有遗漏
+- 新增了 runtime binding，想确认配置正确
 - 系统出问题，先检查配置
 
 ---
@@ -296,9 +320,16 @@ streamlit run src/opc_foundation/dashboard/app.py
 
 **症状：** 健康监控里所有能力都是灰色的"未配置"。
 
-**原因：** 还没有运行过任何能力，`data/` 目录下没有数据文件。
+**原因：** 这些能力没有配置 runtime binding。
 
-**解决方法：** 这是正常的。先按照"能力详情"页的命令运行一两个能力，就有数据了。
+**说明：**
+- 工具类能力（如 LLM 缓存、ArtifactManifest 等）本来就不需要绑定，显示"未配置"是正常的
+- 如果是采集类能力（如 RSS、微信等），需要在 `capability_runtime_bindings.yaml` 中配置 binding
+- 配置了 binding 但还没运行过，会显示"未知"而不是"未配置"
+
+**解决方法：**
+- 工具类能力：不用管，正常现象
+- 采集类能力：参考 [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md) 配置 binding
 
 ### 5.3 配置检查里有红色错误
 
@@ -317,7 +348,26 @@ streamlit run src/opc_foundation/dashboard/app.py
 
 **解决方法：** 按照页面上的命令运行一次，文件生成后就变 ✅ 了。
 
-### 5.5 运行手册覆盖率不到 100%
+### 5.5 为什么有的能力显示「未知」
+
+**症状：** 健康监控里有的能力显示蓝色的"未知"。
+
+**原因：** 配置了 runtime binding，但还没有匹配到运行记录。
+
+**说明：**
+- "未知" ≠ "失败"，只是说还没运行过，或者运行了但没有匹配到记录
+- 刚配置完 binding 还没运行过能力，显示"未知"是正常的
+- 运行一次这个能力，刷新页面就会变成健康/降级/失败
+
+**解决方法：**
+1. 确认 binding 配置正确（source_types 对不对）
+2. 按照能力详情页的命令运行一次这个能力
+3. 刷新 Dashboard 页面
+4. 如果还是"未知"，检查 data 目录下有没有生成对应的 JSONL 文件
+
+详细排查步骤见 [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md) 第 6 节。
+
+### 5.6 运行手册覆盖率不到 100%
 
 **症状：** 配置检查提示有能力没有运行手册。
 
@@ -337,9 +387,12 @@ streamlit run src/opc_foundation/dashboard/app.py
 |---|---|
 | `configs/foundation_capabilities.yaml` | 能力注册表（有哪些能力） |
 | `configs/capability_runbooks.yaml` | 运行手册（每个能力怎么用） |
+| `configs/capability_runtime_bindings.yaml` | 运行时绑定（M3B-3 新增，能力与真实数据的映射） |
 | `configs/capability_usage_registry.yaml` | 使用关系（哪些项目用了哪些能力） |
 
 新增/修改能力后，更新对应的 YAML 文件，中控台会自动读取。
+
+> **M3B-3 提示：** `capability_runtime_bindings.yaml` 是真实运行数据接入的核心配置，定义了每个能力和 source_type/source_id 的对应关系。详情见 [Control Center 运行时数据接入说明](foundation_control_center_runtime_data.md)。
 
 ---
 
@@ -363,12 +416,14 @@ src/opc_foundation/dashboard/
 - **只读：** 中控台只读取文件，不修改任何数据文件
 - **无投资判断：** 所有模型和页面都不包含 ticker / rating / score 等投资判断字段
 - **全中文：** 所有用户可见的界面元素都是中文（capability_id 等技术术语除外）
+- **M3B-3 真实数据接入：** 通过 runtime binding 从真实运行数据中聚合健康状态，数据缺失时 fail-soft 显示"未知"或"未配置"
 
 ### 7.3 如何新增一个能力到中控台
 
 1. 在 `foundation_capabilities.yaml` 中添加能力定义
-2. 在 `capability_runbooks.yaml` 中添加运行手册
-3. 刷新中控台页面，自动生效
+2. 在 `capability_runbooks.yaml` 中添加运行手册（推荐）
+3. 在 `capability_runtime_bindings.yaml` 中添加 runtime binding（如果有真实运行数据，M3B-3 新增）
+4. 刷新中控台页面，自动生效
 
 ---
 
@@ -376,4 +431,5 @@ src/opc_foundation/dashboard/
 
 - [foundation_control_center.md](foundation_control_center.md) — 中控台产品说明
 - [foundation_control_center_usage.md](foundation_control_center_usage.md) — 使用指南
+- [foundation_control_center_runtime_data.md](foundation_control_center_runtime_data.md) — M3B-3 运行时数据接入说明
 - [foundation_capability_registry.md](foundation_capability_registry.md) — 能力注册表说明
