@@ -1,8 +1,8 @@
 # Foundation TRAE 运维手册
 
-**Version**: 1.3  
-**Updated**: 2026-06-26  
-**Status**: M3C-2B Ready（92 个信息源 Live Smoke 真实接通验证完成）
+**Version**: 1.4
+**Updated**: 2026-06-26
+**Status**: M3C-3 Ready（15 个 Trial Source TRAE Trial Scheduling 已接入）
 
 ---
 

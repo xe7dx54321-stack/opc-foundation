@@ -1,0 +1,188 @@
+# ============================================================
+# TRAE Foundation Trial Schedule - 试运行调度模板（示例配置）
+# ============================================================
+#
+# 用途：M3C-3 TRAE Trial Scheduling 专用配置。
+#      本文件是 example 模板，只包含 15 个已验证 trial source。
+#      不包含 blocked/high-risk/TLS/DNS/404/url_backlog/search_provider/dormant 源。
+#
+# 使用方法：
+#   1. 复制本文件为 trae_foundation_trial_schedule.local.yaml（不提交 Git）
+#   2. 根据实际需求调整 enabled_by_default 和 schedule_times
+#   3. 使用 scripts/setup_foundation_trial_schedule.ps1 自动配置 Windows Task Scheduler
+#   4. 使用 scripts/remove_foundation_trial_schedule.ps1 清理 trial jobs
+#
+# 设计原则：
+#   - 只调度 M3C-2D-URLFix 验证通过的 15 个 trial ready 源
+#   - 不调度 92 全量源
+#   - 不调度 Microsoft IR（url_backlog）
+#   - 不调度 blocked/high-risk/search_provider/dormant 源
+#   - trial run 输出写入 data/foundation_trial/
+#   - 本文件 trial_only=true, production_mode=false
+#
+# ============================================================
+
+version: 1
+updated_at: "2026-06-26"
+timezone: local_machine
+trial_only: true
+production_mode: false
+
+# ============================================================
+# Trial Source Scope（与 foundation_trial_source_allowlist.example.yaml 保持一致）
+# ============================================================
+#
+# trial_source_count: 15
+# source_ids:
+#   - goldman_sachs_research          (URL 已修复：https://www.goldmansachs.com/insights)
+#   - goldman_sachs_reports            (URL 已修复：https://www.goldmansachs.com/insights/reports)
+#   - goldman_sachs_top_of_mind        (live OK)
+#   - goldman_sachs_insights           (live OK)
+#   - barclays_our_insights            (live OK)
+#   - yahoo_finance                    (live OK)
+#   - business_insider                 (live OK)
+#   - markets_insider                  (live OK)
+#   - the_fly                          (live OK)
+#   - briefing_com_upgrades            (live OK)
+#   - wallstreet_cn                    (live OK)
+#   - cls_cn                          (live OK，标记 transient watch)
+#   - wind_public                      (live OK)
+#   - gelonghui                        (live OK)
+#   - zhitong_caijing                  (live OK)
+#
+# excluded_sources（NOT scheduled）：
+#   - microsoft_ir                    (url_backlog: HTTP 403 Akamai bot 保护)
+#   - All blocked/high-risk sources
+#   - All search_provider sources
+#   - All dormant sources
+#   - All TLS/DNS/404/url_backlog sources
+#
+# ============================================================
+
+# ============================================================
+# 任务列表
+# ============================================================
+
+tasks:
+
+  # ========================================================
+  # Trial Morning Run - 08:10
+  # ========================================================
+  - task_id: foundation_trial_sources_morning_run
+    task_name: "[Trial] Foundation Trial Sources Morning Run"
+    task_type: trial_run
+    source_count: 15
+    command: >-
+      powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_sources.ps1 -Mode run
+    schedule_times:
+      - "08:10"
+    enabled_by_default: true
+    output_dir: data/foundation_trial
+    notes: |
+      M3C-3 Trial Scheduling - Morning run。
+      只调度 15 个已验证 trial source，不调度 92 全量。
+      trial run 输出写入 data/foundation_trial/index/。
+      覆盖 Goldman Sachs × 4, Barclays × 1, Yahoo Finance, Business Insider,
+      Markets Insider, The Fly, Briefing.com, 华尔街见闻, 财联社, 万得, 格隆汇, 智通财经。
+      cls_cn 标记为 transient watch（偶尔 http_error）。
+
+  # ========================================================
+  # Trial Morning Check - 08:25
+  # ========================================================
+  - task_id: foundation_trial_sources_morning_check
+    task_name: "[Trial] Foundation Trial Sources Morning Check"
+    task_type: trial_check
+    command: >-
+      powershell -ExecutionPolicy Bypass -File scripts/check_foundation_trial_sources.ps1
+    schedule_times:
+      - "08:25"
+    enabled_by_default: true
+    output_dir: data/foundation_trial
+    notes: |
+      检查 morning run 的输出完整性。
+      验证 source_health.jsonl、run_log.jsonl、reports/ 是否正常生成。
+      不检查 blocked 源出现在 trial output 中。
+
+  # ========================================================
+  # Trial Afternoon Run - 13:10
+  # ========================================================
+  - task_id: foundation_trial_sources_afternoon_run
+    task_name: "[Trial] Foundation Trial Sources Afternoon Run"
+    task_type: trial_run
+    source_count: 15
+    command: >-
+      powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_sources.ps1 -Mode run
+    schedule_times:
+      - "13:10"
+    enabled_by_default: true
+    output_dir: data/foundation_trial
+    notes: |
+      M3C-3 Trial Scheduling - Afternoon run。
+      与 morning run 相同，只调度 15 个 trial source。
+
+  # ========================================================
+  # Trial Evening Run - 20:10
+  # ========================================================
+  - task_id: foundation_trial_sources_evening_run
+    task_name: "[Trial] Foundation Trial Sources Evening Run"
+    task_type: trial_run
+    source_count: 15
+    command: >-
+      powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_sources.ps1 -Mode run
+    schedule_times:
+      - "20:10"
+    enabled_by_default: true
+    output_dir: data/foundation_trial
+    notes: |
+      M3C-3 Trial Scheduling - Evening run。
+      与 morning/afternoon run 相同，覆盖晚间更新的源（美股收盘后）。
+
+  # ========================================================
+  # Trial Evening Check - 20:25
+  # ========================================================
+  - task_id: foundation_trial_sources_evening_check
+    task_name: "[Trial] Foundation Trial Sources Evening Check"
+    task_type: trial_check
+    command: >-
+      powershell -ExecutionPolicy Bypass -File scripts/check_foundation_trial_sources.ps1
+    schedule_times:
+      - "20:25"
+    enabled_by_default: true
+    output_dir: data/foundation_trial
+    notes: |
+      检查 evening run 的输出完整性。
+
+  # ========================================================
+  # Trial Daily Status - 23:50
+  # ========================================================
+  - task_id: foundation_trial_daily_status
+    task_name: "[Trial] Foundation Trial Daily Status"
+    task_type: trial_status
+    command: >-
+      powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_sources.ps1 -Mode dry-run
+    schedule_times:
+      - "23:50"
+    enabled_by_default: true
+    output_dir: data/foundation_trial
+    notes: |
+      生成每日 trial 状态摘要（dry-run，不访问网络）。
+      用于确认 trial schedule 正常运行，无需人工干预。
+      输出到 data/foundation_trial/reports/trial_run_YYYY-MM-DD.md。
+
+# ============================================================
+# Rollback 步骤（如果 trial scheduling 出现异常）
+# ============================================================
+#
+# 1. 暂停所有 trial jobs：
+#    scripts/remove_foundation_trial_schedule.ps1 -Action disable
+#
+# 2. 删除所有 trial jobs：
+#    scripts/remove_foundation_trial_schedule.ps1 -Action delete
+#
+# 3. 保留 data/foundation_trial/ 作为诊断数据（不删除）
+#
+# 4. 不影响 source inventory（92 源不受影响）
+# 5. 不影响 production research archive
+# 6. 不影响 blocked 源策略
+#
+# ============================================================
