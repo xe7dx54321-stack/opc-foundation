@@ -60,7 +60,9 @@ M3C-1 已新增上线脚本与 TRAE 调度模板，详见 [Foundation TRAE Opera
 
 M3C-2A 已完成首次全信息源基线运行，生成了真实的运行状态数据。详见 [Baseline Run Report](docs/foundation_baseline_run_report.md)。
 
-M3C-2A-fix 已完成首次基线噪音清理和 92 源口径统一，为 M3C-2B 一周稳定性观察做准备。
+M3C-2A-fix 已完成首次基线噪音清理和 92 源口径统一，为 M3C-2B 真实接通验证做准备。
+
+M3C-2B 已完成 92 个信息源真实接通与批量 Live Smoke，生成了每个源的接通状态和后续优先级。详见 [Source Live Smoke Report](docs/foundation_source_live_smoke_report.md)。
 
 ## What it is
 

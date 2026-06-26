@@ -1,8 +1,8 @@
 # OPC Foundation Source Activation Plan
 
-**Version**: 1.2  
+**Version**: 1.3  
 **Updated**: 2026-06-26  
-**Status**: M3C-2A Ready（首次全信息源基线运行完成）
+**Status**: M3C-2B Ready（92 个信息源 Live Smoke 真实接通验证完成）
 
 ---
 

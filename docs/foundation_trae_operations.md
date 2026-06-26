@@ -1,8 +1,8 @@
 # Foundation TRAE 运维手册
 
-**Version**: 1.2  
+**Version**: 1.3  
 **Updated**: 2026-06-26  
-**Status**: M3C-2A-fix Ready（首次基线噪音清理 + 92 源口径统一）
+**Status**: M3C-2B Ready（92 个信息源 Live Smoke 真实接通验证完成）
 
 ---
 
