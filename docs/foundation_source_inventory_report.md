@@ -1,8 +1,8 @@
 # OPC Foundation Source Inventory Report
 
-**Version**: 1.1  
-**Updated**: 2026-06-25  
-**Status**: M3C-0B Ready（Source Inventory 接入配置检查与上线计划）
+**Version**: 1.2  
+**Updated**: 2026-06-26  
+**Status**: M3C-2A-fix Ready（Source Inventory 92 源口径统一）
 
 ---
 
@@ -39,7 +39,8 @@
 
 ## 3. Source 数量
 
-共 **87 个**信息源（sources）。
+共 **92 个**信息源（sources）。
+> 注：M3C-0A 初始为 87 个源；后续配置扩展后，当前口径为 92 个源。
 
 ---
 
@@ -238,3 +239,4 @@ M3C-1 上线顺序建议：
 | Date | Version | Changes |
 |------|---------|---------|
 | 2026-06-25 | 1 | M3C-0A 初始版本，登记 87 个信息源，覆盖 9 个 source group |
+| 2026-06-26 | 1.2 | M3C-2A-fix 口径统一，更新为 92 个信息源 |

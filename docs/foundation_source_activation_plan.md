@@ -32,9 +32,10 @@ Foundation 之前只有 capability 层面的抽象（如 `research.official_publ
 ## 2. 当前 source inventory 总览
 
 - **source group**: 9 个
-- **source 数量**: 87 个
-- **默认启用**: 70 个（scheduled 源）
-- **默认禁用**: 17 个（search provider + blocked + community）
+- **source 数量**: 92 个
+- **默认启用**: 约 70 个（scheduled 源）
+- **默认禁用**: 约 22 个（search provider + blocked + community + on_demand）
+> 注：M3C-0A 初始为 87 个源；后续配置扩展后，当前口径为 92 个源。
 
 详见 [Source Inventory Report](foundation_source_inventory_report.md)。
 

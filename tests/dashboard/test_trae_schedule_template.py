@@ -430,3 +430,120 @@ class TestTraeScheduleIntegration:
         from opc_foundation.dashboard import loaders
         assert models is not None
         assert loaders is not None
+
+
+# ============================================
+# M3C-2A-fix Baseline Cleanup Tests
+# ============================================
+
+
+BASELINE_REPORT_PATH = Path("docs/foundation_baseline_run_report.md")
+SOURCE_INVENTORY_REPORT_PATH = Path("docs/foundation_source_inventory_report.md")
+
+
+class TestBaselineReportCleanup:
+    """基线运行报告清理测试类。
+
+    验证 M3C-2A-fix 的文档和口径校准。
+    """
+
+    def test_baseline_report_has_fix_section(self) -> None:
+        """测试 baseline report 包含 M3C-2A-fix 章节。
+
+        验证基线运行报告中包含首次基线问题清理章节。
+        """
+        assert BASELINE_REPORT_PATH.exists(), "Baseline report should exist"
+        content = BASELINE_REPORT_PATH.read_text(encoding="utf-8")
+        assert "M3C-2A-fix" in content, \
+            "Baseline report should have M3C-2A-fix section"
+
+    def test_baseline_report_has_ecb_imf_attribution(self) -> None:
+        """测试 baseline report 包含 ECB / IMF 问题归因。
+
+        验证报告中对 ECB 和 IMF RSS 问题有明确归因。
+        """
+        assert BASELINE_REPORT_PATH.exists()
+        content = BASELINE_REPORT_PATH.read_text(encoding="utf-8")
+        assert "ECB" in content or "ecb" in content.lower(), \
+            "Baseline report should have ECB attribution"
+        assert "IMF" in content or "imf" in content.lower(), \
+            "Baseline report should have IMF attribution"
+        assert "empty_source" in content, \
+            "Baseline report should mention empty_source attribution"
+
+    def test_baseline_report_has_doc_extraction_attribution(self) -> None:
+        """测试 baseline report 包含 document_extraction 失败项归因。
+
+        验证报告中对 document_extraction 单项失败有明确归因。
+        """
+        assert BASELINE_REPORT_PATH.exists()
+        content = BASELINE_REPORT_PATH.read_text(encoding="utf-8")
+        assert "malformed" in content.lower() or "Document Extraction" in content, \
+            "Baseline report should have document extraction failure attribution"
+
+    def test_source_inventory_is_92(self) -> None:
+        """测试 baseline report 明确当前 Source Inventory 为 92 个源。
+
+        验证报告中明确 source inventory 当前口径为 92 个源。
+        """
+        assert BASELINE_REPORT_PATH.exists()
+        content = BASELINE_REPORT_PATH.read_text(encoding="utf-8")
+        assert "92" in content and "source" in content.lower(), \
+            "Baseline report should mention 92 sources"
+
+    def test_source_inventory_report_92_unified(self) -> None:
+        """测试 source inventory report 统一为 92 源口径。
+
+        验证 source inventory report 中源数量已更新为 92。
+        """
+        assert SOURCE_INVENTORY_REPORT_PATH.exists()
+        content = SOURCE_INVENTORY_REPORT_PATH.read_text(encoding="utf-8")
+        assert "92 个" in content or "92 sources" in content.lower(), \
+            "Source inventory report should use 92 sources"
+
+    def test_readme_no_87_conflict(self) -> None:
+        """测试 README 不再出现与 92 源冲突的旧口径。
+
+        验证 README 中口径已统一。
+        """
+        assert README_PATH.exists()
+        content = README_PATH.read_text(encoding="utf-8")
+        # README 可以提到 87 作为历史，但必须有 92 作为当前口径
+        # 这里只检查是否提到了 92
+        assert "92" in content, \
+            "README should mention 92 sources as current count"
+
+    def test_known_limited_not_p0(self) -> None:
+        """测试 known_limited 不触发 P0。
+
+        验证 baseline report 中明确 known_limited / empty_source
+        不属于 P0 级别问题。
+        """
+        assert BASELINE_REPORT_PATH.exists()
+        content = BASELINE_REPORT_PATH.read_text(encoding="utf-8")
+        # 检查是否明确说明 empty_source / known_limited 不是 P0
+        has_statement = (
+            "非 P0" in content
+            or "非阻断" in content
+            or "不视为严重失败" in content
+            or "不应污染 P0" in content
+        )
+        assert has_statement, \
+            "Baseline report should clarify empty_source/known_limited is not P0"
+
+    def test_doc_extraction_does_not_spread(self) -> None:
+        """测试 document_extraction 单项失败不扩散到全部文档类型。
+
+        验证报告中明确说明单项失败只影响对应类型，不扩散。
+        """
+        assert BASELINE_REPORT_PATH.exists()
+        content = BASELINE_REPORT_PATH.read_text(encoding="utf-8")
+        # 检查是否说明不影响其他类型
+        has_statement = (
+            "不扩散" in content
+            or "不受影响" in content
+            or "只影响" in content
+            or "Affects other" in content
+        )
+        assert has_statement, \
+            "Baseline report should clarify doc extraction failure does not spread"

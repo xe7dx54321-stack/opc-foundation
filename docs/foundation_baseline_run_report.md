@@ -1,9 +1,9 @@
 # OPC Foundation Baseline Run Report - M3C-2A
 
-**Version**: 1.0  
+**Version**: 1.1  
 **Execution Date**: 2026-06-26  
-**Commit**: 262a416  
-**Status**: M3C-2A Ready（首次全信息源基线运行完成）
+**Commit**: e814e79  
+**Status**: M3C-2A-fix Ready（首次基线噪音清理 + 92 源口径统一）
 
 ---
 
@@ -323,7 +323,87 @@ To proceed to M3C-2B (one week stable run):
 
 ---
 
-## 11. Next Steps
+## 11. M3C-2A-fix：首次基线问题清理
+
+M3C-2A 首次基线运行后，对暴露出的问题进行归因和口径校准，为 M3C-2B 一周稳定性观察做准备。
+
+### 11.1 ECB / IMF RSS 问题归因
+
+#### ECB Press Releases RSS
+
+| Item | Value |
+|---|---|
+| **source_id** | live_ecb_rss |
+| **URL** | https://www.ecb.europa.eu/rss/press.html.en |
+| **Current status** | failed |
+| **Failure reason** | feed 内容为空（connector 异常: feed 内容为空） |
+| **Attribution** | **B. empty_source** - 源可访问但当前无候选内容 |
+| **Severity** | Warning（非 P0/P1 阻断性问题） |
+| **Recommended action** | 标记为 known_limited / empty_source，不视为严重失败。后续观察 ECB RSS 是否长期为空，如长期为空可考虑替代源。 |
+
+#### IMF News RSS
+
+| Item | Value |
+|---|---|
+| **source_id** | live_imf_rss |
+| **URL** | https://www.imf.org/en/News/Rss |
+| **Current status** | failed |
+| **Failure reason** | feed 内容为空（connector 异常: feed 内容为空） |
+| **Attribution** | **B. empty_source** - 源可访问但当前无候选内容 |
+| **Severity** | Warning（非 P0/P1 阻断性问题） |
+| **Recommended action** | 标记为 known_limited / empty_source，不视为严重失败。后续观察 IMF RSS 是否长期为空，如长期为空可考虑替代源。 |
+
+**结论**：ECB / IMF RSS 的失败属于"空源"而非"源失效"，不应污染 P0 告警。应在 Dashboard 中显示为"降级 · 空源"或"已知限制"。
+
+### 11.2 Document Extraction 单项失败归因
+
+| Item | Value |
+|---|---|
+| **Failed item** | tests/document_extraction/fixtures/malformed.pdf |
+| **Source** | smoke_pdf_documents |
+| **File extension** | .pdf |
+| **Error type** | extractor_error |
+| **Error message** | PyMuPDF 读取失败: Failed to open file |
+| **Is expected fail-soft?** | ✅ 是（malformed 测试样例，属于预期失败样本） |
+| **Affects other doc types?** | ❌ 否。HTML / TXT / Markdown 全部 healthy |
+| **Affects Dashboard health?** | 轻度。只影响 PDF 类型，不扩散为全类型失败 |
+| **Retry needed?** | 不需要。这是 malformed 测试文件，重试也不会成功 |
+| **Recommended action** | 标记为"预期失败样本 / 已知坏文档"，不每天重复报 P1。在 Dashboard 中区分"真实失败"和"测试坏文档"。 |
+
+**结论**：这是测试用 malformed PDF 导致的预期失败，不属于生产环境异常。只影响 PDF 类型，其他文档类型不受影响。
+
+### 11.3 Source Inventory 92 源口径统一
+
+**背景**：M3C-0A 初始口径为 87 个源；后续配置扩展后，当前口径为 92 个源。
+
+**统一口径**：
+- 当前 Source Inventory 共 **92 个源**，分布于 **9 个 source group**
+- 历史说明：M3C-0A 初始为 87 个源；后续配置扩展后，当前口径为 92 个源
+
+**已更新文档**：
+- README.md
+- docs/foundation_source_inventory_report.md
+- docs/foundation_source_activation_plan.md
+- docs/foundation_baseline_run_report.md
+- docs/foundation_trae_operations.md
+
+**消除冲突**：所有文档和 Dashboard 输出已统一为 92 个源口径，不再出现矛盾的 87/92 混用。
+
+### 11.4 M3C-2B 前置条件（更新）
+
+To proceed to M3C-2B (one week stable run):
+
+- [x] ECB/IMF RSS 归因完成（标记为 empty_source / known_limited，不阻断）
+- [x] Document Extraction 单项失败归因完成（预期失败样本，不阻断）
+- [x] Source Inventory 92 源口径统一
+- [ ] 配置剩余 source group 的 production config
+- [ ] 验证所有 scheduled sources 可成功运行
+- [ ] 建立 7 天基线数据
+- [ ] 生成基线稳定性报告
+
+---
+
+## 12. Next Steps
 
 1. **M3C-2B**: One week stable run with monitoring
 2. **M3C-2C**: Production config optimization based on baseline results
