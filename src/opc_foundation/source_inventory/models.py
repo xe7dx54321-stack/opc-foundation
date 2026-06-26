@@ -420,3 +420,175 @@ class LiveSmokeRunConfig:
     dry_run: bool = False
     proxy_url: str = ""
     proxy_mode: str = "none"
+
+
+# ============================================
+# Triage（分流）相关模型
+# ============================================
+
+class TriageBucket(str, Enum):
+    """Source 分桶枚举。
+
+    功能说明（小白解读）：
+        每个 source 跑完 live smoke 后，要把它分到一个"处理桶"里，
+        表示接下来该怎么处理它。
+        比如有的可以直接上线，有的需要修 URL，有的需要补 connector。
+
+    各桶含义：
+        trae_trial_ready:            可进入 TRAE 试运行候选
+        url_verification_needed:     需要 URL 校验
+        url_fixed:                   URL 已修正
+        dns_resolution_failed:       DNS 解析失败
+        http_4xx_or_404:             HTTP 4xx 或 404
+        tls_handshake_failed:        TLS/SSL 握手失败
+        python_client_limited:       Python urllib 客户端能力不足
+        browser_like_needed:         后续需要 browser-like connector
+        needs_connector:             需要补 connector
+        wechat_archive_mapping_needed: 需要映射到 wechat_archive
+        on_demand_only:              只按需使用
+        dormant:                     休眠
+        blocked_by_policy:           策略禁止访问
+        replace_or_remove_candidate: 建议替换或移除
+    """
+
+    TRAE_TRIAL_READY = "trae_trial_ready"
+    URL_VERIFICATION_NEEDED = "url_verification_needed"
+    URL_FIXED = "url_fixed"
+    DNS_RESOLUTION_FAILED = "dns_resolution_failed"
+    HTTP_4XX_OR_404 = "http_4xx_or_404"
+    TLS_HANDSHAKE_FAILED = "tls_handshake_failed"
+    PYTHON_CLIENT_LIMITED = "python_client_limited"
+    BROWSER_LIKE_NEEDED = "browser_like_needed"
+    NEEDS_CONNECTOR = "needs_connector"
+    WECHAT_ARCHIVE_MAPPING_NEEDED = "wechat_archive_mapping_needed"
+    ON_DEMAND_ONLY = "on_demand_only"
+    DORMANT = "dormant"
+    BLOCKED_BY_POLICY = "blocked_by_policy"
+    REPLACE_OR_REMOVE_CANDIDATE = "replace_or_remove_candidate"
+
+
+# 分桶中文标签
+TRIAGE_BUCKET_LABELS = {
+    TriageBucket.TRAE_TRIAL_READY: "可进入 TRAE 试运行",
+    TriageBucket.URL_VERIFICATION_NEEDED: "需要 URL 校验",
+    TriageBucket.URL_FIXED: "URL 已修正",
+    TriageBucket.DNS_RESOLUTION_FAILED: "DNS 解析失败",
+    TriageBucket.HTTP_4XX_OR_404: "HTTP 4xx/404",
+    TriageBucket.TLS_HANDSHAKE_FAILED: "TLS 握手失败",
+    TriageBucket.PYTHON_CLIENT_LIMITED: "Python 客户端能力不足",
+    TriageBucket.BROWSER_LIKE_NEEDED: "需要 browser-like connector",
+    TriageBucket.NEEDS_CONNECTOR: "需要补 connector",
+    TriageBucket.WECHAT_ARCHIVE_MAPPING_NEEDED: "需要微信归档映射",
+    TriageBucket.ON_DEMAND_ONLY: "仅按需使用",
+    TriageBucket.DORMANT: "休眠",
+    TriageBucket.BLOCKED_BY_POLICY: "策略禁止访问",
+    TriageBucket.REPLACE_OR_REMOVE_CANDIDATE: "建议替换或移除",
+}
+
+
+@dataclass
+class SourceTriageResult:
+    """单个 Source 的分流结果。
+
+    功能说明（小白解读）：
+        记录一个 source 经过 triage（分流）后的所有信息：
+        分到哪个桶、为什么、建议做什么动作、能不能进 TRAE 试运行。
+
+    参数：
+        source_id:            源 ID
+        source_name:          源名称
+        source_group:         所属分组
+        priority:             激活优先级（S/A/B/supplement/blocked）
+        latest_live_status:   最近一次 live smoke 状态
+        triage_bucket:        分桶结果
+        triage_reason:        分桶原因（为什么分到这个桶）
+        recommended_action:   建议动作（下一步该做什么）
+        trae_trial_eligible:  是否符合 TRAE 试运行条件
+        access_mode:          接入方式
+        url:                  源 URL
+        notes:                额外备注
+    """
+
+    source_id: str
+    source_name: str = ""
+    source_group: str = ""
+    priority: str = ""
+    latest_live_status: str = ""
+    triage_bucket: TriageBucket = TriageBucket.REPLACE_OR_REMOVE_CANDIDATE
+    triage_reason: str = ""
+    recommended_action: str = ""
+    trae_trial_eligible: bool = False
+    access_mode: str = ""
+    url: str = ""
+    notes: str = ""
+
+    def to_dict(self) -> dict[str, any]:
+        """转换为字典（用于 JSON 序列化）。
+
+        Returns:
+            dict: 字典形式的分流结果
+        """
+        return {
+            "source_id": self.source_id,
+            "source_name": self.source_name,
+            "source_group": self.source_group,
+            "priority": self.priority,
+            "latest_live_status": self.latest_live_status,
+            "triage_bucket": self.triage_bucket.value,
+            "triage_reason": self.triage_reason,
+            "recommended_action": self.recommended_action,
+            "trae_trial_eligible": self.trae_trial_eligible,
+            "access_mode": self.access_mode,
+            "url": self.url,
+            "notes": self.notes,
+        }
+
+
+@dataclass
+class TriageSummary:
+    """Triage 总览汇总。
+
+    功能说明（小白解读）：
+        所有 92 个源分完桶后的大汇总。
+        每个桶有多少个源、TRAE 试运行候选有哪些等。
+
+    参数：
+        total_sources:       源总数
+        results:             每个源的分流结果
+        triaged_at:          分流时间
+    """
+
+    total_sources: int = 0
+    results: list[SourceTriageResult] = field(default_factory=list)
+    triaged_at: str = ""
+
+    @property
+    def bucket_counts(self) -> dict[str, int]:
+        """按分桶统计数量。
+
+        Returns:
+            dict: {分桶名: 数量}
+        """
+        counts: dict[str, int] = {}
+        for r in self.results:
+            key = r.triage_bucket.value
+            counts[key] = counts.get(key, 0) + 1
+        return counts
+
+    @property
+    def trae_trial_ready_count(self) -> int:
+        """可进入 TRAE 试运行的源数量。
+
+        Returns:
+            int: 数量
+        """
+        return sum(1 for r in self.results if r.triage_bucket == TriageBucket.TRAE_TRIAL_READY)
+
+    @property
+    def trae_trial_ready_sources(self) -> list[SourceTriageResult]:
+        """可进入 TRAE 试运行的源列表。
+
+        Returns:
+            list[SourceTriageResult]: 源列表
+        """
+        return [r for r in self.results if r.triage_bucket == TriageBucket.TRAE_TRIAL_READY]
