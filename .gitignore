@@ -51,4 +51,5 @@ configs/capability_runtime_bindings.local.yaml
 # Source Inventory Live Smoke 本地数据（不提交）
 data/source_inventory_live_smoke/
 data/foundation_control_center/
+data/foundation_trial/
 configs/foundation_source_inventory.local.yaml

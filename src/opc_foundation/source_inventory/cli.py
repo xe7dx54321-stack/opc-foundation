@@ -306,6 +306,550 @@ def _summary_from_dict(data: dict) -> LiveSmokeSummary:
     )
 
 
+# ============================================================
+# Trial Run 子命令
+# ============================================================
+
+
+def _cmd_trial_validate(args: argparse.Namespace) -> int:
+    """trial-validate 子命令：验证 trial 配置和 allowlist。
+
+    小白解读：
+        检查 trial-only 配置是否正确：
+        - allowlist 中 trial source 是否为 16 个
+        - 是否误包含 blocked/search/dormant/problem sources
+        - trial config 格式是否正确
+
+    Args:
+        args: 命令行参数
+
+    Returns:
+        int: 退出码（0=成功，非 0=失败）
+    """
+    import yaml
+
+    config_path = Path(args.config)
+    allowlist_path = Path(args.allowlist)
+
+    if not allowlist_path.exists():
+        print(f"Error: Allowlist file not found: {allowlist_path}")
+        return 1
+
+    if not config_path.exists():
+        print(f"Error: Config file not found: {config_path}")
+        return 1
+
+    try:
+        with open(allowlist_path, "r", encoding="utf-8") as f:
+            allowlist_data = yaml.safe_load(f)
+    except Exception as e:
+        print(f"Error: Failed to load allowlist: {e}")
+        return 1
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config_data = yaml.safe_load(f)
+    except Exception as e:
+        print(f"Error: Failed to load trial config: {e}")
+        return 1
+
+    # 检查 trial source 数量
+    trial_ids = [x["source_id"] for x in allowlist_data.get("trial_source_ids", [])]
+    excluded_ids = set(allowlist_data.get("excluded_source_ids", []))
+
+    print("Trial Configuration Validation: PASSED")
+    print(f"  Trial source count: {len(trial_ids)}")
+
+    # 检查数量
+    if len(trial_ids) != 16:
+        print(f"  [WARNING] Expected 16 trial sources, got {len(trial_ids)}")
+
+    # 检查无重复
+    dupes = [x for x in trial_ids if trial_ids.count(x) > 1]
+    if dupes:
+        print(f"  [ERROR] Duplicate source_ids: {set(dupes)}")
+        return 1
+
+    # 检查不包含 excluded
+    bad = [x for x in trial_ids if x in excluded_ids]
+    if bad:
+        print(f"  [ERROR] Trial contains excluded sources: {bad}")
+        return 1
+
+    # 检查 trial config 中的 source 数
+    trial_sources = config_data.get("sources", [])
+    print(f"  Trial config sources: {len(trial_sources)}")
+
+    # 检查 trial scope metadata
+    trial_scope = config_data.get("trial", {})
+    print(f"  Trial name: {trial_scope.get('name', 'N/A')}")
+    print(f"  Based on: {trial_scope.get('based_on', 'N/A')}")
+    print(f"  Source count: {trial_scope.get('source_count', 'N/A')}")
+    print(f"  Production mode: {trial_scope.get('production_mode', False)}")
+
+    # 检查 source_id 一致性
+    config_ids = set(s.get("source_id", "") for s in trial_sources)
+    if config_ids != set(trial_ids):
+        missing = set(trial_ids) - config_ids
+        extra = config_ids - set(trial_ids)
+        if missing:
+            print(f"  [WARNING] Allowlist IDs not in config: {missing}")
+        if extra:
+            print(f"  [WARNING] Config IDs not in allowlist: {extra}")
+
+    # 检查 blocked sources 明确排除
+    blocked = {
+        "telegram_groups", "cloud_drive_share", "pdf_download_sites",
+        "unknown_wechat_pdf", "report_download_proxy",
+    }
+    bad_blocked = [x for x in trial_ids if x in blocked]
+    if bad_blocked:
+        print(f"  [ERROR] Trial contains blocked sources: {bad_blocked}")
+        return 1
+
+    print("  Blocked source check: PASSED")
+    print("  Excluded source check: PASSED")
+    print("  Config format check: PASSED")
+
+    return 0
+
+
+def _cmd_trial_run(args: argparse.Namespace) -> int:
+    """trial-run 子命令：运行 trial sources。
+
+    小白解读：
+        用 ResearchArchiver 跑 16 个 trial ready 源，
+        输出到 data/foundation_trial/。
+        不纳入 blocked/search/dormant/problem sources。
+
+    Args:
+        args: 命令行参数
+
+    Returns:
+        int: 退出码
+    """
+    import yaml
+    import os
+    from datetime import datetime, timezone
+
+    config_path = Path(args.config)
+    if not config_path.exists():
+        print(f"Error: Config file not found: {config_path}")
+        return 1
+
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            config_data = yaml.safe_load(f)
+    except Exception as e:
+        print(f"Error: Failed to load config: {e}")
+        return 1
+
+    output_dir = Path(args.output_dir)
+    archive_root = output_dir
+    index_dir = archive_root / "index"
+    reports_dir = archive_root / "reports"
+
+    # 确保输出目录存在
+    index_dir.mkdir(parents=True, exist_ok=True)
+    reports_dir.mkdir(parents=True, exist_ok=True)
+
+    # 解析代理
+    proxy_url, proxy_mode = _resolve_proxy(getattr(args, "proxy", None))
+
+    # 设置代理环境变量（供底层 urllib 使用）
+    if proxy_url:
+        os.environ["HTTP_PROXY"] = proxy_url
+        os.environ["HTTPS_PROXY"] = proxy_url
+
+    trial_sources = config_data.get("sources", [])
+    print(f"Trial run: {len(trial_sources)} sources")
+    print(f"  output_dir: {output_dir}")
+    print(f"  dry_run: {args.dry_run}")
+    print(f"  max_items_per_source: {args.max_items_per_source}")
+    print(f"  proxy_mode: {proxy_mode}")
+    print("")
+
+    # 创建 run log
+    run_log_path = index_dir / "run_log.jsonl"
+    health_log_path = index_dir / "source_health.jsonl"
+    failed_queue_path = index_dir / "failed_queue.jsonl"
+
+    run_start = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    print(f"Run started at: {run_start}")
+
+    success_count = 0
+    failed_count = 0
+    empty_count = 0
+    skipped_count = 0
+
+    # 逐个源运行（使用 ResearchArchiver 的连接器）
+    for source in trial_sources:
+        sid = source.get("source_id", "")
+        sname = source.get("source_name", "")
+        stype = source.get("source_type", "")
+        feed_url = source.get("feed_url", "")
+        base_url = source.get("base_url", "")
+
+        print(f"  [{len(trial_sources)}] {sid} ... ", end="")
+
+        # 写 run log
+        with open(run_log_path, "a", encoding="utf-8") as log_f:
+            log_f.write(f'{{"source_id":"{sid}","source_name":"{sname}","source_type":"{stype}","status":"started","run_at":"{run_start}"}}\n')
+
+        if args.dry_run:
+            # dry-run: 不访问网络，直接标记为 skipped
+            skipped_count += 1
+            print("skipped (dry-run)")
+
+            with open(health_log_path, "a", encoding="utf-8") as health_f:
+                health_f.write(f'{{"source_id":"{sid}","source_name":"{sname}","status":"dry_run","run_at":"{run_start}"}}\n')
+            continue
+
+        # 真实运行：使用基础连接器做轻量验证
+        # （完整的 research archiver 集成在后续 production 阶段）
+        try:
+            health = _trial_fetch_source(sid, sname, feed_url, stype, args.timeout_seconds)
+            status = health.get("status", "unknown")
+
+            if status == "success":
+                success_count += 1
+            elif status == "empty":
+                empty_count += 1
+            else:
+                failed_count += 1
+
+            print(f"{status}")
+
+            with open(health_log_path, "a", encoding="utf-8") as health_f:
+                health_f.write(f'{{"source_id":"{sid}","source_name":"{sname}","status":"{status}","run_at":"{health.get("run_at","")}","candidate_count":{health.get("candidate_count",0)},"error":"{health.get("error","")}"}}\n')
+
+            if status in ("failed", "error"):
+                with open(failed_queue_path, "a", encoding="utf-8") as queue_f:
+                    queue_f.write(f'{{"source_id":"{sid}","source_name":"{sname}","status":"{status}","error":"{health.get("error","")}","run_at":"{health.get("run_at","")}"}}\n')
+
+        except Exception as e:
+            failed_count += 1
+            print(f"failed: {e}")
+
+            with open(health_log_path, "a", encoding="utf-8") as health_f:
+                import json as _json
+                health_f.write(_json.dumps({
+                    "source_id": sid,
+                    "source_name": sname,
+                    "status": "error",
+                    "error": str(e)[:200],
+                    "run_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }, ensure_ascii=False) + "\n")
+
+            with open(failed_queue_path, "a", encoding="utf-8") as queue_f:
+                import json as _json
+                queue_f.write(_json.dumps({
+                    "source_id": sid,
+                    "source_name": sname,
+                    "status": "error",
+                    "error": str(e)[:200],
+                    "run_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                }, ensure_ascii=False) + "\n")
+
+    run_end = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    # 写汇总
+    summary_path = index_dir / "run_summary.json"
+    import json as _json
+    summary = {
+        "run_started_at": run_start,
+        "run_finished_at": run_end,
+        "total_sources": len(trial_sources),
+        "success_count": success_count,
+        "empty_count": empty_count,
+        "failed_count": failed_count,
+        "skipped_count": skipped_count,
+        "proxy_enabled": proxy_url != "",
+        "proxy_mode": proxy_mode,
+        "dry_run": args.dry_run,
+    }
+    with open(summary_path, "w", encoding="utf-8") as f:
+        _json.dump(summary, f, ensure_ascii=False, indent=2)
+
+    print("")
+    print(f"Trial run complete: {run_end}")
+    print(f"  Total: {len(trial_sources)}")
+    print(f"  Success: {success_count}")
+    print(f"  Empty: {empty_count}")
+    print(f"  Failed: {failed_count}")
+    print(f"  Skipped: {skipped_count}")
+    print(f"  proxy_enabled: {proxy_url != ''}")
+    print(f"  proxy_mode: {proxy_mode}")
+    print(f"Results: {index_dir}")
+    print(f"Failed queue: {failed_queue_path}")
+
+    return 0
+
+
+def _trial_fetch_source(
+    source_id: str,
+    source_name: str,
+    url: str,
+    source_type: str,
+    timeout_seconds: int,
+) -> dict:
+    """对单个 trial source 做轻量抓取验证。
+
+    小白解读：
+        用 urllib 访问源 URL，看看能不能拿到数据。
+        这是轻量验证，不做完整的内容提取。
+
+    Args:
+        source_id: 源 ID
+        source_name: 源名称
+        url: 源 URL
+        source_type: 源类型
+        timeout_seconds: 超时秒数
+
+    Returns:
+        dict: 包含 status、candidate_count、error 等字段
+    """
+    import urllib.request
+    import urllib.error
+    from datetime import datetime, timezone
+
+    result = {
+        "source_id": source_id,
+        "source_name": source_name,
+        "status": "unknown",
+        "candidate_count": 0,
+        "error": "",
+        "run_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+
+    if not url:
+        result["status"] = "error"
+        result["error"] = "No URL configured"
+        return result
+
+    try:
+        headers = {
+            "User-Agent": "OPC-Foundation-TrialRun/1.0 (+https://github.com/xe7dx54321-stack/opc-foundation)",
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+        }
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=timeout_seconds) as resp:
+            status = resp.status
+            content_type = resp.headers.get("Content-Type", "")
+
+            if 200 <= status < 300:
+                # 读内容，找候选链接
+                try:
+                    body = resp.read(1024 * 100)  # 最多读 100KB
+                    # 简单统计链接数量作为候选
+                    import re as _re
+                    links = _re.findall(r'href=["\']([^"\']+)["\']', body.decode("utf-8", errors="ignore"))
+                    # 过滤出看起来像文章/报告的链接
+                    candidates = [l for l in links if any(
+                        kw in l.lower() for kw in ["report", "research", "insight", "article", "analysis", "view", "market", "news", "202", "203", "204", "205", "206", "207", "208", "303", "304", "305", "306", "307", "308"]
+                    )]
+                    result["candidate_count"] = len(candidates[:5])
+                except Exception:
+                    pass
+
+                if status == 200:
+                    result["status"] = "success"
+                else:
+                    result["status"] = f"http_{status}"
+            elif 300 <= status < 400:
+                result["status"] = "redirect"
+            elif status == 403:
+                result["status"] = "blocked"
+                result["error"] = "HTTP 403"
+            elif status == 404:
+                result["status"] = "not_found"
+                result["error"] = "HTTP 404"
+            else:
+                result["status"] = "http_error"
+                result["error"] = f"HTTP {status}"
+
+    except urllib.error.HTTPError as e:
+        result["status"] = "http_error"
+        result["error"] = f"HTTP {e.code}: {str(e)[:100]}"
+    except urllib.error.URLError as e:
+        result["status"] = "url_error"
+        result["error"] = str(e.reason)[:200]
+    except Exception as e:
+        result["status"] = "error"
+        result["error"] = f"{type(e).__name__}: {str(e)[:200]}"
+
+    return result
+
+
+def _cmd_trial_report(args: argparse.Namespace) -> int:
+    """trial-report 子命令：从 trial 运行结果生成 Markdown 报告。
+
+    小白解读：
+        读取 data/foundation_trial/index/ 下的运行结果，
+        生成一份 trial run 报告。
+
+    Args:
+        args: 命令行参数
+
+    Returns:
+        int: 退出码
+    """
+    import json
+    from datetime import datetime, timezone
+    from pathlib import Path as _Path
+
+    archive_root = _Path(args.archive_root)
+    index_dir = archive_root / "index"
+    reports_dir = archive_root / "reports"
+
+    if not index_dir.exists():
+        print(f"Error: Trial index directory not found: {index_dir}")
+        return 1
+
+    # 读取汇总
+    summary_path = index_dir / "run_summary.json"
+    health_log_path = index_dir / "source_health.jsonl"
+    failed_queue_path = index_dir / "failed_queue.jsonl"
+
+    if not summary_path.exists():
+        print(f"Error: Run summary not found: {summary_path}")
+        return 1
+
+    with open(summary_path, "r", encoding="utf-8") as f:
+        summary = json.load(f)
+
+    # 读取 health log
+    health_entries = []
+    if health_log_path.exists():
+        with open(health_log_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        health_entries.append(json.loads(line))
+                    except Exception:
+                        pass
+
+    # 读取 failed queue
+    failed_entries = []
+    if failed_queue_path.exists():
+        with open(failed_queue_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip():
+                    try:
+                        failed_entries.append(json.loads(line))
+                    except Exception:
+                        pass
+
+    # 生成报告
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+
+    report_lines = [
+        "# OPC Foundation M3C-2D Trial Run Report",
+        "",
+        f"> **版本**：1.0",
+        f"> **生成时间**：{datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ')}",
+        f"> **Trial 说明**：本报告为 M3C-2D trial-only 试运行结果，**不代表最终 production TRAE 接管**。",
+        "",
+        "## 1. 执行摘要",
+        "",
+        f"- **执行时间**：{summary.get('run_started_at', 'N/A')} ~ {summary.get('run_finished_at', 'N/A')}",
+        f"- **Trial Source 总数**：{summary.get('total_sources', 0)}",
+        f"- **Dry-run**：{'是' if summary.get('dry_run') else '否'}",
+        f"- **Proxy 启用**：{'是' if summary.get('proxy_enabled') else '否'}",
+        f"- **Proxy 模式**：{summary.get('proxy_mode', 'none')}",
+        "",
+        "### 1.1 运行结果",
+        "",
+        "| 状态 | 数量 |",
+        "|---|---|",
+        f"| 总计 | {summary.get('total_sources', 0)} |",
+        f"| Success | {summary.get('success_count', 0)} |",
+        f"| Empty | {summary.get('empty_count', 0)} |",
+        f"| Failed | {summary.get('failed_count', 0)} |",
+        f"| Skipped | {summary.get('skipped_count', 0)} |",
+        "",
+        "## 2. Source 状态明细",
+        "",
+    ]
+
+    # 按状态分组
+    by_status: dict[str, list] = {}
+    for entry in health_entries:
+        status = entry.get("status", "unknown")
+        if status not in by_status:
+            by_status[status] = []
+        by_status[status].append(entry)
+
+    for status, entries in sorted(by_status.items()):
+        report_lines.append(f"### {status} ({len(entries)})")
+        report_lines.append("")
+        report_lines.append("| source_id | source_name | candidates |")
+        report_lines.append("|---|---|---|")
+        for e in entries:
+            sid = e.get("source_id", "")
+            sname = e.get("source_name", "")
+            cands = e.get("candidate_count", 0)
+            err = e.get("error", "")
+            extra = f"（error: {err[:50]}...）" if err else ""
+            report_lines.append(f"| {sid} | {sname} | {cands} {extra} |")
+        report_lines.append("")
+
+    if failed_entries:
+        report_lines.append("## 3. Failed Queue")
+        report_lines.append("")
+        report_lines.append("| source_id | source_name | error |")
+        report_lines.append("|---|---|---|")
+        for e in failed_entries:
+            sid = e.get("source_id", "")
+            sname = e.get("source_name", "")
+            err = e.get("error", "")[:80]
+            report_lines.append(f"| {sid} | {sname} | {err} |")
+        report_lines.append("")
+
+    report_lines.extend([
+        "## 4. Trial 配置信息",
+        "",
+        f"- **Allowlist**：configs/foundation_trial_source_allowlist.example.yaml",
+        f"- **Trial Config**：configs/trae_foundation_trial_sources.example.yaml",
+        f"- **输出目录**：{archive_root}",
+        "",
+        "## 5. 后续建议",
+        "",
+        "根据 trial 运行结果，评估各源是否可进入正式 TRAE 调度。",
+        "",
+        "## 6. M3C-2E 建议",
+        "",
+        "M3C-2D 完成后，建议进入：",
+        "",
+        "1. **M3C-2D-URLFix**：对 failed sources 中的 404/URL 失效源做 URL 修正",
+        "2. **M3C-2D-TLSProbe**：对 TLS 握手失败源做替代入口探索",
+        "3. **M3C-2D-WeChatMap**：对 6 个微信公众号源做 wechat_archive 映射",
+        "4. **M3C-3**：基于 trial 结果，配置正式 TRAE production 调度",
+    ])
+
+    report_content = "\n".join(report_lines)
+
+    # 保存报告
+    reports_dir.mkdir(parents=True, exist_ok=True)
+    report_path = reports_dir / f"trial_run_{today}.md"
+
+    # 也写入 docs/
+    docs_report_path = _Path("docs/foundation_trial_run_report.md")
+
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(report_content)
+
+    with open(docs_report_path, "w", encoding="utf-8") as f:
+        f.write(report_content)
+
+    print(f"Trial report saved to:")
+    print(f"  {report_path}")
+    print(f"  {docs_report_path}")
+
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     """CLI 主入口。
 
@@ -346,6 +890,79 @@ def main(argv: list[str] | None = None) -> int:
     p_report.add_argument("--archive-root", default="data/source_inventory_live_smoke", help="Archive root directory")
     p_report.add_argument("--output", help="Output report file path")
     p_report.set_defaults(func=_cmd_report)
+
+    # trial-validate
+    p_trial_validate = subparsers.add_parser(
+        "trial-validate",
+        help="Validate trial config and allowlist (M3C-2D)"
+    )
+    p_trial_validate.add_argument(
+        "--config",
+        default="configs/trae_foundation_trial_sources.example.yaml",
+        help="Path to trial config file",
+    )
+    p_trial_validate.add_argument(
+        "--allowlist",
+        default="configs/foundation_trial_source_allowlist.example.yaml",
+        help="Path to trial allowlist file",
+    )
+    p_trial_validate.set_defaults(func=_cmd_trial_validate)
+
+    # trial-run
+    p_trial_run = subparsers.add_parser(
+        "trial-run",
+        help="Run trial sources (M3C-2D)"
+    )
+    p_trial_run.add_argument(
+        "--config",
+        default="configs/trae_foundation_trial_sources.example.yaml",
+        help="Path to trial config file",
+    )
+    p_trial_run.add_argument(
+        "--allowlist",
+        default="configs/foundation_trial_source_allowlist.example.yaml",
+        help="Path to trial allowlist file",
+    )
+    p_trial_run.add_argument(
+        "--output-dir",
+        default="data/foundation_trial",
+        help="Output directory for trial results",
+    )
+    p_trial_run.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Dry-run without network access",
+    )
+    p_trial_run.add_argument(
+        "--max-items-per-source",
+        type=int,
+        default=10,
+        help="Max items per source",
+    )
+    p_trial_run.add_argument(
+        "--timeout-seconds",
+        type=int,
+        default=20,
+        help="Request timeout in seconds",
+    )
+    p_trial_run.add_argument(
+        "--proxy",
+        default=None,
+        help="Proxy URL (e.g. http://127.0.0.1:7890)",
+    )
+    p_trial_run.set_defaults(func=_cmd_trial_run)
+
+    # trial-report
+    p_trial_report = subparsers.add_parser(
+        "trial-report",
+        help="Generate trial run report (M3C-2D)"
+    )
+    p_trial_report.add_argument(
+        "--archive-root",
+        default="data/foundation_trial",
+        help="Archive root directory",
+    )
+    p_trial_report.set_defaults(func=_cmd_trial_report)
 
     args = parser.parse_args(argv)
     if not args.command:

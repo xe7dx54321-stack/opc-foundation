@@ -1,0 +1,260 @@
+# TRAE Foundation Trial Sources Config
+# M3C-2D Trial Run Configuration
+# Trial-only config: NOT final production. Only 16 verified sources.
+# This config is used by the trial run scripts and CLI.
+---
+version: 1
+trial_mode: true
+production_mode: false
+updated_at: "2026-06-26"
+description: "M3C-2D trial run for 16 live-smoke verified sources. Trial-only, not final production."
+
+# Archive root for trial outputs
+# 重要：只写入 data/foundation_trial/，不写入 data/research/
+archive_root: "data/foundation_trial"
+
+# Trial metadata
+trial:
+  name: "foundation_m3c_2d_trial"
+  based_on: "M3C-2C trae_trial_ready bucket"
+  source_count: 16
+  purpose: "Verify 16 live-smoke OK sources can be scheduled in TRAE"
+  not_for_production: true
+
+# Archive settings for trial run
+archive:
+  # Trial run 仅提取元数据（标题、链接、发布时间），不下载全文
+  extract_full_text: false
+  max_items_per_source: 10
+  max_age_days: 3
+
+# Proxy settings (CLI overrides / env vars override this)
+proxy:
+  enabled: false
+  # proxy_url 不写死在配置里，由命令行参数传入
+
+# Source list: 仅包含 16 个 trial ready 源
+# 全部来自 foundation_source_inventory.example.yaml（source_id 保持一致）
+sources:
+  # ============================================================
+  # 投行官方公开研究 (5)
+  # ============================================================
+  - source_id: "goldman_sachs_research"
+    source_type: "official_public_research"
+    source_name: "Goldman Sachs Research"
+    feed_url: "https://www.goldmansachs.com/insights/research/index.html"
+    base_url: "https://www.goldmansachs.com/insights/research/"
+    enabled: true
+    tags: ["goldman", "research", "bank", "official"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "S"
+      description: "Goldman Sachs 官方研究报告"
+
+  - source_id: "goldman_sachs_reports"
+    source_type: "official_public_research"
+    source_name: "Goldman Sachs Reports"
+    feed_url: "https://www.goldmansachs.com/insights/research/reports/index.html"
+    base_url: "https://www.goldmansachs.com/insights/research/reports/"
+    enabled: true
+    tags: ["goldman", "reports", "bank", "official"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "S"
+      description: "Goldman Sachs 报告列表"
+
+  - source_id: "goldman_sachs_top_of_mind"
+    source_type: "official_public_research"
+    source_name: "Goldman Sachs Top of Mind"
+    feed_url: "https://www.goldmansachs.com/insights/top-of-mind/"
+    base_url: "https://www.goldmansachs.com/insights/top-of-mind/"
+    enabled: true
+    tags: ["goldman", "top-of-mind", "bank", "official"]
+    extraction:
+      max_items: 5
+      extract_full_text: false
+      priority: "S"
+      description: "Goldman Sachs Top of Mind 专题"
+
+  - source_id: "goldman_sachs_insights"
+    source_type: "official_public_research"
+    source_name: "Goldman Sachs Insights"
+    feed_url: "https://www.goldmansachs.com/insights/"
+    base_url: "https://www.goldmansachs.com/insights/"
+    enabled: true
+    tags: ["goldman", "insights", "bank", "official"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "S"
+      description: "Goldman Sachs Insights 总览页"
+
+  - source_id: "barclays_our_insights"
+    source_type: "official_public_research"
+    source_name: "Barclays Our Insights"
+    feed_url: "https://www.barclays.com/insights"
+    base_url: "https://home.barclays/"
+    enabled: true
+    tags: ["barclays", "insights", "bank", "official"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "A"
+      description: "Barclays Our Insights"
+
+  # ============================================================
+  # 投行会议纪要 / 公司IR (1)
+  # ============================================================
+  - source_id: "microsoft_ir"
+    source_type: "conference_transcript"
+    source_name: "Microsoft Investor Relations"
+    feed_url: "https://www.microsoft.com/en-us/Investor/events-events-presentations.aspx"
+    base_url: "https://www.microsoft.com/en-us/Investor/"
+    enabled: true
+    tags: ["microsoft", "IR", "conference", "equity"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "S"
+      description: "Microsoft IR 会议纪要"
+
+  # ============================================================
+  # 媒体研报二次引用 (3)
+  # ============================================================
+  - source_id: "yahoo_finance"
+    source_type: "media_mention"
+    source_name: "Yahoo Finance"
+    feed_url: "https://finance.yahoo.com/"
+    base_url: "https://finance.yahoo.com/"
+    enabled: true
+    tags: ["yahoo", "finance", "media", "market"]
+    extraction:
+      max_items: 15
+      extract_full_text: false
+      priority: "A"
+      description: "Yahoo Finance 市场新闻"
+
+  - source_id: "business_insider"
+    source_type: "media_mention"
+    source_name: "Business Insider"
+    feed_url: "https://www.businessinsider.com/"
+    base_url: "https://www.businessinsider.com/"
+    enabled: true
+    tags: ["business-insider", "media", "tech", "finance"]
+    extraction:
+      max_items: 15
+      extract_full_text: false
+      priority: "A"
+      description: "Business Insider 商业科技新闻"
+
+  - source_id: "markets_insider"
+    source_type: "media_mention"
+    source_name: "Markets Insider"
+    feed_url: "https://markets.businessinsider.com/"
+    base_url: "https://markets.businessinsider.com/"
+    enabled: true
+    tags: ["markets-insider", "media", "stocks", "market"]
+    extraction:
+      max_items: 15
+      extract_full_text: false
+      priority: "A"
+      description: "Markets Insider 股市新闻"
+
+  # ============================================================
+  # 分析师评级 / 目标价变动 (2)
+  # ============================================================
+  - source_id: "the_fly"
+    source_type: "analyst_action"
+    source_name: "The Fly"
+    feed_url: "https://thefly.com/"
+    base_url: "https://thefly.com/"
+    enabled: true
+    tags: ["the-fly", "analyst", "ratings", "market"]
+    extraction:
+      max_items: 20
+      extract_full_text: false
+      priority: "A"
+      description: "The Fly 分析师快讯"
+
+  - source_id: "briefing_com_upgrades"
+    source_type: "analyst_action"
+    source_name: "Briefing.com Upgrades/Downgrades"
+    feed_url: "https://www.briefing.com/upgrades-downgrades/"
+    base_url: "https://www.briefing.com/upgrades-downgrades/"
+    enabled: true
+    tags: ["briefing.com", "analyst", "ratings", "market"]
+    extraction:
+      max_items: 15
+      extract_full_text: false
+      priority: "A"
+      description: "Briefing.com 评级变动"
+
+  # ============================================================
+  # 中文财经二次传播 (5)
+  # ============================================================
+  - source_id: "wallstreet_cn"
+    source_type: "media_mention"
+    source_name: "华尔街见闻"
+    feed_url: "https://wallstreetcn.com/"
+    base_url: "https://wallstreetcn.com/"
+    enabled: true
+    tags: ["wallstreetcn", "chinese", "media", "finance"]
+    extraction:
+      max_items: 15
+      extract_full_text: false
+      priority: "B"
+      description: "华尔街见闻中文财经"
+
+  - source_id: "cls_cn"
+    source_type: "media_mention"
+    source_name: "财联社"
+    feed_url: "https://www.cls.cn/"
+    base_url: "https://www.cls.cn/"
+    enabled: true
+    tags: ["cls", "chinese", "media", "finance", "news"]
+    extraction:
+      max_items: 20
+      extract_full_text: false
+      priority: "B"
+      description: "财联社快讯"
+
+  - source_id: "wind_public"
+    source_type: "media_mention"
+    source_name: "Wind 万得公开内容"
+    feed_url: "https://www.wind.com.cn/"
+    base_url: "https://www.wind.com.cn/"
+    enabled: true
+    tags: ["wind", "chinese", "media", "finance"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "B"
+      description: "Wind 万得公开页面"
+
+  - source_id: "gelonghui"
+    source_type: "media_mention"
+    source_name: "格隆汇"
+    feed_url: "https://www.gelonghui.com/"
+    base_url: "https://www.gelonghui.com/"
+    enabled: true
+    tags: ["gelonghui", "chinese", "media", "overseas-stocks"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "B"
+      description: "格隆汇港美股"
+
+  - source_id: "zhitong_caijing"
+    source_type: "media_mention"
+    source_name: "智通财经"
+    feed_url: "https://www.zhitongcaijing.com/"
+    base_url: "https://www.zhitongcaijing.com/"
+    enabled: true
+    tags: ["zhitong", "chinese", "media", "hk-stocks"]
+    extraction:
+      max_items: 10
+      extract_full_text: false
+      priority: "B"
+      description: "智通财经港股"

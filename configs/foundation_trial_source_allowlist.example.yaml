@@ -1,0 +1,196 @@
+# Foundation Trial Source Allowlist
+# M3C-2D Trial Run - 16 个已验证可接通源
+# 依据：M3C-2C Triage 分桶（M3C-2B Live Smoke 结果）
+# 此文件只记录 source_id 清单，不包含 secrets、proxy 地址或本地路径
+# trial_source_count: 16
+
+version: 1
+updated_at: "2026-06-26"
+
+trial_scope:
+  name: "foundation_m3c_2d_trial"
+  description: "M3C-2D trial run for 16 live-smoke verified sources. Trial-only, not final production."
+  source_count: 16
+  source_selection_basis: "M3C-2C trae_trial_ready bucket"
+  trial_enabled: true
+  production_enabled: false
+
+# 16 个 trial ready source_id
+# 分组按 source_group 排列
+trial_source_ids:
+  # ---- 投行官方公开研究 (5) ----
+  - source_id: "goldman_sachs_research"
+    group_category: "official_public_research"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "goldman_sachs_reports"
+    group_category: "official_public_research"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "goldman_sachs_top_of_mind"
+    group_category: "official_public_research"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "goldman_sachs_insights"
+    group_category: "official_public_research"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "barclays_our_insights"
+    group_category: "official_public_research"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  # ---- 投行会议纪要 / 公司IR (1) ----
+  - source_id: "microsoft_ir"
+    group_category: "bank_conference_transcripts"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  # ---- 媒体研报二次引用 (3) ----
+  - source_id: "yahoo_finance"
+    group_category: "media_research_mentions"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "business_insider"
+    group_category: "media_research_mentions"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "markets_insider"
+    group_category: "media_research_mentions"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  # ---- 分析师评级 / 目标价变动 (2) ----
+  - source_id: "the_fly"
+    group_category: "analyst_actions"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "briefing_com_upgrades"
+    group_category: "analyst_actions"
+    live_smoke_status: "live_ok"
+    trial_enabled: true
+
+  # ---- 中文财经二次传播 (5) ----
+  - source_id: "wallstreet_cn"
+    group_category: "chinese_rebroadcast"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "cls_cn"
+    group_category: "chinese_rebroadcast"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "wind_public"
+    group_category: "chinese_rebroadcast"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "gelonghui"
+    group_category: "chinese_rebroadcast"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+  - source_id: "zhitong_caijing"
+    group_category: "chinese_rebroadcast"
+    live_smoke_status: "live_ok_candidates_found"
+    trial_enabled: true
+
+# 以下 source_id 被明确排除（不得纳入 trial）
+excluded_source_ids:
+  # blocked / high-risk (5)
+  - "telegram_groups"
+  - "cloud_drive_share"
+  - "pdf_download_sites"
+  - "unknown_wechat_pdf"
+  - "report_download_proxy"
+
+  # search provider / on-demand (10)
+  - "tavily_search"
+  - "brave_search"
+  - "serpapi"
+  - "bing_search"
+  - "google_cse"
+  - "searx"
+  - "duckduckgo"
+  - "yahoo_search"
+  - "baidu_search"
+  - "custom_search"
+
+  # dormant (2)
+  - "github_issues"
+  - "hacker_news"
+
+  # TLS handshake failed (21)
+  - "morgan_stanley_insights"
+  - "morgan_stanley_research"
+  - "morgan_stanley_thoughts_on_market"
+  - "morgan_stanley_china"
+  - "morgan_stanley_fund_research"
+  - "morgan_stanley_thoughts_podcast"
+  - "jp_morgan_research"
+  - "jp_morgan_global_research_reports"
+  - "jp_morgan_insights"
+  - "jp_morgan_research_insights"
+  - "jp_morgan_research_insights_podcast"
+  - "ubs_global_research"
+  - "ubs_cio_insights"
+  - "ubs_global_research_pod_hub"
+  - "ubs_investment_bank_insights"
+  - "bofa_global_research_insights"
+  - "bofa_weekly_market_recap"
+  - "bofa_global_research_unlocked"
+  - "citi_research"
+  - "citi_gps"
+  - "deutsche_bank_tech_conference"
+
+  # DNS failed (5)
+  - "bofa_global_research"
+  - "bofa_must_read_research"
+  - "citi_institute"
+  - "china_fund_news"
+  - "hk_stock_research"
+
+  # HTTP 4xx (20)
+  - "goldman_sachs_greater_china"
+  - "barclays_research"
+  - "barclays_ib_research"
+  - "goldman_sachs_exchanges"
+  - "goldman_sachs_the_markets"
+  - "goldman_sachs_top_of_mind_podcast"
+  - "goldman_sachs_communacopia"
+  - "barclays_global_tech_conference"
+  - "bernstein_strategic_decisions"
+  - "texas_instruments_ir"
+  - "merck_ir"
+  - "benzinga_analyst_ratings"
+  - "jiwen_vip_public"
+  - "reuters"
+  - "marketwatch"
+  - "marketwatch_upgrades_downgrades"
+  - "wsj_upgrades_downgrades"
+  - "investing_com_analyst_ratings"
+  - "streetinsider"
+  - "tipranks"
+
+  # 微信待映射 (6)
+  - "goldman_sachs_china_wechat"
+  - "morgan_stanley_china_wechat"
+  - "morgan_stanley_fund_wechat"
+  - "yanbaoshe_wechat"
+  - "touyan_circle_wechat"
+  - "wechat_secondary_broadcast"
+
+  # 超时待验证 (1)
+  - "quanshang_china"
+
+# proxy 配置（可选项，不写死在配置里）
+# 使用方式：通过命令行参数 -Proxy 或环境变量 HTTP_PROXY/HTTPS_PROXY
+# 报告里只记录 proxy_enabled=true/false 和 proxy_mode=cli/env/none
