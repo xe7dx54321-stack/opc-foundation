@@ -1,21 +1,21 @@
 # Foundation Trial Source Allowlist
-# M3C-2D Trial Run - 16 个已验证可接通源
+# M3C-2D-URLFix - 15 个已验证可接通源（3 个 404 中修复 2 个）
 # 依据：M3C-2C Triage 分桶（M3C-2B Live Smoke 结果）
 # 此文件只记录 source_id 清单，不包含 secrets、proxy 地址或本地路径
-# trial_source_count: 16
+# trial_source_count: 15
 
 version: 1
 updated_at: "2026-06-26"
 
 trial_scope:
   name: "foundation_m3c_2d_trial"
-  description: "M3C-2D trial run for 16 live-smoke verified sources. Trial-only, not final production."
-  source_count: 16
-  source_selection_basis: "M3C-2C trae_trial_ready bucket"
+  description: "M3C-2D-URLFix trial run for 15 verified sources. 2 GS URLs fixed, 1 MS IR removed (403). Trial-only, not final production."
+  source_count: 15
+  source_selection_basis: "M3C-2C trae_trial_ready bucket + M3C-2D-URLFix URL corrections"
   trial_enabled: true
   production_enabled: false
 
-# 16 个 trial ready source_id
+# 15 个 trial ready source_id
 # 分组按 source_group 排列
 trial_source_ids:
   # ---- 投行官方公开研究 (5) ----
@@ -41,12 +41,6 @@ trial_source_ids:
 
   - source_id: "barclays_our_insights"
     group_category: "official_public_research"
-    live_smoke_status: "live_ok_candidates_found"
-    trial_enabled: true
-
-  # ---- 投行会议纪要 / 公司IR (1) ----
-  - source_id: "microsoft_ir"
-    group_category: "bank_conference_transcripts"
     live_smoke_status: "live_ok_candidates_found"
     trial_enabled: true
 
@@ -165,7 +159,7 @@ excluded_source_ids:
   - "goldman_sachs_exchanges"
   - "goldman_sachs_the_markets"
   - "goldman_sachs_top_of_mind_podcast"
-  - "goldman_sachs_communacopia"
+  - "goldman_sachs_commacopia"
   - "barclays_global_tech_conference"
   - "bernstein_strategic_decisions"
   - "texas_instruments_ir"
@@ -179,6 +173,11 @@ excluded_source_ids:
   - "investing_com_analyst_ratings"
   - "streetinsider"
   - "tipranks"
+
+  # URL Backlog / 需要特殊 connector (1)
+  # - microsoft_ir: HTTP 403 - Akamai bot protection, cannot access via curl/urllib
+  #   Trial eligibility: url_backlog. Cannot enter trial until URL is fixed.
+  - "microsoft_ir"
 
   # 微信待映射 (6)
   - "goldman_sachs_china_wechat"

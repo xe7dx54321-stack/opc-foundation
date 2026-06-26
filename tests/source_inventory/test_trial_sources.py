@@ -77,7 +77,8 @@ class TestTrialAllowlist:
             data = yaml.safe_load(f)
 
         trial_ids = [x["source_id"] for x in data["trial_source_ids"]]
-        assert len(trial_ids) == 16, f"Expected 16 trial sources, got {len(trial_ids)}"
+        expected = data["trial_scope"]["source_count"]
+        assert len(trial_ids) == expected, f"Expected {expected} trial sources, got {len(trial_ids)}"
 
     def test_allowlist_no_duplicates(self):
         """Trial allowlist 不应该有重复的 source_id。"""
@@ -200,7 +201,8 @@ class TestTrialConfig:
             data = yaml.safe_load(f)
 
         sources = data.get("sources", [])
-        assert len(sources) == 16, f"Expected 16 sources in trial config, got {len(sources)}"
+        expected = data.get("trial", {}).get("source_count")
+        assert len(sources) == expected, f"Expected {expected} sources in trial config, got {len(sources)}"
 
     def test_trial_config_trial_metadata(self):
         """Trial config 应该有正确的 trial metadata。"""
@@ -212,7 +214,10 @@ class TestTrialConfig:
 
         assert data.get("trial_mode") is True, "trial_mode should be True"
         assert data.get("production_mode") is False, "production_mode should be False"
-        assert data.get("trial", {}).get("source_count") == 16, "trial source_count should be 16"
+        # source_count should match actual number of sources
+        actual = len(data.get("sources", []))
+        expected = data.get("trial", {}).get("source_count")
+        assert expected == actual, f"trial.source_count ({expected}) should match len(sources) ({actual})"
 
     def test_trial_config_all_enabled(self):
         """Trial config 中所有 source.enabled 应该是 True。"""
@@ -257,7 +262,12 @@ class TestTrialCLI:
         )
         assert result.returncode == 0, f"trial-validate failed: {result.stderr}"
         assert "Trial Configuration Validation: PASSED" in result.stdout
-        assert "Trial source count: 16" in result.stdout
+        # Read expected count from config
+        import yaml
+        with open("configs/trae_foundation_trial_sources.example.yaml", "r", encoding="utf-8") as f:
+            cfg = yaml.safe_load(f)
+        expected = cfg.get("trial", {}).get("source_count", 15)
+        assert f"Trial source count: {expected}" in result.stdout
 
     def test_trial_run_dry_run_command(self):
         """trial-run --dry-run 命令应该能正常执行。"""

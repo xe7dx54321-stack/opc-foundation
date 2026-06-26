@@ -78,9 +78,12 @@ class TestCheckScript:
         assert "foundation_trial_source_allowlist" in content
 
     def test_checks_source_count(self):
-        """脚本应该检查 source 数量是否为 16。"""
+        """脚本应该从配置文件读取 source 数量（动态，不是硬编码）。"""
         content = Path("scripts/check_foundation_trial_sources.ps1").read_text(encoding="utf-8")
-        assert "16" in content
+        # Should read from config instead of hardcoded number
+        assert "trial_scope" in content and "source_count" in content
+        # Should not hardcode "16" as the expected count
+        assert "expected_count = data" in content
 
     def test_checks_no_blocked_sources(self):
         """脚本应该检查不含 blocked sources。"""

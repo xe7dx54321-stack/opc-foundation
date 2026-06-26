@@ -1,13 +1,13 @@
 # TRAE Foundation Trial Sources Config
-# M3C-2D Trial Run Configuration
-# Trial-only config: NOT final production. Only 16 verified sources.
+# M3C-2D-URLFix Trial Run Configuration
+# Trial-only config: NOT final production. 15 verified sources (fixed 2 GS URLs, removed 1 MS IR).
 # This config is used by the trial run scripts and CLI.
 ---
 version: 1
 trial_mode: true
 production_mode: false
 updated_at: "2026-06-26"
-description: "M3C-2D trial run for 16 live-smoke verified sources. Trial-only, not final production."
+description: "M3C-2D-URLFix trial run for 15 verified sources. 2 GS URLs fixed (200 OK), 1 MS IR removed (403). Trial-only, not final production."
 
 # Archive root for trial outputs
 # 重要：只写入 data/foundation_trial/，不写入 data/research/
@@ -16,8 +16,8 @@ archive_root: "data/foundation_trial"
 # Trial metadata
 trial:
   name: "foundation_m3c_2d_trial"
-  based_on: "M3C-2C trae_trial_ready bucket"
-  source_count: 16
+  based_on: "M3C-2C trae_trial_ready bucket + M3C-2D-URLFix URL corrections"
+  source_count: 15
   purpose: "Verify 16 live-smoke OK sources can be scheduled in TRAE"
   not_for_production: true
 
@@ -42,8 +42,8 @@ sources:
   - source_id: "goldman_sachs_research"
     source_type: "official_public_research"
     source_name: "Goldman Sachs Research"
-    feed_url: "https://www.goldmansachs.com/insights/research/index.html"
-    base_url: "https://www.goldmansachs.com/insights/research/"
+    feed_url: "https://www.goldmansachs.com/insights"
+    base_url: "https://www.goldmansachs.com/insights/"
     enabled: true
     tags: ["goldman", "research", "bank", "official"]
     extraction:
@@ -55,8 +55,8 @@ sources:
   - source_id: "goldman_sachs_reports"
     source_type: "official_public_research"
     source_name: "Goldman Sachs Reports"
-    feed_url: "https://www.goldmansachs.com/insights/research/reports/index.html"
-    base_url: "https://www.goldmansachs.com/insights/research/reports/"
+    feed_url: "https://www.goldmansachs.com/insights/reports"
+    base_url: "https://www.goldmansachs.com/insights/reports/"
     enabled: true
     tags: ["goldman", "reports", "bank", "official"]
     extraction:
@@ -107,18 +107,22 @@ sources:
   # ============================================================
   # 投行会议纪要 / 公司IR (1)
   # ============================================================
-  - source_id: "microsoft_ir"
-    source_type: "conference_transcript"
-    source_name: "Microsoft Investor Relations"
-    feed_url: "https://www.microsoft.com/en-us/Investor/events-events-presentations.aspx"
-    base_url: "https://www.microsoft.com/en-us/Investor/"
-    enabled: true
-    tags: ["microsoft", "IR", "conference", "equity"]
-    extraction:
-      max_items: 10
-      extract_full_text: false
-      priority: "S"
-      description: "Microsoft IR 会议纪要"
+  # microsoft_ir: TEMPORARILY REMOVED FROM TRIAL
+  # Reason: HTTP 403 Forbidden - Microsoft IR pages use Akamai bot protection
+  #         and reject curl-like requests. URL redirect also returns 403.
+  # Trial eligibility: url_backlog (not trial_ready)
+  # - source_id: "microsoft_ir"
+  #   source_type: "conference_transcript"
+  #   source_name: "Microsoft Investor Relations"
+  #   feed_url: "https://www.microsoft.com/en-us/Investor/events-events-presentations.aspx"
+  #   base_url: "https://www.microsoft.com/en-us/Investor/"
+  #   enabled: false
+  #   tags: ["microsoft", "IR", "conference", "equity"]
+  #   extraction:
+  #     max_items: 10
+  #     extract_full_text: false
+  #     priority: "S"
+  #     description: "Microsoft IR 会议纪要"
 
   # ============================================================
   # 媒体研报二次引用 (3)

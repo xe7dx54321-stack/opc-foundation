@@ -69,10 +69,11 @@ with open('configs/foundation_trial_source_allowlist.example.yaml', 'r', encodin
 # Check trial_source_ids count
 trial_ids = [x['source_id'] for x in data['trial_source_ids']]
 excluded_ids = set(data['excluded_source_ids'])
+expected_count = data['trial_scope']['source_count']
 
-# 1. Count must be 16
-if len(trial_ids) != 16:
-    print(f'FAIL: trial_source_count={len(trial_ids)}, expected 16')
+# 1. Count must match config
+if len(trial_ids) != expected_count:
+    print(f'FAIL: trial_source_count={len(trial_ids)}, expected {expected_count}')
     sys.exit(1)
 
 # 2. No duplicates
@@ -95,11 +96,11 @@ if bad_blocked:
     print(f'FAIL: trial contains blocked sources: {bad_blocked}')
     sys.exit(1)
 
-print(f'PASS: 16 sources, no duplicates, no excluded')
+print(f'PASS: {expected_count} sources, no duplicates, no excluded')
 "@
 
 $checkPassed = $LASTEXITCODE -eq 0
-$allPassed = (Test-Check "allowlist count=16" ($null -ne $checkResult -and $checkResult -match "PASS")) -and $allPassed
+$allPassed = (Test-Check "allowlist count matches config" ($null -ne $checkResult -and $checkResult -match "PASS")) -and $allPassed
 if ($LASTEXITCODE -ne 0) {
     $allPassed = $false
 }
