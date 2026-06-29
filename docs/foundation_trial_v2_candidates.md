@@ -1,12 +1,14 @@
 # Foundation Trial v2 候选源清单（M3C-5A）
 
-> 版本：1.1
+> 版本：1.2
 > 生成时间：2026-06-29
-> 执行阶段：M3C-5A + M3C-5A2
+> 执行阶段：M3C-5A + M3C-5A2 + M3C-5A2.1
 > 当前 trial v1 源数：15
 > M3C-5A 新增 candidate 数：8
 > M3C-5A2 验证结果：5 ready, 1 watch, 2 reject
-> 累计 trial_v2_ready 数：5  
+> M3C-5A2.1 合并结果：3 个 GS podcast → 1 个 consolidated candidate
+> **累计 trial_v2_ready 数：6**
+> **建议 trial_v2 总新增：6（5 独立 + 1 合并）**  
 
 ---
 
@@ -30,9 +32,9 @@
 | P0 | merck_ir | Merck IR | https://investors.merck.com | 200 OK，官方IR | 否 | 否 | http_4xx_or_404 |
 | P0 | benzinga_analyst_ratings | Benzinga Analyst Ratings | https://www.benzinga.com/analyst-ratings | 200 OK | 否 | 否 | http_4xx_or_404 |
 | P1 | china_fund_news | 中国基金报 | https://www.chnfund.com | 200 OK，新域名 | 否 | 否 | dns_resolution_failed |
-| P1 | goldman_sachs_exchanges | Goldman Sachs Exchanges | https://www.goldmansachs.com/insights/podcasts | 200 OK，播客总览 | 否 | 否 | http_4xx_or_404 |
-| P2 | goldman_sachs_the_markets | Goldman Sachs The Markets | https://www.goldmansachs.com/insights/podcasts | 200 OK，播客总览 | 否 | 否 | http_4xx_or_404 |
-| P2 | goldman_sachs_top_of_mind_podcast | Goldman Sachs Top of Mind | https://www.goldmansachs.com/insights/podcasts | 200 OK，播客总览 | 否 | 否 | http_4xx_or_404 |
+| P1 | **goldman_sachs_podcasts** | **Goldman Sachs Podcasts** | **https://www.goldmansachs.com/insights/podcasts** | **200 OK，播客总览（consolidated）** | **否** | **否** | **http_4xx_or_404** |
+
+> **注意**：M3C-5A2.1 将 3 个 GS podcast 源合并为 1 个 consolidated candidate，避免重复抓取。原始 source 保留在 inventory 中。
 
 ---
 
@@ -164,19 +166,18 @@
 
 ## 5. Trial v2 规划建议
 
-### 5.1 建议纳入 trial v2 的源（第一批，5-6个）
+### 5.1 建议纳入 trial v2 的源（6个）
 
-优先纳入 P0 + P1，共 5-6 个：
+优先纳入 P0 + P1，共 6 个（5 个独立 + 1 个合并）：
 1. `bofa_global_research`
 2. `texas_instruments_ir`
 3. `merck_ir`
 4. `benzinga_analyst_ratings`
 5. `china_fund_news`
-6. `goldman_sachs_exchanges`（3个播客选1个代表）
+6. `goldman_sachs_podcasts`（M3C-5A2.1 合并：3 个播客源 → 1 个 consolidated candidate）
 
 ### 5.2 暂不纳入的原因
 
-- **Goldman Sachs 三个播客源**：都指向同一个总览页，建议合并后再纳入
 - **streetinsider / tipranks**：需 browser-like connector，留待 M3C-5B
 - **DNS/URL backlog**：暂无有效替代入口
 - **需登录/订阅源**：不绕登录/付费墙，暂不纳入
@@ -193,21 +194,27 @@
 
 ---
 
-## 7. M3C-5A2 验证结果摘要
+## 7. M3C-5A2.1 合并结果摘要
 
 > 执行时间：2026-06-29
-> 验证脚本：scripts/run_foundation_trial_v2_candidates.ps1 / check_foundation_trial_v2_candidates.ps1
-> 验证结果：12/12 检查通过
+> 处理范围：3 个 Goldman Sachs podcast 候选源
+> 合并类型：Operational consolidation（trial_v2 层面）
 
-### 7.1 验证结果分桶
+### 7.1 合并前后对比
 
-| 状态 | 数量 | 说明 |
-|---|---|---|
-| trial_v2_ready | 5 | 建议并入 trial_v2 |
-| trial_v2_watch | 1 | 需观察后再决定 |
-| trial_v2_reject | 2 | 建议合并后再纳入 |
+| 状态 | 合并前 | 合并后 | 说明 |
+|---|---|---|---|
+| trial_v2_ready | 5 | **6** | +1 个 consolidated candidate |
+| trial_v2_watch | 1 | 0 | goldman_sachs_exchanges 已合并 |
+| trial_v2_reject | 2 | 0 | 已合并为 consolidated candidate |
 
-### 7.2 trial_v2_ready 清单（5个）
+### 7.2 合并详情
+
+| consolidated candidate | member_source_ids |
+|---|---|
+| goldman_sachs_podcasts | goldman_sachs_exchanges, goldman_sachs_the_markets, goldman_sachs_top_of_mind_podcast |
+
+### 7.3 trial_v2_ready 最终清单（6个）
 
 | source_id | 优先级 | 建议动作 |
 |---|---|---|
@@ -216,19 +223,13 @@
 | merck_ir | P0 | ✅ 建议纳入 |
 | benzinga_analyst_ratings | P0 | ✅ 建议纳入 |
 | china_fund_news | P1 | ✅ 建议纳入 |
+| **goldman_sachs_podcasts** | P1 | ✅ 建议纳入（consolidated） |
 
-### 7.3 trial_v2_watch 清单（1个）
+### 7.4 Source Inventory 确认
 
-| source_id | 优先级 | 建议动作 |
-|---|---|---|
-| goldman_sachs_exchanges | P1 | ⚠️ 观察：需评估是否与P2合并 |
-
-### 7.4 trial_v2_reject 清单（2个）
-
-| source_id | 优先级 | 建议动作 |
-|---|---|---|
-| goldman_sachs_the_markets | P2 | 🔄 建议合并三个播客源为一个 |
-| goldman_sachs_top_of_mind_podcast | P2 | 🔄 建议合并三个播客源为一个 |
+- **source 总数**：92（保持不变）
+- **原始 3 个 GS podcast source**：保留在 inventory 中（不删除）
+- **consolidated candidate**：trial_v2 层面的操作，不影响 source inventory
 
 ### 7.5 验证边界确认
 
@@ -239,13 +240,13 @@
 - ✅ 不绕登录/付费墙
 - ✅ 不提交 data/（.gitignore 已覆盖）
 - ✅ 不引入 Playwright/Selenium
+- ✅ 不删除 source inventory 记录
 
 ### 7.6 后续规划
 
 **建议 trial_v2 包含：**
 - 当前 15 个 trial v1 源（保持不变）
-- 新增 5 个 trial_v2_ready 源
-- 可选：合并后的 1 个 Goldman Sachs 播客源
+- 新增 6 个 trial_v2_ready 源（5 独立 + 1 合并）
 
-**Trial v2 总计：20-21 个源**
+**Trial v2 合计：21 个源**
 
