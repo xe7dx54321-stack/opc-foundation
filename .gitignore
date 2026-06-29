@@ -52,4 +52,5 @@ configs/capability_runtime_bindings.local.yaml
 data/source_inventory_live_smoke/
 data/foundation_control_center/
 data/foundation_trial/
+data/foundation_content_validity/
 configs/foundation_source_inventory.local.yaml

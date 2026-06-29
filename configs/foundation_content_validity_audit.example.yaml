@@ -1,0 +1,75 @@
+# Foundation Content Validity Audit Config
+# M3C-5A4 — 21 源内容有效性审计
+# 本文件只记录配置，不包含 secrets、proxy 地址或本地路径
+
+version: 1
+updated_at: "2026-06-29"
+
+scope:
+  name: "foundation_trial_v2_content_validity_audit"
+  description: "Content validity audit for 21 trial_v2 operational sources"
+  operational_source_count: 21
+  max_candidates_per_source: 5
+  production_enabled: false
+  trae_scheduling_enabled: false
+  note: "Audit only. Does NOT modify trial_v1 or configure TRAE scheduling."
+
+input:
+  trial_v2_allowlist: "configs/foundation_trial_v2_allowlist.example.yaml"
+  source_inventory: "configs/foundation_source_inventory.example.yaml"
+
+output:
+  root_dir: "data/foundation_content_validity"
+  audit_jsonl: "data/foundation_content_validity/index/source_content_audit.jsonl"
+  report_md: "data/foundation_content_validity/reports/content_validity_audit_latest.md"
+
+thresholds:
+  content_ready_min_valid_candidates: 2
+  content_ready_min_relevant_candidates: 2
+  content_watch_min_valid_candidates: 1
+  max_noise_ratio_for_ready: 0.5
+
+noise_detection:
+  reject_login_pages: true
+  reject_cookie_only_pages: true
+  reject_navigation_only_pages: true
+  reject_empty_pages: true
+  reject_unrelated_pages: true
+
+noise_keywords:
+  login_terms:
+    - "sign in"
+    - "login"
+    - "log in"
+    - "signin"
+    - "account"
+    - "password"
+  cookie_terms:
+    - "cookie"
+    - "consent"
+    - "privacy policy"
+    - "accept cookies"
+    - "gdpr"
+  navigation_terms:
+    - "home"
+    - "about"
+    - "contact"
+    - "careers"
+    - "menu"
+    - "subscribe"
+  unrelated_terms:
+    - "careers"
+    - "products"
+    - "investors"  # IR page without content
+
+content_types:
+  news: ["news", "article", "story", "report"]
+  research: ["research", "report", "insights", "analysis"]
+  ir: ["investor", "press release", "earnings", "event"]
+  podcast: ["podcast", "episode", "audio", "video"]
+  rating: ["rating", "upgrade", "downgrade", "analyst"]
+  market_update: ["market", "update", "briefing", "daily"]
+
+# proxy 配置（可选项，不写死在配置里）
+# 使用方式：通过命令行参数 -Proxy 或环境变量 HTTP_PROXY/HTTPS_PROXY
+# 报告里只记录 proxy_enabled=true/false 和 proxy_mode=cli/env/none
