@@ -425,7 +425,7 @@ sources:
     capability_id: research.official_public_research
     source_type: official_public_research
     website: Bank of America
-    url: "https://research.bofa.com"
+    url: "https://www.bankofamerica.com/research"
     institution: Bank of America
     region: global
     content_type:
@@ -440,7 +440,7 @@ sources:
     recommended_time_windows:
       - morning
     enabled_by_default: true
-    notes: BofA Global Research 公开研报
+    notes: BofA Global Research 公开研报（M3C-5A URL修复：原域名research.bofa.com DNS失效，迁至bankofamerica.com主站）
 
   - source_id: bofa_global_research_insights
     source_name: BofA Global Research and Market Insights
@@ -836,7 +836,7 @@ sources:
     capability_id: research.podcast_transcript
     source_type: podcast
     website: Goldman Sachs
-    url: "https://www.goldmansachs.com/podcasts/exchanges"
+    url: "https://www.goldmansachs.com/insights/podcasts"
     institution: Goldman Sachs
     region: global
     content_type:
@@ -851,7 +851,7 @@ sources:
     recommended_time_windows:
       - morning
     enabled_by_default: true
-    notes: Goldman Sachs Exchanges 播客节目
+    notes: Goldman Sachs Exchanges 播客节目（M3C-5A URL修复：原播客单独页面404，迁至insights/podcasts总览页）
 
   - source_id: goldman_sachs_the_markets
     source_name: Goldman Sachs The Markets
@@ -860,7 +860,7 @@ sources:
     capability_id: research.podcast_transcript
     source_type: podcast
     website: Goldman Sachs
-    url: "https://www.goldmansachs.com/podcasts/the-markets"
+    url: "https://www.goldmansachs.com/insights/podcasts"
     institution: Goldman Sachs
     region: global
     content_type:
@@ -875,7 +875,7 @@ sources:
     recommended_time_windows:
       - morning
     enabled_by_default: true
-    notes: Goldman Sachs 市场播客
+    notes: Goldman Sachs 市场播客（M3C-5A URL修复：原播客单独页面404，迁至insights/podcasts总览页）
 
   - source_id: goldman_sachs_top_of_mind_podcast
     source_name: Goldman Sachs Top of Mind (Podcast)
@@ -884,7 +884,7 @@ sources:
     capability_id: research.podcast_transcript
     source_type: podcast
     website: Goldman Sachs
-    url: "https://www.goldmansachs.com/podcasts/top-of-mind"
+    url: "https://www.goldmansachs.com/insights/podcasts"
     institution: Goldman Sachs
     region: global
     content_type:
@@ -899,7 +899,7 @@ sources:
     recommended_time_windows:
       - morning
     enabled_by_default: true
-    notes: Goldman Sachs Top of Mind 主题播客
+    notes: Goldman Sachs Top of Mind 主题播客（M3C-5A URL修复：原播客单独页面404，迁至insights/podcasts总览页）
 
   - source_id: jp_morgan_research_insights_podcast
     source_name: J.P. Morgan Research Insights (Podcast)
@@ -1151,7 +1151,7 @@ sources:
     capability_id: research.conference_transcript
     source_type: company_ir
     website: Texas Instruments
-    url: "https://www.ti.com/investor"
+    url: "https://investor.ti.com"
     institution: Texas Instruments
     region: global
     content_type:
@@ -1166,7 +1166,7 @@ sources:
     recommended_time_windows:
       - morning
     enabled_by_default: true
-    notes: TI IR 页面，财报电话会议纪要
+    notes: TI IR 页面，财报电话会议纪要（M3C-5A URL修复：原路径ti.com/investor 404，迁至investor.ti.com子域名）
 
   - source_id: merck_ir
     source_name: Merck Investor Relations
@@ -1175,7 +1175,7 @@ sources:
     capability_id: research.conference_transcript
     source_type: company_ir
     website: Merck
-    url: "https://www.merck.com/investor"
+    url: "https://investors.merck.com"
     institution: Merck
     region: global
     content_type:
@@ -1190,7 +1190,7 @@ sources:
     recommended_time_windows:
       - morning
     enabled_by_default: true
-    notes: Merck IR 页面，财报电话会议纪要
+    notes: Merck IR 页面，财报电话会议纪要（M3C-5A URL修复：原路径merck.com/investor 404，迁至investors.merck.com子域名）
 
   # ----------------------------------------
   # 4. 媒体研报二次引用 (A)
@@ -1360,7 +1360,7 @@ sources:
     capability_id: research.analyst_action
     source_type: analyst_rating
     website: Benzinga
-    url: "https://www.benzinga.com/analytics/ratings"
+    url: "https://www.benzinga.com/analyst-ratings"
     institution: Benzinga
     region: global
     content_type:
@@ -1376,7 +1376,7 @@ sources:
       - morning
       - midday
     enabled_by_default: true
-    notes: Benzinga 分析师评级页面
+    notes: Benzinga 分析师评级页面（M3C-5A URL修复：原路径analytics/ratings 404，改为analyst-ratings）
 
   - source_id: marketwatch_upgrades_downgrades
     source_name: MarketWatch Upgrades/Downgrades
@@ -1541,7 +1541,7 @@ sources:
     capability_id: research.media_mention
     source_type: chinese_media
     website: 中国基金报
-    url: "https://www.chinafundnews.com"
+    url: "https://www.chnfund.com"
     institution: 中国基金报
     region: china
     content_type:
@@ -1557,7 +1557,7 @@ sources:
       - morning
       - evening
     enabled_by_default: true
-    notes: 中国基金报，关注引用海外研报观点的报道，不存疑似泄露PDF
+    notes: 中国基金报，关注引用海外研报观点的报道，不存疑似泄露PDF（M3C-5A URL修复：原域名chinafundnews.com DNS失效，迁至chnfund.com）
 
   - source_id: quanshang_china
     source_name: 券商中国
