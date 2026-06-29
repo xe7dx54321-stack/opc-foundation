@@ -793,3 +793,84 @@ class SourceInventoryValidationResult:
             bool: True 表示没有错误
         """
         return self.error_count == 0
+
+
+# ===========================================================================
+# Trial Runtime 相关数据模型（M3C-4 新增）
+# ===========================================================================
+
+
+@dataclass(frozen=True)
+class TrialSourceStatus:
+    """单个 trial source 的运行状态。
+
+    功能说明（小白解读）：
+        记录一个 trial source 最近一次运行的结果，比如：
+        - 这个源叫啥（source_id, source_name）
+        - 最近一次啥状态（success / http_error / url_error / dry_run）
+        - 啥时候跑的（run_at）
+        - 抓到了几条（candidate_count）
+        - 出啥错了（error）
+
+    参数：
+        source_id:       源 ID
+        source_name:     源名称
+        status:          运行状态（success / http_error / url_error / dry_run / started）
+        run_at:          运行时间（ISO 字符串）
+        candidate_count: 抓到的候选数量
+        error:           错误信息
+    """
+
+    source_id: str
+    source_name: str
+    status: str
+    run_at: str
+    candidate_count: int = 0
+    error: str = ""
+
+
+@dataclass(frozen=True)
+class TrialRuntimeSummary:
+    """Trial 运行时摘要。
+
+    功能说明（小白解读）：
+        把 15 个 trial source 的运行结果汇总成一份摘要，
+        告诉用户今天 trial 跑没跑、跑了多少、成功多少、失败多少。
+
+        健康状态规则：
+        - healthy：成功率 >= 90%，且无 P0 错误
+        - degraded：存在 transient watch 或成功率 70%-90%
+        - failed：最近一次 run 未执行、严重错误、或 success < 70%
+        - unknown：尚未生成 trial data（data 文件不存在）
+
+    参数：
+        total_sources:        trial source 总数（应该是 15）
+        success_count:        最近一次 run 成功的数量
+        failed_count:         最近一次 run 失败的数量
+        transient_count:      transient watch 的数量（如 cls_cn HTTP 418）
+        skipped_count:        dry_run 跳过的数量
+        empty_count:          成功但 candidate_count=0 的数量
+        latest_run_at:        最近一次 run 时间
+        latest_check_at:      最近一次 check 时间
+        latest_daily_status_at: 最近一次 daily status 时间
+        overall_health:       整体健康状态（healthy/degraded/failed/unknown）
+        source_statuses:      每个 source 的详细状态列表
+        data_exists:          data 文件是否存在
+        transient_sources:    被标记为 transient watch 的源 ID 列表
+        has_blocked_included: 是否有 blocked 源被误纳入
+    """
+
+    total_sources: int = 0
+    success_count: int = 0
+    failed_count: int = 0
+    transient_count: int = 0
+    skipped_count: int = 0
+    empty_count: int = 0
+    latest_run_at: str = ""
+    latest_check_at: str = ""
+    latest_daily_status_at: str = ""
+    overall_health: str = "unknown"
+    source_statuses: list[TrialSourceStatus] = field(default_factory=list)
+    data_exists: bool = False
+    transient_sources: list[str] = field(default_factory=list)
+    has_blocked_included: bool = False

@@ -1,14 +1,14 @@
 # OPC Foundation M3C-2D Trial Run Report
 
 > **版本**：1.0
-> **生成时间**：2026-06-29T01:30:11Z
+> **生成时间**：2026-06-29T03:06:28Z
 > **Trial 说明**：本报告为 M3C-2D trial-only 试运行结果，**不代表最终 production TRAE 接管**。
 
 ## 1. 执行摘要
 
-- **执行时间**：2026-06-29T01:30:11Z ~ 2026-06-29T01:30:11Z
+- **执行时间**：2026-06-29T03:06:06Z ~ 2026-06-29T03:06:28Z
 - **Trial Source 总数**：15
-- **Dry-run**：是
+- **Dry-run**：否
 - **Proxy 启用**：否
 - **Proxy 模式**：none
 
@@ -17,10 +17,10 @@
 | 状态 | 数量 |
 |---|---|
 | 总计 | 15 |
-| Success | 0 |
+| Success | 15 |
 | Empty | 0 |
 | Failed | 0 |
-| Skipped | 15 |
+| Skipped | 0 |
 
 ## 2. Source 状态明细
 
@@ -116,7 +116,7 @@
 | cls_cn | 财联社 | 0 （error: HTTP 418: HTTP Error 418: ...） |
 | cls_cn | 财联社 | 0 （error: HTTP 418: HTTP Error 418: ...） |
 
-### success (129)
+### success (144)
 
 | source_id | source_name | candidates |
 |---|---|---|
@@ -204,6 +204,21 @@
 | wind_public | Wind 万得公开内容 | 1  |
 | gelonghui | 格隆汇 | 0  |
 | zhitong_caijing | 智通财经 | 5  |
+| goldman_sachs_research | Goldman Sachs Research | 1  |
+| goldman_sachs_reports | Goldman Sachs Reports | 1  |
+| goldman_sachs_top_of_mind | Goldman Sachs Top of Mind | 1  |
+| goldman_sachs_insights | Goldman Sachs Insights | 1  |
+| barclays_our_insights | Barclays Our Insights | 5  |
+| yahoo_finance | Yahoo Finance | 5  |
+| business_insider | Business Insider | 5  |
+| markets_insider | Markets Insider | 5  |
+| the_fly | The Fly | 3  |
+| briefing_com_upgrades | Briefing.com Upgrades/Downgrades | 1  |
+| wallstreet_cn | 华尔街见闻 | 5  |
+| cls_cn | 财联社 | 5  |
+| wind_public | Wind 万得公开内容 | 1  |
+| gelonghui | 格隆汇 | 0  |
+| zhitong_caijing | 智通财经 | 2  |
 | goldman_sachs_research | Goldman Sachs Research | 1  |
 | goldman_sachs_reports | Goldman Sachs Reports | 1  |
 | goldman_sachs_top_of_mind | Goldman Sachs Top of Mind | 1  |

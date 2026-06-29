@@ -25,6 +25,8 @@ from .models import (
     CapabilityUsageStage,
     CapabilityUsageWorkflow,
     DashboardSummary,
+    TrialRuntimeSummary,
+    TrialSourceStatus,
 )
 from .loaders import (
     check_docs_exist,
@@ -58,6 +60,8 @@ __all__ = [
     "CapabilityUsageStage",
     "CapabilityUsageWorkflow",
     "DashboardSummary",
+    "TrialRuntimeSummary",
+    "TrialSourceStatus",
     # loaders
     "check_docs_exist",
     "load_capabilities_config",

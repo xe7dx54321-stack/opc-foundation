@@ -37,6 +37,7 @@ from opc_foundation.dashboard.loaders import (
     validate_runbooks,
     validate_runtime_bindings,
     validate_source_inventory,
+    build_trial_runtime_summary,
 )
 from opc_foundation.dashboard.health import (
     build_dashboard_summary,
@@ -2389,6 +2390,52 @@ def _render_health_monitor(st, registry, runtime_summaries):
     def pct(n):
         return str(round(n / total * 100, 1)) + "%" if total > 0 else "0%"
 
+    # ============================================
+    # M3C-4 新增：Trial Runtime 摘要展示
+    # ============================================
+    trial_summary = build_trial_runtime_summary()
+    if trial_summary.data_exists:
+        health_color_map = {
+            "healthy": "#22c55e",
+            "degraded": "#eab308",
+            "failed": "#ef4444",
+            "unknown": "#6b7280",
+        }
+        health_label_map = {
+            "healthy": "运行正常",
+            "degraded": "降级",
+            "failed": "失败",
+            "unknown": "未知",
+        }
+        hc = health_color_map.get(trial_summary.overall_health, "#6b7280")
+        hl = health_label_map.get(trial_summary.overall_health, trial_summary.overall_health)
+        run_time = trial_summary.latest_run_at[:16].replace("T", " ") if trial_summary.latest_run_at else "-"
+
+        with st.container():
+            st.markdown(
+                f"""
+                <div style="background:#111827;border:1px solid #374151;border-radius:8px;padding:14px 18px;margin-bottom:16px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+                        <span style="font-size:18px;">🧪</span>
+                        <span style="font-size:15px;font-weight:600;color:#ffffff;">Foundation Trial Sources</span>
+                        <span style="background:rgba({_hex_to_rgb(hc)},0.2);color:{hc};border:1px solid rgba({_hex_to_rgb(hc)},0.3);border-radius:4px;padding:2px 8px;font-size:12px;">{hl}</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;">
+                        <div><div style="font-size:11px;color:#9ca3af;">Trial 源数</div><div style="font-size:18px;font-weight:600;color:#fff;">{trial_summary.total_sources}</div></div>
+                        <div><div style="font-size:11px;color:#9ca3af;">成功</div><div style="font-size:18px;font-weight:600;color:#22c55e;">{trial_summary.success_count}</div></div>
+                        <div><div style="font-size:11px;color:#9ca3af;">失败</div><div style="font-size:18px;font-weight:600;color:#ef4444;">{trial_summary.failed_count}</div></div>
+                        <div><div style="font-size:11px;color:#9ca3af;">Transient</div><div style="font-size:18px;font-weight:600;color:#eab308;">{trial_summary.transient_count}</div></div>
+                        <div><div style="font-size:11px;color:#9ca3af;">成功率</div><div style="font-size:18px;font-weight:600;color:#fff;">{round(trial_summary.success_count / trial_summary.total_sources * 100, 1) if trial_summary.total_sources else 0}%</div></div>
+                        <div><div style="font-size:11px;color:#9ca3af;">最近运行</div><div style="font-size:13px;color:#d1d5db;">{run_time}</div></div>
+                    </div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+    else:
+        with st.container():
+            st.info("🧪 Foundation Trial Sources：尚未运行，暂无 trial 数据。运行 `scripts/run_foundation_trial_sources.ps1` 后自动刷新。")
+
     # --- 构建表格行 ---
     table_rows = ""
     for i, c in enumerate(all_caps):
@@ -3273,6 +3320,26 @@ def _render_config_check(st, registry, usage_registry, runbook_registry, runtime
 **说明** | 正常设计，按预期存在。 | runtime 工具能力无 binding、HKEX known_limited、能力尚未被使用
             """
         )
+
+    # M3C-4 新增：Trial 配置状态检查
+    st.subheader("🧪 Trial 配置与运行状态")
+    trial_summary = build_trial_runtime_summary()
+    if trial_summary.data_exists:
+        health_label_map = {"healthy": "运行正常", "degraded": "降级", "failed": "失败", "unknown": "未知"}
+        hl = health_label_map.get(trial_summary.overall_health, trial_summary.overall_health)
+        st.success(
+            f"✅ Trial 运行数据已生成 | 健康状态：{hl} | "
+            f"源数：{trial_summary.total_sources} | "
+            f"成功：{trial_summary.success_count} | "
+            f"失败：{trial_summary.failed_count} | "
+            f"Transient：{trial_summary.transient_count}"
+        )
+        if trial_summary.transient_sources:
+            st.info(f"ℹ️ Transient watch 源：{', '.join(trial_summary.transient_sources)}（如 cls_cn HTTP 418，非 P0/P1 blocker）")
+        if not trial_summary.has_blocked_included:
+            st.success("✅ blocked/search/dormant/problem source 未误纳入 trial")
+    else:
+        st.info("ℹ️ 尚未生成 trial 运行数据。运行 `scripts/run_foundation_trial_sources.ps1 -Mode run` 后自动刷新。")
 
     # 1. 校验 capability_id 唯一性和 track 引用
     st.subheader("1️⃣ 能力注册表校验")

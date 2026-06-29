@@ -8,6 +8,9 @@
 """
 from __future__ import annotations
 
+import datetime
+import json
+import os
 from pathlib import Path
 
 import yaml
@@ -31,6 +34,8 @@ from .models import (
     SourceInventory,
     SourceInventoryCheckItem,
     SourceInventoryValidationResult,
+    TrialRuntimeSummary,
+    TrialSourceStatus,
 )
 
 
@@ -1080,4 +1085,212 @@ def summarize_source_inventory(inventory: SourceInventory) -> SourceInventoryVal
         high_risk_count=high_risk_count,
         search_provider_count=search_provider_count,
         community_count=community_count,
+    )
+
+
+# ===========================================================================
+# Trial Runtime Loader（M3C-4 新增）
+# ===========================================================================
+
+
+# Trial 数据目录常量，fail-soft 用
+TRIAL_DATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "..", "data", "foundation_trial", "index")
+
+# 已知的 transient watch 源（如 cls_cn HTTP 418）
+TRANSIENT_WATCH_SOURCES = {"cls_cn"}
+
+
+def _parse_iso_timestamp(ts: str) -> datetime.datetime:
+    """解析 ISO 时间戳字符串。
+
+    功能说明（小白解读）：
+        把像 "2026-06-26T10:33:11" 这样的字符串转成 Python 能理解的 datetime 对象，
+        这样我们就能比较哪个时间更晚。
+
+    参数：
+        ts: ISO 格式的时间字符串
+
+    返回：
+        datetime.datetime: 解析后的时间对象，解析失败返回 epoch time
+    """
+    try:
+        # 兼容带时区和不带时区的情况
+        if ts.endswith("Z"):
+            ts = ts[:-1] + "+00:00"
+        if "+" in ts or ts.count("-") > 2:
+            return datetime.datetime.fromisoformat(ts)
+        return datetime.datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S")
+    except (ValueError, TypeError):
+        return datetime.datetime.min
+
+
+def load_trial_runtime_data(
+    data_dir: str = TRIAL_DATA_DIR,
+) -> tuple[list[dict], list[dict], list[dict]]:
+    """加载 trial 运行时数据。
+
+    功能说明（小白解读）：
+        读取 data/foundation_trial/index/ 目录下的三个 JSONL 文件：
+        - source_health.jsonl：每个源的健康状态
+        - run_log.jsonl：运行日志
+        - failed_queue.jsonl：失败队列
+
+        如果文件不存在，就返回三个空列表（fail-soft），不会崩溃。
+
+    参数：
+        data_dir: trial 数据目录，默认从项目根目录找
+
+    返回：
+        tuple[list[dict], list[dict], list[dict]]: (source_health_rows, run_log_rows, failed_queue_rows)
+    """
+    source_health_path = os.path.join(data_dir, "source_health.jsonl")
+    run_log_path = os.path.join(data_dir, "run_log.jsonl")
+    failed_queue_path = os.path.join(data_dir, "failed_queue.jsonl")
+
+    def _read_jsonl(path: str) -> list[dict]:
+        """读取 JSONL 文件，每行一个 JSON 对象。"""
+        if not os.path.exists(path):
+            return []
+        rows = []
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            rows.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            continue
+        except OSError:
+            return []
+        return rows
+
+    return (
+        _read_jsonl(source_health_path),
+        _read_jsonl(run_log_path),
+        _read_jsonl(failed_queue_path),
+    )
+
+
+def build_trial_runtime_summary(
+    data_dir: str = TRIAL_DATA_DIR,
+) -> TrialRuntimeSummary:
+    """构建 trial 运行时摘要。
+
+    功能说明（小白解读）：
+        把 source_health.jsonl 里的数据汇总成一份摘要，
+        告诉用户：今天 trial 跑没跑、成功几个、失败几个、有没有 transient watch。
+
+        健康状态规则：
+        - healthy：成功率 >= 90%，且无 P0 错误
+        - degraded：存在 transient watch 或成功率 70%-90%
+        - failed：最近一次 run 未执行、严重错误、或 success < 70%
+        - unknown：data 文件不存在
+
+    参数：
+        data_dir: trial 数据目录
+
+    返回：
+        TrialRuntimeSummary: trial 运行时摘要对象
+    """
+    source_health_rows, run_log_rows, failed_queue_rows = load_trial_runtime_data(data_dir)
+
+    # data 文件不存在时的 fail-soft 返回
+    if not source_health_rows:
+        return TrialRuntimeSummary(
+            data_exists=False,
+            overall_health="unknown",
+        )
+
+    # 按 source_id 分组，取每个源最新的一条记录
+    latest_by_source: dict[str, dict] = {}
+    for row in source_health_rows:
+        sid = row.get("source_id", "")
+        if not sid:
+            continue
+        current = latest_by_source.get(sid)
+        if current is None:
+            latest_by_source[sid] = row
+        else:
+            current_ts = _parse_iso_timestamp(current.get("run_at", ""))
+            row_ts = _parse_iso_timestamp(row.get("run_at", ""))
+            if row_ts > current_ts:
+                latest_by_source[sid] = row
+
+    source_statuses: list[TrialSourceStatus] = []
+    success_count = 0
+    failed_count = 0
+    transient_count = 0
+    skipped_count = 0
+    empty_count = 0
+    latest_run_at = ""
+    transient_sources: list[str] = []
+
+    for sid, row in latest_by_source.items():
+        status = row.get("status", "")
+        error = row.get("error", "")
+
+        # 判断是否为 transient watch（如 cls_cn HTTP 418）
+        is_transient = sid in TRANSIENT_WATCH_SOURCES and status in ("http_error", "failed")
+
+        if status == "success":
+            success_count += 1
+            if row.get("candidate_count", 0) == 0:
+                empty_count += 1
+        elif status in ("http_error", "url_error"):
+            if is_transient:
+                transient_count += 1
+                transient_sources.append(sid)
+            else:
+                failed_count += 1
+        elif status == "dry_run":
+            skipped_count += 1
+        elif status in ("failed", "timeout"):
+            failed_count += 1
+
+        # 更新最新 run 时间
+        run_at = row.get("run_at", "")
+        if run_at and (not latest_run_at or _parse_iso_timestamp(run_at) > _parse_iso_timestamp(latest_run_at)):
+            latest_run_at = run_at
+
+        source_statuses.append(TrialSourceStatus(
+            source_id=sid,
+            source_name=row.get("source_name", sid),
+            status=status,
+            run_at=run_at,
+            candidate_count=row.get("candidate_count", 0),
+            error=error,
+        ))
+
+    # 按 source_id 排序，让展示更稳定
+    source_statuses.sort(key=lambda s: s.source_id)
+
+    # 计算整体健康状态
+    total = len(source_statuses)
+    success_rate = success_count / total if total > 0 else 0.0
+
+    if total == 0:
+        overall_health = "unknown"
+    elif failed_count > 0 and success_rate < 0.7:
+        overall_health = "failed"
+    elif transient_count > 0 or (success_rate >= 0.7 and success_rate < 0.9):
+        overall_health = "degraded"
+    elif success_rate >= 0.9:
+        overall_health = "healthy"
+    else:
+        overall_health = "failed"
+
+    return TrialRuntimeSummary(
+        total_sources=total,
+        success_count=success_count,
+        failed_count=failed_count,
+        transient_count=transient_count,
+        skipped_count=skipped_count,
+        empty_count=empty_count,
+        latest_run_at=latest_run_at,
+        overall_health=overall_health,
+        source_statuses=source_statuses,
+        data_exists=True,
+        transient_sources=transient_sources,
+        has_blocked_included=False,
     )
