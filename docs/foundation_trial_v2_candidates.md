@@ -1,11 +1,12 @@
 # Foundation Trial v2 候选源清单（M3C-5A）
 
-> 版本：1.0  
-> 生成时间：2026-06-29  
-> 执行阶段：M3C-5A  
-> 当前 trial v1 源数：15  
-> M3C-5A 新增 candidate 数：8  
-> 累计 candidate 数：8（trial_v2 阶段）  
+> 版本：1.1
+> 生成时间：2026-06-29
+> 执行阶段：M3C-5A + M3C-5A2
+> 当前 trial v1 源数：15
+> M3C-5A 新增 candidate 数：8
+> M3C-5A2 验证结果：5 ready, 1 watch, 2 reject
+> 累计 trial_v2_ready 数：5  
 
 ---
 
@@ -188,3 +189,63 @@
 - Source Triage 报告：`docs/foundation_source_triage_report.md`
 - Source Activation Plan：`docs/foundation_source_activation_plan.md`
 - Trial 运行报告：`docs/foundation_trae_trial_schedule_report.md`
+- **Trial v2 验证报告**：`docs/foundation_trial_v2_validation_report.md`
+
+---
+
+## 7. M3C-5A2 验证结果摘要
+
+> 执行时间：2026-06-29
+> 验证脚本：scripts/run_foundation_trial_v2_candidates.ps1 / check_foundation_trial_v2_candidates.ps1
+> 验证结果：12/12 检查通过
+
+### 7.1 验证结果分桶
+
+| 状态 | 数量 | 说明 |
+|---|---|---|
+| trial_v2_ready | 5 | 建议并入 trial_v2 |
+| trial_v2_watch | 1 | 需观察后再决定 |
+| trial_v2_reject | 2 | 建议合并后再纳入 |
+
+### 7.2 trial_v2_ready 清单（5个）
+
+| source_id | 优先级 | 建议动作 |
+|---|---|---|
+| bofa_global_research | P0 | ✅ 建议纳入 |
+| texas_instruments_ir | P0 | ✅ 建议纳入 |
+| merck_ir | P0 | ✅ 建议纳入 |
+| benzinga_analyst_ratings | P0 | ✅ 建议纳入 |
+| china_fund_news | P1 | ✅ 建议纳入 |
+
+### 7.3 trial_v2_watch 清单（1个）
+
+| source_id | 优先级 | 建议动作 |
+|---|---|---|
+| goldman_sachs_exchanges | P1 | ⚠️ 观察：需评估是否与P2合并 |
+
+### 7.4 trial_v2_reject 清单（2个）
+
+| source_id | 优先级 | 建议动作 |
+|---|---|---|
+| goldman_sachs_the_markets | P2 | 🔄 建议合并三个播客源为一个 |
+| goldman_sachs_top_of_mind_podcast | P2 | 🔄 建议合并三个播客源为一个 |
+
+### 7.5 验证边界确认
+
+- ✅ 不修改当前 15 个 trial v1 源
+- ✅ 不修改 TRAE scheduling
+- ✅ 不调度 92 全量源
+- ✅ 不抓 blocked/high-risk 源
+- ✅ 不绕登录/付费墙
+- ✅ 不提交 data/（.gitignore 已覆盖）
+- ✅ 不引入 Playwright/Selenium
+
+### 7.6 后续规划
+
+**建议 trial_v2 包含：**
+- 当前 15 个 trial v1 源（保持不变）
+- 新增 5 个 trial_v2_ready 源
+- 可选：合并后的 1 个 Goldman Sachs 播客源
+
+**Trial v2 总计：20-21 个源**
+

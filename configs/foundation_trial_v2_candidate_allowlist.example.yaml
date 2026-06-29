@@ -1,0 +1,160 @@
+# Foundation Trial v2 Candidate Allowlist
+# 用于 M3C-5A2：验证 8 个 URL 恢复候选源
+# 不修改当前 15 个 trial v1 源
+
+version: 1
+updated_at: "2026-06-29"
+
+scope:
+  name: "foundation_m3c_5a2_trial_v2_candidate_validation"
+  description: "Validate 8 URL-recovered trial_v2 candidates before merging into trial scheduling"
+  candidate_count: 8
+  source_selection_basis: "M3C-5A URL recovery results"
+  note: "This is a validation-only allowlist. Do NOT merge into current trial v1 scheduling."
+
+trial_v2_candidates:
+  # P0: High confidence (4 sources)
+  - source_id: "bofa_global_research"
+    source_name: "BofA Global Research"
+    source_group: "official_public_research"
+    url: "https://www.bankofamerica.com/research"
+    priority: "P0"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Original research.bofa.com DNS failed, migrated to bankofamerica.com/research"
+
+  - source_id: "texas_instruments_ir"
+    source_name: "Texas Instruments Investor Relations"
+    source_group: "bank_conference_transcripts"
+    url: "https://investor.ti.com"
+    priority: "P0"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Original ti.com/investor returned 404, migrated to investor.ti.com subdomain"
+
+  - source_id: "merck_ir"
+    source_name: "Merck Investor Relations"
+    source_group: "bank_conference_transcripts"
+    url: "https://investors.merck.com"
+    priority: "P0"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Original merck.com/investor returned 404, migrated to investors.merck.com subdomain"
+
+  - source_id: "benzinga_analyst_ratings"
+    source_name: "Benzinga Analyst Ratings"
+    source_group: "analyst_actions"
+    url: "https://www.benzinga.com/analyst-ratings"
+    priority: "P0"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Original /analytics/ratings returned 404, path corrected to /analyst-ratings"
+
+  # P1: Medium-high confidence (2 sources)
+  - source_id: "china_fund_news"
+    source_name: "中国基金报"
+    source_group: "chinese_rebroadcast"
+    url: "https://www.chnfund.com"
+    priority: "P1"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Original chinafundnews.com DNS failed, migrated to chnfund.com"
+
+  - source_id: "goldman_sachs_exchanges"
+    source_name: "Goldman Sachs Exchanges"
+    source_group: "official_podcast_transcript"
+    url: "https://www.goldmansachs.com/insights/podcasts"
+    priority: "P1"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Original /podcasts/exchanges returned 404, unified to /insights/podcasts"
+
+  # P2: Needs evaluation for duplication (2 sources)
+  - source_id: "goldman_sachs_the_markets"
+    source_name: "Goldman Sachs The Markets"
+    source_group: "official_podcast_transcript"
+    url: "https://www.goldmansachs.com/insights/podcasts"
+    priority: "P2"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Same URL as goldman_sachs_exchanges, evaluates for duplication"
+
+  - source_id: "goldman_sachs_top_of_mind_podcast"
+    source_name: "Goldman Sachs Top of Mind (Podcast)"
+    source_group: "official_podcast_transcript"
+    url: "https://www.goldmansachs.com/insights/podcasts"
+    priority: "P2"
+    recovery_result: "url_fixed_trial_v2_candidate"
+    candidate_enabled: true
+    requires_proxy: false
+    requires_special_connector: false
+    notes: "Same URL as goldman_sachs_exchanges, evaluates for duplication"
+
+excluded_source_ids:
+  # Not in trial v1
+  trial_v1_ids:
+    - "goldman_sachs_research"
+    - "goldman_sachs_reports"
+    - "goldman_sachs_top_of_mind"
+    - "goldman_sachs_insights"
+    - "barclays_our_insights"
+    - "microsoft_ir"
+    - "yahoo_finance"
+    - "business_insider"
+    - "markets_insider"
+    - "the_fly"
+    - "briefing_com_upgrades"
+    - "wallstreet_cn"
+    - "cls_cn"
+    - "wind_public"
+    - "gelonghui"
+    - "zhitong_caijing"
+  # Not included in trial_v2 validation
+  blocked_ids:
+    - "telegram_groups"
+    - "cloud_drive_share"
+    - "pdf_download_sites"
+    - "unknown_wechat_pdf"
+    - "report_download_proxy"
+  search_provider_ids:
+    - "tavily_search"
+    - "brave_search"
+    - "serpapi"
+    - "bing_search"
+    - "google_cse"
+    - "searx"
+    - "duckduckgo"
+    - "yahoo_search"
+    - "baidu_search"
+    - "custom_search"
+  dormant_ids:
+    - "github_issues"
+    - "hacker_news"
+  tls_failed_ids:
+    - "morgan_stanley_insights"
+    - "jp_morgan_research"
+    - "ubs_global_research"
+    - "bofa_global_research_insights"
+    - "citi_research"
+    - "deutsche_bank_tech_conference"
+  wechat_ids:
+    - "goldman_sachs_china_wechat"
+    - "morgan_stanley_china_wechat"
+    - "morgan_stanley_fund_wechat"
+    - "yanbaoshe_wechat"
+    - "touyan_circle_wechat"
+    - "wechat_secondary_broadcast"
