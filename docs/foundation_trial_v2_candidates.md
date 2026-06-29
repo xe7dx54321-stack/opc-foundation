@@ -1,13 +1,15 @@
 # Foundation Trial v2 候选源清单（M3C-5A）
 
-> 版本：1.2
+> 版本：1.3
 > 生成时间：2026-06-29
-> 执行阶段：M3C-5A + M3C-5A2 + M3C-5A2.1
+> 执行阶段：M3C-5A + M3C-5A2 + M3C-5A2.1 + M3C-5A3
 > 当前 trial v1 源数：15
 > M3C-5A 新增 candidate 数：8
 > M3C-5A2 验证结果：5 ready, 1 watch, 2 reject
 > M3C-5A2.1 合并结果：3 个 GS podcast → 1 个 consolidated candidate
+> M3C-5A3 完整验证：21 源 trial_v2 allowlist 已生成并通过验证
 > **累计 trial_v2_ready 数：6**
+> **建议 trial_v2 总源数：21（15 trial_v1 + 6 additions）**
 > **建议 trial_v2 总新增：6（5 独立 + 1 合并）**  
 
 ---

@@ -1,0 +1,325 @@
+# Foundation Trial v2 Allowlist
+# M3C-5A3 — 21 源 trial_v2 独立验证清单
+# 结构：15 个 trial_v1 base + 6 个 trial_v2 additions
+# 本文件是 trial_v2 验证清单，不修改当前 trial_v1 allowlist
+# 不包含 secrets、proxy 地址或本地路径
+
+version: 1
+updated_at: "2026-06-29"
+
+scope:
+  name: "foundation_trial_v2_full_validation"
+  description: "21-source trial_v2 validation: 15 trial_v1 sources + 6 ready additions (M3C-5A/M3C-5A2/M3C-5A2.1)"
+  base_trial_v1_count: 15
+  trial_v2_ready_additions_count: 6
+  operational_source_count: 21
+  source_inventory_count_should_remain: 92
+  production_enabled: false
+  trae_scheduling_enabled: false
+  note: "This is a validation-only allowlist. Does NOT modify current trial_v1 or TRAE scheduling."
+
+inherit_from:
+  trial_v1_allowlist: "configs/foundation_trial_source_allowlist.example.yaml"
+  trial_v2_candidates: "configs/foundation_trial_v2_candidate_allowlist.example.yaml"
+
+# ==============================================================================
+# Section 1: Trial v1 Base Sources (15)
+# Copied from foundation_trial_source_allowlist.example.yaml
+# NOT MODIFIED - just referenced here for validation purposes
+# ==============================================================================
+
+trial_v1_base_sources:
+  # ---- 投行官方公开研究 (5) ----
+  - source_id: "goldman_sachs_research"
+    source_name: "Goldman Sachs Research"
+    group_category: "official_public_research"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "goldman_sachs_reports"
+    source_name: "Goldman Sachs Reports"
+    group_category: "official_public_research"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "goldman_sachs_top_of_mind"
+    source_name: "Goldman Sachs Top of Mind"
+    group_category: "official_public_research"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "goldman_sachs_insights"
+    source_name: "Goldman Sachs Insights"
+    group_category: "official_public_research"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "barclays_our_insights"
+    source_name: "Barclays Our Insights"
+    group_category: "official_public_research"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  # ---- 媒体研报二次引用 (3) ----
+  - source_id: "yahoo_finance"
+    source_name: "Yahoo Finance"
+    group_category: "media_research_mentions"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "business_insider"
+    source_name: "Business Insider"
+    group_category: "media_research_mentions"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "markets_insider"
+    source_name: "Markets Insider"
+    group_category: "media_research_mentions"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  # ---- 分析师评级 / 目标价变动 (2) ----
+  - source_id: "the_fly"
+    source_name: "The Fly"
+    group_category: "analyst_actions"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "briefing_com_upgrades"
+    source_name: "Briefing.com Upgrades"
+    group_category: "analyst_actions"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  # ---- 中文财经二次传播 (5) ----
+  - source_id: "wallstreet_cn"
+    source_name: "华尔街见闻"
+    group_category: "chinese_rebroadcast"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "cls_cn"
+    source_name: "CLS"
+    group_category: "chinese_rebroadcast"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "wind_public"
+    source_name: "Wind Public"
+    group_category: "chinese_rebroadcast"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "gelonghui"
+    source_name: "格隆汇"
+    group_category: "chinese_rebroadcast"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+  - source_id: "zhitong_caijing"
+    source_name: "智通财经"
+    group_category: "chinese_rebroadcast"
+    trial_v1_status: "trial_v1_active"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+
+# ==============================================================================
+# Section 2: Trial v2 Ready Additions (6)
+# From M3C-5A URL recovery + M3C-5A2 validation + M3C-5A2.1 consolidation
+# ==============================================================================
+
+trial_v2_additions:
+  # ---- P0: High confidence independent sources (5) ----
+  - source_id: "bofa_global_research"
+    source_name: "BofA Global Research"
+    group_category: "official_public_research"
+    candidate_type: "inventory_backed"
+    trial_v1_status: "trial_v1_not_eligible"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+    url: "https://www.bankofamerica.com/research"
+    notes: "Original research.bofa.com DNS failed, migrated to bankofamerica.com/research"
+
+  - source_id: "texas_instruments_ir"
+    source_name: "Texas Instruments Investor Relations"
+    group_category: "bank_conference_transcripts"
+    candidate_type: "inventory_backed"
+    trial_v1_status: "trial_v1_not_eligible"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+    url: "https://investor.ti.com"
+    notes: "Original ti.com/investor returned 404, migrated to investor.ti.com subdomain"
+
+  - source_id: "merck_ir"
+    source_name: "Merck Investor Relations"
+    group_category: "bank_conference_transcripts"
+    candidate_type: "inventory_backed"
+    trial_v1_status: "trial_v1_not_eligible"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+    url: "https://investors.merck.com"
+    notes: "Original merck.com/investor returned 404, migrated to investors.merck.com subdomain"
+
+  - source_id: "benzinga_analyst_ratings"
+    source_name: "Benzinga Analyst Ratings"
+    group_category: "analyst_actions"
+    candidate_type: "inventory_backed"
+    trial_v1_status: "trial_v1_not_eligible"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P0"
+    url: "https://www.benzinga.com/analyst-ratings"
+    notes: "Original /analytics/ratings returned 404, path corrected to /analyst-ratings"
+
+  - source_id: "china_fund_news"
+    source_name: "中国基金报"
+    group_category: "chinese_rebroadcast"
+    candidate_type: "inventory_backed"
+    trial_v1_status: "trial_v1_not_eligible"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P1"
+    url: "https://www.chnfund.com"
+    notes: "Original chinafundnews.com DNS failed, migrated to chnfund.com"
+
+  # ---- P1: Consolidated candidate (1) ----
+  # This is an operational consolidation, NOT a new source inventory entry
+  # Member sources remain in inventory but are not counted separately in operational count
+  - source_id: "goldman_sachs_podcasts"
+    source_name: "Goldman Sachs Podcasts"
+    group_category: "official_podcast_transcript"
+    candidate_type: "consolidated"
+    trial_v1_status: "trial_v1_not_eligible"
+    trial_v2_status: "trial_v2_ready"
+    trial_v2_priority: "P1"
+    url: "https://www.goldmansachs.com/insights/podcasts"
+    member_source_ids:
+      - "goldman_sachs_exchanges"
+      - "goldman_sachs_the_markets"
+      - "goldman_sachs_top_of_mind_podcast"
+    notes: "Operational consolidation of three Goldman Sachs podcast sources pointing to the same public podcasts hub. Member sources remain in inventory."
+
+# ==============================================================================
+# Section 3: Consolidated Source Mapping
+# Shows how consolidated candidates map to their member sources
+# Member sources are NOT separately counted in operational_source_count
+# ==============================================================================
+
+consolidated_sources:
+  - consolidated_source_id: "goldman_sachs_podcasts"
+    member_source_ids:
+      - "goldman_sachs_exchanges"
+      - "goldman_sachs_the_markets"
+      - "goldman_sachs_top_of_mind_podcast"
+    operational_count: 1
+    member_count: 3
+
+# ==============================================================================
+# Section 4: Exclusions (same as trial_v1)
+# ==============================================================================
+
+excluded_source_ids:
+  # blocked / high-risk (5)
+  - "telegram_groups"
+  - "cloud_drive_share"
+  - "pdf_download_sites"
+  - "unknown_wechat_pdf"
+  - "report_download_proxy"
+
+  # search provider / on-demand (10)
+  - "tavily_search"
+  - "brave_search"
+  - "serpapi"
+  - "bing_search"
+  - "google_cse"
+  - "searx"
+  - "duckduckgo"
+  - "yahoo_search"
+  - "baidu_search"
+  - "custom_search"
+
+  # dormant (2)
+  - "github_issues"
+  - "hacker_news"
+
+  # TLS handshake failed (21)
+  - "morgan_stanley_insights"
+  - "morgan_stanley_research"
+  - "morgan_stanley_thoughts_on_market"
+  - "morgan_stanley_china"
+  - "morgan_stanley_fund_research"
+  - "morgan_stanley_thoughts_podcast"
+  - "jp_morgan_research"
+  - "jp_morgan_global_research_reports"
+  - "jp_morgan_insights"
+  - "jp_morgan_research_insights"
+  - "jp_morgan_research_insights_podcast"
+  - "ubs_global_research"
+  - "ubs_cio_insights"
+  - "ubs_global_research_pod_hub"
+  - "ubs_investment_bank_insights"
+  - "bofa_global_research_insights"
+  - "bofa_weekly_market_recap"
+  - "bofa_global_research_unlocked"
+  - "citi_research"
+  - "citi_gps"
+  - "deutsche_bank_tech_conference"
+
+  # WeChat (6)
+  - "goldman_sachs_china_wechat"
+  - "morgan_stanley_china_wechat"
+  - "morgan_stanley_fund_wechat"
+  - "yanbaoshe_wechat"
+  - "touyan_circle_wechat"
+  - "wechat_secondary_broadcast"
+
+  # Excluded per policy (remaining non-trial_v2-ready sources)
+  # These are excluded from trial_v2 but remain in source inventory
+  - "bofa_must_read_research"
+  - "citi_institute"
+  - "hk_stock_research"
+  - "goldman_sachs_greater_china"
+  - "barclays_research"
+  - "barclays_ib_research"
+  - "goldman_sachs_commacopia"
+  - "barclays_global_tech_conference"
+  - "bernstein_strategic_decisions"
+  - "jiwen_vip_public"
+  - "reuters"
+  - "marketwatch"
+  - "marketwatch_upgrades_downgrades"
+  - "wsj_upgrades_downgrades"
+  - "investing_com_analyst_ratings"
+  - "streetinsider"
+  - "tipranks"
+  - "microsoft_ir"
+  - "quanshang_china"
+
+# ==============================================================================
+# Source Count Validation
+# ==============================================================================
+
+validation_counts:
+  trial_v1_base_count: 15
+  trial_v2_additions_count: 6
+  operational_source_count: 21
+  consolidated_candidate_count: 1
+  member_sources_not_counted_separately: 3
+  source_inventory_total: 92
+
+# proxy 配置（可选项，不写死在配置里）
+# 使用方式：通过命令行参数 -Proxy 或环境变量 HTTP_PROXY/HTTPS_PROXY
+# 报告里只记录 proxy_enabled=true/false 和 proxy_mode=cli/env/none

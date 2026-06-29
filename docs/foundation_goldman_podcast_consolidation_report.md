@@ -1,8 +1,9 @@
 # Goldman Sachs Podcast 源合并报告（M3C-5A2.1）
 
-> 版本：1.0
+> 版本：1.1
 > 生成时间：2026-06-29
-> 执行阶段：M3C-5A2.1
+> 执行阶段：M3C-5A2.1 + M3C-5A3
+> M3C-5A3 验证：goldman_sachs_podcasts 已纳入 21 源 trial_v2 allowlist，验证通过
 
 ---
 
