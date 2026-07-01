@@ -231,7 +231,58 @@ All checks PASSED
 
 ---
 
-## 11. 相关文件
+## 11. M3C-5A5 内容有效性审计结果
+
+> 执行时间：2026-07-02
+> 审计范围：21 operational deep audit + 92 inventory matrix
+
+### 11.1 审计概要
+
+| 项目 | 值 |
+|---|---|
+| 审计阶段 | M3C-5A5 |
+| Operational Deep Audit | 21 个源 |
+| Inventory Matrix | 92 个源 |
+| Matrix 中 deep_audit | 20 个（1 个 consolidated 源不在 inventory 中） |
+| Matrix 中 matrix_only | 72 个 |
+| 网络环境 | proxy_enabled=false, proxy_mode=none |
+
+### 11.2 21 源内容有效性审计结果
+
+| 状态 | 数量 | 源 |
+|---|---|---|
+| content_ready | 4 | barclays_our_insights, markets_insider, wind_public, china_fund_news |
+| content_watch | 9 | goldman_sachs_research, goldman_sachs_reports, goldman_sachs_top_of_mind, goldman_sachs_insights, business_insider, cls_cn, gelonghui, zhitong_caijing, merck_ir |
+| operational consolidated（不在 inventory） | 1 | goldman_sachs_podcasts（content_watch，但不在 inventory 中，不计入 matrix） |
+| content_reject | 2 | briefing_com_upgrades, wallstreet_cn |
+| technical_only | 5 | yahoo_finance, the_fly, bofa_global_research, texas_instruments_ir, benzinga_analyst_ratings |
+
+### 11.3 TRAE trial_v2 scheduling 纳入策略
+
+| 状态 | 纳入 scheduling | 说明 |
+|---|---|---|
+| content_ready（4 个） | 可以 | 内容有效性已确认，建议纳入 trial_v2 scheduling |
+| content_watch（9 个） | 暂缓 | 需持续观察，部分可能需要 JS 渲染支持（M3C-5B） |
+| content_reject（2 个） | 不得 | 空页面，无有效内容 |
+| technical_only（5 个） | 不得 | HTTP 403/连接失败，需 connector 或网络环境修复（M3C-5C） |
+
+### 11.4 对 trial_v2 配置的影响
+
+M3C-5A5 审计结果表明：
+1. **原 M3C-5A3 的 21 源 trial_v2 ready 假设需要修正**：实际只有 4 个源通过内容有效性审计
+2. **TRAE trial_v2 scheduling 只能纳入 content_ready 源**（4 个），不能将全部 21 个源直接纳入
+3. **content_watch 源需要观察**，等待 M3C-5B browser-like connector 阶段重新评估
+4. **technical_only / content_reject 源不得进入 scheduling**，需留待后续阶段处理
+
+### 11.5 建议
+
+- M3C-5A6 应优先为 4 个 content_ready 源配置 TRAE trial_v2 scheduling
+- 保持当前 15 个 trial_v1 源不受影响
+- 不修改现有 TRAE scheduling
+
+---
+
+## 12. 相关文件
 
 - Trial v2 Allowlist：`configs/foundation_trial_v2_allowlist.example.yaml`
 - Run Script：`scripts/run_foundation_trial_v2.ps1`
@@ -239,4 +290,5 @@ All checks PASSED
 - Trial v2 Candidates：`docs/foundation_trial_v2_candidates.md`
 - Goldman Sachs Consolidation：`docs/foundation_goldman_podcast_consolidation_report.md`
 - M3C-5A2 Validation：`docs/foundation_trial_v2_validation_report.md`
+- M3C-5A5 Content Validity Audit：`docs/foundation_content_validity_audit_report.md`
 - TRAE Operations：`docs/foundation_trae_operations.md`

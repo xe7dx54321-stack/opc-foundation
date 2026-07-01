@@ -1,14 +1,15 @@
 # Foundation Content Validity Audit Config
-# M3C-5A4 — 21 源内容有效性审计
+# M3C-5A5 — 21 源内容有效性审计 + 92 源 matrix 覆盖
 # 本文件只记录配置，不包含 secrets、proxy 地址或本地路径
 
 version: 1
-updated_at: "2026-06-29"
+updated_at: "2026-07-02"
 
 scope:
-  name: "foundation_trial_v2_content_validity_audit"
-  description: "Content validity audit for 21 trial_v2 operational sources"
+  name: "foundation_full_source_content_validity_audit"
+  description: "Actual content validity audit for 21 operational trial_v2 sources and matrix coverage for 92 source inventory entries"
   operational_source_count: 21
+  source_inventory_count: 92
   max_candidates_per_source: 5
   production_enabled: false
   trae_scheduling_enabled: false
@@ -21,13 +22,14 @@ input:
 output:
   root_dir: "data/foundation_content_validity"
   audit_jsonl: "data/foundation_content_validity/index/source_content_audit.jsonl"
+  matrix_jsonl: "data/foundation_content_validity/index/source_content_validity_matrix.jsonl"
   report_md: "data/foundation_content_validity/reports/content_validity_audit_latest.md"
 
 thresholds:
+  content_ready_min_score: 70
   content_ready_min_valid_candidates: 2
-  content_ready_min_relevant_candidates: 2
+  content_watch_min_score: 45
   content_watch_min_valid_candidates: 1
-  max_noise_ratio_for_ready: 0.5
 
 noise_detection:
   reject_login_pages: true
@@ -69,6 +71,11 @@ content_types:
   podcast: ["podcast", "episode", "audio", "video"]
   rating: ["rating", "upgrade", "downgrade", "analyst"]
   market_update: ["market", "update", "briefing", "daily"]
+
+network:
+  stable_network_required: true
+  allow_proxy: true
+  print_proxy_url: false
 
 # proxy 配置（可选项，不写死在配置里）
 # 使用方式：通过命令行参数 -Proxy 或环境变量 HTTP_PROXY/HTTPS_PROXY

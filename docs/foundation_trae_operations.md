@@ -1,8 +1,8 @@
 # Foundation TRAE 运维手册
 
-**Version**: 1.4
-**Updated**: 2026-06-26
-**Status**: M3C-3 Ready（15 个 Trial Source TRAE Trial Scheduling 已接入）
+**Version**: 1.5
+**Updated**: 2026-07-02
+**Status**: M3C-3 Ready（15 个 Trial Source TRAE Trial Scheduling 已接入）+ M3C-5A5 审计完成
 
 ---
 
@@ -298,3 +298,59 @@ M3C-2 的目标是让所有 scheduled 源稳定运行一周，建立基线数据
 - [Source Inventory Report](foundation_source_inventory_report.md)
 - [Control Center 设计文档](foundation_control_center.md)
 - [Control Center 使用指南](foundation_control_center_usage.md)
+
+---
+
+## 12. M3C-5A5 内容有效性审计 -- TRAE 操作说明
+
+> 执行时间：2026-07-02
+> 审计范围：21 operational deep audit + 92 inventory matrix
+> 详细审计报告：[foundation_content_validity_audit_report.md](foundation_content_validity_audit_report.md)
+
+### 12.1 审计结果对 TRAE 配置的影响
+
+M3C-5A5 内容有效性审计完成，21 个 operational 源的审计结果如下：
+
+| 状态 | 数量 | TRAE 操作 |
+|---|---|---|
+| content_ready | 4 | 纳入 trial_v2 scheduling（M3C-5A6 配置） |
+| content_watch | 9 | 不纳入 scheduling，持续观察 |
+| content_reject | 2 | 不纳入 scheduling，列入 backlog |
+| technical_only | 5 | 不纳入 scheduling，列入 backlog（需 connector/网络修复） |
+
+### 12.2 建议纳入 trial_v2 scheduling 的 4 个 content_ready 源
+
+| source_id | source_name | 审计分数 | source_group | 建议频率 |
+|---|---|---|---|---|
+| barclays_our_insights | Barclays Our Insights | 90 | official_public_research | 每天1次 |
+| markets_insider | Markets Insider | 90 | media_research_mentions | 每天1-2次 |
+| wind_public | Wind 万得公开内容 | 85 | chinese_rebroadcast | 每天1次 |
+| china_fund_news | 中国基金报 | 100 | chinese_rebroadcast | 每天1-2次 |
+
+### 12.3 TRAE 操作步骤（M3C-5A6）
+
+1. **不修改当前 15 个 trial_v1 的 TRAE scheduling 配置**
+2. **为 4 个 content_ready 源配置新的 trial_v2 scheduling 任务**：
+   - 使用 `scripts/run_foundation_trial_v2.ps1` 作为调度入口
+   - trial_v2 scheduling 与 trial_v1 scheduling 独立运行
+3. **content_watch 源不配置 scheduling**，等待 M3C-5B 阶段重新评估
+4. **technical_only / content_reject 源不配置 scheduling**，等待 M3C-5C 阶段处理
+
+### 12.4 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改当前 15 个 trial v1 scheduling | 否 |
+| 是否修改 production 配置 | 否 |
+| 是否调度 92 全量 | 否 |
+| 是否配置 content_watch 源 | 否 |
+| 是否配置 technical_only 源 | 否 |
+| 是否配置 content_reject 源 | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+
+### 12.5 后续阶段
+
+| 阶段 | 目标 | 涉及源 |
+|---|---|---|
+| M3C-5B | Browser-like connector | goldman_sachs 系列（4个）、business_insider、briefing_com_upgrades、wallstreet_cn 等 |
+| M3C-5C | 特殊 connector / 网络修复 | yahoo_finance、the_fly、benzinga_analyst_ratings、bofa_global_research、texas_instruments_ir |

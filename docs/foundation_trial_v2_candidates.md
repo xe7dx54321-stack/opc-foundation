@@ -1,18 +1,20 @@
 # Foundation Trial v2 候选源清单（M3C-5A）
 
-> 版本：1.4
-> 生成时间：2026-06-29
-> 执行阶段：M3C-5A + M3C-5A2 + M3C-5A2.1 + M3C-5A3 + M3C-5A4
+> 版本：1.5
+> 生成时间：2026-07-02
+> 执行阶段：M3C-5A + M3C-5A2 + M3C-5A2.1 + M3C-5A3 + M3C-5A4 + M3C-5A5
 > 当前 trial v1 源数：15
 > M3C-5A 新增 candidate 数：8
 > M3C-5A2 验证结果：5 ready, 1 watch, 2 reject
 > M3C-5A2.1 合并结果：3 个 GS podcast → 1 个 consolidated candidate
 > M3C-5A3 完整验证：21 源 trial_v2 allowlist 已生成并通过验证
-> M3C-5A4 内容有效性审计：进行中（需完成实际审计后更新）
-> **累计 trial_v2_ready 数：6**
-> **建议 trial_v2 总源数：21（15 trial_v1 + 6 additions）**
-> **建议 trial_v2 总新增：6（5 独立 + 1 合并）**
-> **⚠️ 注意：trial_v2 scheduling 必须等待 M3C-5A4 content validity audit 通过后再执行**  
+> M3C-5A4 内容有效性审计：21 operational deep audit + 92 matrix 已完成
+> M3C-5A5 审计结果：content_ready(4) / content_watch(9) / content_reject(2) / technical_only(5)
+> **累计 content_ready 数：4（建议纳入 trial_v2 scheduling）**
+> **累计 content_watch 数：9（暂缓观察）**
+> **不建议纳入：7（2 content_reject + 5 technical_only）**
+> **建议 trial_v2 scheduling 总源数：4（仅 content_ready）**
+> **⚠️ 注意：trial_v2 scheduling 只纳入 content_ready 源，content_watch/technical_only/content_reject 不得进入**
 
 ---
 
@@ -27,16 +29,16 @@
 
 ---
 
-## 2. Trial v2 候选源总览
+## 2. Trial v2 候选源总览（含 M3C-5A5 审计状态）
 
-| 优先级 | source_id | source_name | 修复后URL | 验证状态 | 需代理 | 需特殊connector | 原始分桶 |
-|---|---|---|---|---|---|---|---|
-| P0 | bofa_global_research | BofA Global Research | https://www.bankofamerica.com/research | 301重定向，可访问 | 否 | 否 | dns_resolution_failed |
-| P0 | texas_instruments_ir | Texas Instruments IR | https://investor.ti.com | 200 OK，官方IR | 否 | 否 | http_4xx_or_404 |
-| P0 | merck_ir | Merck IR | https://investors.merck.com | 200 OK，官方IR | 否 | 否 | http_4xx_or_404 |
-| P0 | benzinga_analyst_ratings | Benzinga Analyst Ratings | https://www.benzinga.com/analyst-ratings | 200 OK | 否 | 否 | http_4xx_or_404 |
-| P1 | china_fund_news | 中国基金报 | https://www.chnfund.com | 200 OK，新域名 | 否 | 否 | dns_resolution_failed |
-| P1 | **goldman_sachs_podcasts** | **Goldman Sachs Podcasts** | **https://www.goldmansachs.com/insights/podcasts** | **200 OK，播客总览（consolidated）** | **否** | **否** | **http_4xx_or_404** |
+| 优先级 | source_id | source_name | 修复后URL | 验证状态 | 内容有效性审计状态 | 审计分数 | 需代理 | 需特殊connector | 原始分桶 |
+|---|---|---|---|---|---|---|---|---|---|
+| P0 | bofa_global_research | BofA Global Research | https://www.bankofamerica.com/research | 301重定向，可访问 | technical_only | 0 | 否 | 否 | dns_resolution_failed |
+| P0 | texas_instruments_ir | Texas Instruments IR | https://investor.ti.com | 200 OK，官方IR | technical_only | 0 | 否 | 否 | http_4xx_or_404 |
+| P0 | merck_ir | Merck IR | https://investors.merck.com | 200 OK，官方IR | content_watch | 70 | 否 | 否 | http_4xx_or_404 |
+| P0 | benzinga_analyst_ratings | Benzinga Analyst Ratings | https://www.benzinga.com/analyst-ratings | 200 OK | technical_only | 0 | 否 | 否 | http_4xx_or_404 |
+| P1 | china_fund_news | 中国基金报 | https://www.chnfund.com | 200 OK，新域名 | **content_ready** | 100 | 否 | 否 | dns_resolution_failed |
+| P1 | **goldman_sachs_podcasts** | **Goldman Sachs Podcasts** | **https://www.goldmansachs.com/insights/podcasts** | **200 OK，播客总览（consolidated）** | content_watch（不在 inventory） | 60 | **否** | **否** | **http_4xx_or_404** |
 
 > **注意**：M3C-5A2.1 将 3 个 GS podcast 源合并为 1 个 consolidated candidate，避免重复抓取。原始 source 保留在 inventory 中。
 
@@ -170,7 +172,9 @@
 
 ## 5. Trial v2 规划建议
 
-### 5.1 建议纳入 trial v2 的源（6个）
+### 5.1 M3C-5A3 原建议（已由 M3C-5A5 审计修正）
+
+> 以下为 M3C-5A3 阶段建议，M3C-5A5 内容有效性审计后已修正为 5.2。
 
 优先纳入 P0 + P1，共 6 个（5 个独立 + 1 个合并）：
 1. `bofa_global_research`
@@ -180,11 +184,40 @@
 5. `china_fund_news`
 6. `goldman_sachs_podcasts`（M3C-5A2.1 合并：3 个播客源 → 1 个 consolidated candidate）
 
-### 5.2 暂不纳入的原因
+### 5.2 M3C-5A5 修正后建议（基于内容有效性审计）
+
+M3C-5A5 审计表明，21 个源中实际只有 4 个通过内容有效性审计（content_ready）：
+
+**建议纳入 trial_v2 scheduling 的源（4 个 content_ready）**：
+
+| source_id | source_name | 审计分数 | 审计说明 |
+|---|---|---|---|
+| barclays_our_insights | Barclays Our Insights | 90 | 4/5 relevant candidates，新闻/IR/市场评论 |
+| markets_insider | Markets Insider | 90 | 5/5 relevant candidates，市场新闻/IR/评级 |
+| wind_public | Wind 万得公开内容 | 85 | 3/5 relevant candidates，研究/ESG/评级数据 |
+| china_fund_news | 中国基金报 | 100 | 4/5 fresh + 4/5 relevant，时效性最佳 |
+
+> **说明**：barclays_our_insights、markets_insider、wind_public 为 trial_v1 基础源，china_fund_news 为 M3C-5A 新增源。
+
+**暂缓观察（9 个 content_watch）**：
+- goldman_sachs_research, goldman_sachs_reports, goldman_sachs_top_of_mind, goldman_sachs_insights（需 JS 渲染）
+- business_insider（渲染异常 + 噪音）
+- cls_cn, gelonghui, zhitong_caijing（relevance 偏低）
+- merck_ir（IR 核心内容少）
+- goldman_sachs_podcasts（consolidated，不在 inventory）
+
+**不建议纳入（7 个 = 2 content_reject + 5 technical_only）**：
+- briefing_com_upgrades, wallstreet_cn（空页面）
+- yahoo_finance, the_fly, benzinga_analyst_ratings（HTTP 403）
+- bofa_global_research, texas_instruments_ir（连接失败）
+
+### 5.3 暂不纳入的原因
 
 - **streetinsider / tipranks**：需 browser-like connector，留待 M3C-5B
 - **DNS/URL backlog**：暂无有效替代入口
 - **需登录/订阅源**：不绕登录/付费墙，暂不纳入
+- **technical_only 源**：HTTP 403/连接失败，需 connector 或网络环境修复（M3C-5C）
+- **空页面源**：需确认是否为 JS 渲染依赖
 
 ---
 
@@ -195,6 +228,9 @@
 - Source Activation Plan：`docs/foundation_source_activation_plan.md`
 - Trial 运行报告：`docs/foundation_trae_trial_schedule_report.md`
 - **Trial v2 验证报告**：`docs/foundation_trial_v2_validation_report.md`
+- **Trial v2 完整验证报告**：`docs/foundation_trial_v2_full_validation_report.md`
+- **M3C-5A5 内容有效性审计报告**：`docs/foundation_content_validity_audit_report.md`
+- **TRAE 运维手册**：`docs/foundation_trae_operations.md`
 
 ---
 
@@ -218,16 +254,18 @@
 |---|---|
 | goldman_sachs_podcasts | goldman_sachs_exchanges, goldman_sachs_the_markets, goldman_sachs_top_of_mind_podcast |
 
-### 7.3 trial_v2_ready 最终清单（6个）
+### 7.3 trial_v2_ready 最终清单（M3C-5A5 修正后）
 
-| source_id | 优先级 | 建议动作 |
-|---|---|---|
-| bofa_global_research | P0 | ✅ 建议纳入 |
-| texas_instruments_ir | P0 | ✅ 建议纳入 |
-| merck_ir | P0 | ✅ 建议纳入 |
-| benzinga_analyst_ratings | P0 | ✅ 建议纳入 |
-| china_fund_news | P1 | ✅ 建议纳入 |
-| **goldman_sachs_podcasts** | P1 | ✅ 建议纳入（consolidated） |
+> M3C-5A5 内容有效性审计后，仅以下 4 个源获得 content_ready 状态，建议纳入 trial_v2 scheduling。
+
+| source_id | source_name | 审计分数 | 建议动作 |
+|---|---|---|---|
+| barclays_our_insights | Barclays Our Insights | 90 | **content_ready**，建议纳入 scheduling |
+| markets_insider | Markets Insider | 90 | **content_ready**，建议纳入 scheduling |
+| wind_public | Wind 万得公开内容 | 85 | **content_ready**，建议纳入 scheduling |
+| china_fund_news | 中国基金报 | 100 | **content_ready**，建议纳入 scheduling |
+
+> **注意**：M3C-5A3 原建议的 6 个 trial_v2_ready 中，仅 china_fund_news 通过内容有效性审计。其余 5 个中：3 个为 technical_only（bofa_global_research, texas_instruments_ir, benzinga_analyst_ratings），1 个为 content_watch（merck_ir），1 个 consolidated 不在 inventory（goldman_sachs_podcasts）。同时，3 个原 trial_v1 基础源（barclays_our_insights, markets_insider, wind_public）在审计中确认为 content_ready。
 
 ### 7.4 Source Inventory 确认
 
