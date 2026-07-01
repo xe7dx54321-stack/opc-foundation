@@ -212,7 +212,14 @@ def _extract_date_from_text(text: str) -> str:
     - "2026-06-15"
     - "June 29, 2026"
     - "6月29日"
+    - "7月1日 22:16"（中文日期+时间）
+    - "07-01"（月-日格式）
+    - "1小时前"、"5分钟前"、"昨天"（相对时间）
+    - "34 min read"（不视为日期，返回空）
     """
+    if not text:
+        return ""
+    
     # 英文月份格式（如 Jun 15, 2026 / June 29, 2026）
     m = re.search(r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}', text)
     if m:
@@ -221,8 +228,32 @@ def _extract_date_from_text(text: str) -> str:
     m = re.search(r'\d{4}-\d{2}-\d{2}', text)
     if m:
         return m.group(0)
-    # 中文格式
+    # 中文格式：X月X日 HH:MM
+    m = re.search(r'\d{1,2}月\d{1,2}日\s+\d{1,2}:\d{2}', text)
+    if m:
+        return m.group(0)
+    # 中文格式：X月X日
     m = re.search(r'\d{1,2}月\d{1,2}日', text)
+    if m:
+        return m.group(0)
+    # 月-日格式：07-01
+    m = re.search(r'\b\d{2}-\d{2}\b', text)
+    if m:
+        return m.group(0)
+    # 相对时间：X小时前、X分钟前、昨天
+    m = re.search(r'\d+\s*小时前', text)
+    if m:
+        return m.group(0)
+    m = re.search(r'\d+\s*分钟前', text)
+    if m:
+        return m.group(0)
+    m = re.search(r'昨天', text)
+    if m:
+        return m.group(0)
+    m = re.search(r'今天', text)
+    if m:
+        return m.group(0)
+    m = re.search(r'\d{1,2}:\d{2}', text)  # HH:MM
     if m:
         return m.group(0)
     return ""
@@ -472,9 +503,11 @@ _SOURCE_SPECIFIC_SELECTORS: dict[str, list[tuple[str, str]]] = {
     ],
 
     # === Business Insider ===
-    # BI 使用 a.tout-title-link 标记文章标题
+    # BI 首页文章链接为相对路径（如 /slug-text-2026-7），不含域名
+    # article.tout / feed-list 等均为 JS 渲染，SSR 中不可用
+    # 策略：匹配 a[href^='/'] 中标题 >= 20 字符且 URL 含年月日期的文章链接
     "business_insider": [
-        ("a.tout-title-link", "bi_title"),
+        ("a[href^='/']", "bi_relative_article"),
     ],
 
     # === Reuters ===
@@ -493,9 +526,11 @@ _SOURCE_SPECIFIC_SELECTORS: dict[str, list[tuple[str, str]]] = {
     ],
 
     # === 财联社 ===
-    # 财联社文章链接格式为 /detail/{id}
+    # /telegraph 页面纯 JS 渲染，SSR 无内容，改用主页 https://www.cls.cn/
+    # 新闻条目结构：div 容器内含 div.c-999（时间，"M月D日 HH:MM"）+ a[href^='/detail/']（新闻链接）
+    # 使用容器级选择器提取，一次取出标题+时间
     "cls_cn": [
-        ("a[href*='/detail/']", "cls_detail"),
+        ("div.m-b-10.b-b-w-1", "cls_news_container"),
     ],
 
     # === 格隆汇 ===
@@ -505,9 +540,11 @@ _SOURCE_SPECIFIC_SELECTORS: dict[str, list[tuple[str, str]]] = {
     ],
 
     # === 智通财经 ===
-    # 智通财经文章链接格式为 /content/detail/{id}.html
+    # 新闻条目：div.info-list-item > div.info-item-content > div.info-item-content-title > a
+    # 时间：div.info-item-content-operat > span:first-child（"1小时前"/"07-01"）
+    # 摘要：div.info-item-content-desc
     "zhitong_caijing": [
-        ("a[href*='/content/detail/']", "ztc_detail"),
+        ("div.info-list-item", "ztc_item"),
     ],
 
     # === Benzinga ===
@@ -659,11 +696,51 @@ def extract_candidates_from_html(
                         if not title or len(title) < 5:
                             continue
 
-                    elif extraction_type == "bi_title":
-                        # Business Insider 文章标题链接
+                    elif extraction_type == "bi_relative_article":
+                        # Business Insider 文章链接（相对路径匹配）
+                        # BI 首页文章为相对路径 /slug-text-YYYY-M，标题在 a 文本中
                         title = elem.get_text(strip=True)
-                        if not title or len(title) < 5:
+                        href = elem.get("href", "")
+                        if not title or len(title) < 20:
                             continue
+                        # 跳过分类/标签/静态页面
+                        skip_paths = ['/category', '/tag', '/page', '/search', '/author', '/about']
+                        if any(href.startswith(sp) for sp in skip_paths):
+                            continue
+                        # 过滤导航/栏目名称（短文本匹配特定关键词时跳过）
+                        nav_keywords = [
+                            "subscribe", "newsletter", "sign in", "log in",
+                            "privacy", "terms", "careers", "app store",
+                            "get the app", "contact", "advertising",
+                        ]
+                        if any(nk in title.lower() for nk in nav_keywords):
+                            continue
+                        # 从 URL 路径提取日期（/slug-YYYY-M 或 /YYYY/M/）
+                        published_at = _infer_published_date(href, "")
+                        snippet = title[:200]
+                        # 直接构建候选（已获取 href）
+                        if not href or href.startswith('#') or href.startswith('javascript:'):
+                            continue
+                        full_url = urljoin(base_url, href).split('#')[0]
+                        if full_url in source_seen_urls:
+                            continue
+                        source_seen_urls.add(full_url)
+                        if _NOISE_LINK_PATTERNS.search(title):
+                            continue
+                        # BI 文章直接设为 news 类型（不依赖通用推断）
+                        content_type = "news"
+                        relevance = "high"
+                        freshness = _classify_freshness(published_at) if published_at else "unknown"
+                        source_candidates.append(ContentCandidate(
+                            title=title,
+                            url=full_url,
+                            published_at=published_at,
+                            snippet=snippet[:200],
+                            content_type=content_type,
+                            relevance=relevance,
+                            freshness=freshness,
+                        ))
+                        continue
 
                     elif extraction_type in ("reuters_article", "reuters_heading"):
                         # Reuters 文章卡片
@@ -689,11 +766,50 @@ def extract_candidates_from_html(
                         if not title or len(title) < 5:
                             continue
 
-                    elif extraction_type == "cls_detail":
-                        # 财联社文章：过滤掉纯导航文本
-                        title = elem.get_text(strip=True)
-                        if len(title) < 8:
+                    elif extraction_type == "cls_news_container":
+                        # 财联社新闻容器（div.m-b-10.b-b-w-1）
+                        # 结构：容器内 div.c-999 有时间（"M月D日 HH:MM"），
+                        #       a[href^='/detail/'] 有新闻链接和标题
+                        news_link = elem.find("a", attrs={"href": re.compile(r'^/detail/\d+')})
+                        if not news_link:
                             continue
+                        title = news_link.get_text(strip=True)
+                        if not title or len(title) < 8:
+                            continue
+                        href = news_link.get("href", "")
+                        # 在容器内查找时间 div（class 含 c-999）
+                        time_div = elem.find("div", class_=re.compile(r'c-999'))
+                        published_at = ""
+                        if time_div:
+                            published_at = time_div.get_text(strip=True)
+                        # 过滤噪音（广告、下载、登录）
+                        noise_kw = ["APP下载", "登录", "注册", "广告"]
+                        if any(nk in title for nk in noise_kw):
+                            continue
+                        snippet = title[:200]
+                        # 直接构建候选（已获取 href）
+                        if not href or href.startswith('#') or href.startswith('javascript:'):
+                            continue
+                        full_url = urljoin(base_url, href).split('#')[0]
+                        if full_url in source_seen_urls:
+                            continue
+                        source_seen_urls.add(full_url)
+                        if _NOISE_LINK_PATTERNS.search(title):
+                            continue
+                        # CLS 财经新闻直接设为 market_update 类型
+                        content_type = "market_update"
+                        relevance = "high"
+                        freshness = _classify_freshness(published_at) if published_at else "unknown"
+                        source_candidates.append(ContentCandidate(
+                            title=title,
+                            url=full_url,
+                            published_at=published_at,
+                            snippet=snippet[:200],
+                            content_type=content_type,
+                            relevance=relevance,
+                            freshness=freshness,
+                        ))
+                        continue
 
                     elif extraction_type == "glh_article":
                         # 格隆汇文章
@@ -701,8 +817,42 @@ def extract_candidates_from_html(
                         if not title or len(title) < 5:
                             continue
 
-                    elif extraction_type == "ztc_detail":
-                        # 智通财经文章：过滤分类标签和导航文本
+                    elif extraction_type in ("ztc_detail", "ztc_item"):
+                        # 智通财经文章
+                        if extraction_type == "ztc_item":
+                            # 从 div.info-list-item 容器中提取
+                            title_el = elem.select_one("div.info-item-content-title a")
+                            if not title_el:
+                                continue
+                            title_span = title_el.select_one("span")
+                            title = title_span.get_text(strip=True) if title_span else title_el.get_text(strip=True)
+                            # 获取摘要
+                            desc_el = elem.select_one("div.info-item-content-desc")
+                            snippet = desc_el.get_text(strip=True) if desc_el else ""
+                            # 获取时间：div.info-item-content-operat > span:first-child
+                            operat_el = elem.select_one("div.info-item-content-operat")
+                            if operat_el:
+                                time_span = operat_el.find("span")
+                                published_at = time_span.get_text(strip=True) if time_span else ""
+                            else:
+                                published_at = ""
+                            # 获取 href
+                            href = title_el.get("href", "")
+                            if not href or href in source_seen_urls:
+                                continue
+                            source_seen_urls.add(href)
+                            # 构建候选（加入 source_candidates）
+                            source_candidates.append(ContentCandidate(
+                                title=title,
+                                url=urljoin(base_url, href),
+                                published_at=published_at,
+                                snippet=snippet[:200] if snippet else "",
+                                content_type="market_update",
+                                relevance="high" if len(title) > 20 else "medium",
+                                freshness=_classify_freshness(published_at),
+                            ))
+                            continue
+                        # ztc_detail（旧选择器，兼容）
                         title = elem.get_text(strip=True)
                         if len(title) < 10:
                             continue
@@ -957,17 +1107,21 @@ def _infer_published_date(url: str, surrounding_text: str) -> str:
         r'/(\d{4})(\d{2})(\d{2})(?!\d)',     # /20240115
         r'-(\d{4})-(\d{1,2})-(\d{1,2})',     # -2024-01-15
         r'_(\d{4})-(\d{1,2})-(\d{1,2})',     # _2024-01-15
+        r'-(\d{4})-(\d{1,2})(?=[\-/?]|$)',   # -2024-7（BI: /slug-text-2026-7）
+        r'/(\d{4})/(\d{1,2})(?=[\-/?]|$)',    # /2024/7（BI: /YYYY/M/）
     ]
     for pattern in url_date_patterns:
         m = re.search(pattern, url)
         if m:
-            year, month, day = m.group(1), m.group(2), m.group(3)
             try:
+                year = m.group(1)
+                month = m.group(2) if len(m.groups()) >= 2 else "01"
+                day = m.group(3) if len(m.groups()) >= 3 else "01"
                 # 校验日期合理性
                 y, mo, d = int(year), int(month), int(day)
                 if 2000 <= y <= 2030 and 1 <= mo <= 12 and 1 <= d <= 31:
                     return f"{y}-{mo:02d}-{d:02d}"
-            except (ValueError, TypeError):
+            except (ValueError, TypeError, IndexError):
                 continue
 
     # 从周围文本提取日期（如 "Jan 15, 2024", "January 15, 2024"）
@@ -1018,8 +1172,14 @@ def _classify_freshness(date_str: str) -> str:
     """
     根据日期字符串判断新鲜度。
     
+    支持格式：
+    - "2024-01-15" / "20240115"
+    - "7月1日 22:16" / "7月1日"（中文日期）
+    - "07-01" / "1小时前" / "5分钟前" / "昨天"
+    - "14:30"（纯时间，视为 unknown）
+    
     Args:
-        date_str: 日期字符串（格式如 "2024-01-15"）
+        date_str: 日期字符串
         
     Returns:
         fresh / stale / unknown
@@ -1027,7 +1187,56 @@ def _classify_freshness(date_str: str) -> str:
     if not date_str:
         return "unknown"
     try:
-        # 尝试解析日期
+        # 中文日期格式：M月D日 HH:MM 或 M月D日
+        cn_date_match = re.search(r'(\d{1,2})月(\d{1,2})日', date_str)
+        if cn_date_match:
+            month, day = int(cn_date_match.group(1)), int(cn_date_match.group(2))
+            year = datetime.now().year
+            try:
+                dt = datetime(year, month, day)
+                delta = (datetime.now() - dt).days
+                if 0 <= delta <= 30:
+                    return "fresh"
+                elif 0 <= delta <= 365:
+                    return "stale"
+                elif delta < 0:
+                    # 可能是去年12月的文章跨年到今年
+                    dt = datetime(year - 1, month, day)
+                    delta = (datetime.now() - dt).days
+                    if 0 <= delta <= 365:
+                        return "stale"
+                return "unknown"
+            except ValueError:
+                pass
+
+        # 相对时间
+        if re.search(r'\d+\s*(?:小时|分钟)前|昨天', date_str):
+            return "fresh"
+
+        # 纯时间 HH:MM（无法判断日期，返回 unknown）
+        if re.match(r'^\d{1,2}:\d{2}$', date_str):
+            return "unknown"
+
+        # MM-DD 格式（如 "07-01"），推断为当年
+        mmdd_match = re.match(r'^(\d{1,2})-(\d{1,2})$', date_str)
+        if mmdd_match:
+            month, day = int(mmdd_match.group(1)), int(mmdd_match.group(2))
+            year = datetime.now().year
+            try:
+                dt = datetime(year, month, day)
+                delta = (datetime.now() - dt).days
+                if 0 <= delta <= 30:
+                    return "fresh"
+                elif delta < 0:
+                    dt = datetime(year - 1, month, day)
+                    delta = (datetime.now() - dt).days
+                    if 0 <= delta <= 365:
+                        return "stale"
+                return "unknown"
+            except ValueError:
+                pass
+
+        # ISO 格式
         for fmt in ("%Y-%m-%d", "%Y%m%d", "%d-%m-%Y"):
             try:
                 dt = datetime.strptime(date_str, fmt)

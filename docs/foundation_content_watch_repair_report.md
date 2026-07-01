@@ -131,3 +131,96 @@ proxy_enabled=false, proxy_mode=none
 | 是否恢复已删除页面 | 否 |
 | 是否引入 Playwright/Selenium | 否 |
 | 是否打 tag | 否 |
+
+---
+
+## M3C-5A7.1：第二轮逐源攻坚结果
+
+> 更新时间：2026-07-02
+> 修复范围：business_insider、cls_cn、zhitong_caijing
+> 关联阶段：M3C-5A7.1（Content Watch 源第二轮逐源攻坚）
+
+### M3C-5A7.1.1 修复概要
+
+M3C-5A7 第一轮后，以下 3 个源仍为 content_watch：
+
+| source_id | 修复前状态 | content_score | 主要问题 |
+|---|---|---|---|
+| business_insider | content_watch | 55 | article.tout 选择器已失效（JS 渲染），候选与 URL 不匹配 |
+| cls_cn | content_watch | 60 | /telegraph 纯 JS 渲染，span.m-r-5 不存在于 SSR |
+| zhitong_caijing | content_watch | 70 | 仅 1 个 relevant，日期格式不稳定 |
+
+### M3C-5A7.1.2 逐源修复动作
+
+#### business_insider
+
+| 项目 | 修复前 | 修复后 |
+|---|---|---|
+| 选择器 | `article.tout` (bi_article) | `a[href^='/']` (bi_relative_article) |
+| 日期提取 | 无 | URL 路径 `/slug-YYYY-M` 提取年月 |
+| 噪音过滤 | 无 | 过滤 /category /tag /page 等路径 + 导航文本 |
+| 内容类型 | unknown (通用推断失败) | news (直接设置) |
+| relevance | medium | high |
+
+**根本原因**：BI 首页 `article.tout` 和 `feed-list` 均为 JS 渲染，SSR HTML 中文章链接以相对路径（`/slug-text-YYYY-M`）呈现。
+
+#### cls_cn
+
+| 项目 | 修复前 | 修复后 |
+|---|---|---|
+| URL 策略 | /telegraph (纯 JS) | 主页 https://www.cls.cn/ |
+| 选择器 | 3 个 JS 选择器 | `div.m-b-10.b-b-w-1` (cls_news_container) |
+| 时间提取 | span.m-r-5 (不存在) | div.c-999 容器内 "M月D日 HH:MM" |
+| 内容类型 | unknown | market_update (直接设置) |
+| freshness | unknown | fresh (中文日期解析) |
+
+**根本原因**：CLS /telegraph 页面内容完全由客户端 JavaScript 渲染，SSR HTML 中无任何结构化新闻数据。
+
+#### zhitong_caijing
+
+| 项目 | 修复前 | 修复后 |
+|---|---|---|
+| 选择器 | `a[href*='/content/detail/']` (ztc_detail) | `div.info-list-item` (ztc_item) |
+| 提取内容 | 仅标题 | 标题 + 摘要 + 时间 + URL |
+| 日期格式 | 不稳定 | 支持 "X小时前"、"07-01"、"M月D日" |
+| 内容类型 | unknown | market_update (直接设置) |
+| relevance | medium | high |
+
+**根本原因**：旧选择器只提取链接文本，未利用容器级结构。
+
+### M3C-5A7.1.3 修复后验证结果
+
+| source_id | 修复前 | 修复后 | content_score | valid | relevant | fresh | content_ready |
+|---|---|---|---:|---:|---:|---:|---|
+| business_insider | content_watch | **content_ready** | **95** | 5 | 5 | 4 | **YES** |
+| cls_cn | content_watch | **content_ready** | **100** | 3 | 3 | 3 | **YES** |
+| zhitong_caijing | content_watch | **content_ready** | **100** | 20 | 20 | 18 | **YES** |
+
+### M3C-5A7.1.4 新增代码能力
+
+1. **增强 `_infer_published_date`**：支持 BI 的 `/slug-YYYY-M` 和 `/YYYY/M/` URL 日期模式，支持只有年月无日期的情况
+2. **增强 `_classify_freshness`**：支持中文日期 "M月D日 HH:MM"、相对时间 "X小时前/X分钟前/昨天"、MM-DD 格式 "07-01"
+3. **增强 `_extract_date_from_text`**：支持 "X月X日 HH:MM"、"X小时前"、"X分钟前"、"昨天"、HH:MM
+4. **容器级选择器策略**：BI、CLS、ZTC 均采用容器级选择器，一次提取标题+时间+URL+摘要
+
+### M3C-5A7.1.5 边界确认
+
+- 不处理 Goldman Sachs JS 渲染类源 ✅
+- 不处理 benzinga Cloudflare 403 ✅
+- 不处理 TLS/SSL 专项源 ✅
+- 不新增 source ✅
+- 不修改 source inventory 总数 ✅
+- 不修改 trial_v1 ✅
+- 不修改 TRAE scheduling ✅
+- 不配置 production ✅
+- 不提交 data/local/secrets ✅
+- 不恢复已删除 Dashboard 页面 ✅
+- 不引入 Playwright/Selenium ✅
+- 不打 tag ✅
+
+### M3C-5A7.1.6 建议
+
+- 新增可进入 scheduling 的源：business_insider、cls_cn、zhitong_caijing
+- content_ready 总数：6 → 9（+3）
+- content_watch 总数：7 → 5（-2，gelonghui 和 GS 系列仍为 watch）
+- 建议进入 TRAE trial_v2 scheduling（第 2 批）

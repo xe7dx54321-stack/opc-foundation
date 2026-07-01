@@ -17,8 +17,8 @@
 | 审计模式 | Content Validity Audit（Operational Deep Audit） |
 | 操作源数 | 21（operational deep audit） |
 | Matrix 源数 | 92（full inventory matrix） |
-| content_ready | **4** |
-| content_watch | **9**（含 1 个不在 inventory 中的 consolidated 源） |
+| content_ready | **9** |
+| content_watch | **5**（含 1 个不在 inventory 中的 consolidated 源） |
 | content_reject | **2** |
 | technical_only | **5** |
 | 网络环境 | proxy_enabled=false, proxy_mode=none |
@@ -104,8 +104,8 @@
 
 | 状态 | 数量 | 说明 |
 |---|---|---|
-| content_ready | **4** | 能产出有效候选信息，建议纳入 trial_v2 scheduling |
-| content_watch | **9** | 基本可访问但存在内容质量问题，需持续观察 |
+| content_ready | **9** | 能产出有效候选信息，建议纳入 trial_v2 scheduling |
+| content_watch | **5** | 基本可访问但存在内容质量问题，需持续观察 |
 | content_reject | **2** | 页面无效或无有效候选内容 |
 | technical_only | **5** | 技术访问失败（HTTP 失败/403），需 connector 或网络环境修复 |
 | **合计** | **20** | deep_audit 范围内（不含 1 个不在 inventory 中的 consolidated 源） |
@@ -401,6 +401,70 @@
 - **technical_only 源从 5 个增至 6 个**：benzinga_analyst_ratings 确认为 Cloudflare Bot Protection 阻挡
 
 ### 10.8 M3C-5A7 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v1 | 否 |
+| 是否修改 TRAE scheduling | 否 |
+| 是否配置 production | 否 |
+| 是否抓 blocked/high-risk | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否恢复已删除页面 | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否打 tag | 否 |
+
+---
+
+## 11. M3C-5A7.1 Content Watch 源第二轮逐源攻坚
+
+> 更新时间：2026-07-02
+> 修复范围：business_insider、cls_cn、zhitong_caijing
+> 关联阶段：M3C-5A7.1（Content Watch 源第二轮逐源攻坚）
+> 关联报告：`docs/foundation_content_watch_repair_report.md`（M3C-5A7.1 章节）
+
+### 11.1 修复概要
+
+M3C-5A7 第一轮后，以下 3 个源仍为 content_watch，第二轮针对性攻坚：
+
+| source_id | 修复前状态 | content_score | 主要问题 |
+|---|---|---|---|
+| business_insider | content_watch | 55 | article.tout 选择器已失效（JS 渲染），候选与 URL 不匹配 |
+| cls_cn | content_watch | 60 | /telegraph 纯 JS 渲染，span.m-r-5 不存在于 SSR |
+| zhitong_caijing | content_watch | 70 | 仅 1 个 relevant，日期格式不稳定 |
+
+### 11.2 修复结果
+
+| source_id | 修复前 | 修复后 | content_score | valid | relevant | fresh | content_ready |
+|---|---|---|---:|---:|---:|---:|---|
+| business_insider | content_watch | **content_ready** | **95** | 5 | 5 | 4 | **YES** |
+| cls_cn | content_watch | **content_ready** | **100** | 3 | 3 | 3 | **YES** |
+| zhitong_caijing | content_watch | **content_ready** | **100** | 20 | 20 | 18 | **YES** |
+
+### 11.3 更新后统计
+
+| 状态 | M3C-5A5 原始 | M3C-5A7 第一轮 | M3C-5A7.1 第二轮 | 变化 |
+|------|--------|--------|--------|------|
+| content_ready | 4 | 6 | **9** | +3 (business_insider, cls_cn, zhitong_caijing) |
+| content_watch | 9 | 7 | **5** | -2 |
+| content_reject | 2 | 2 | 2 | 不变 |
+| technical_only | 5 | 6 | 6 | 不变 |
+
+### 11.4 对 Section 5 Scheduling 建议的影响
+
+基于 M3C-5A7.1 修复结果，建议更新 scheduling 评估：
+
+- **新增建议纳入 trial_v2 scheduling（第 2 批）**：business_insider（分数 95）、cls_cn（分数 100）、zhitong_caijing（分数 100）
+- **content_ready 源从 6 个增至 9 个**：barclays_our_insights, markets_insider, wind_public, china_fund_news, goldman_sachs_insights, merck_ir, **business_insider, cls_cn, zhitong_caijing**
+- **content_watch 源从 7 个减至 5 个**：goldman_sachs_reports, goldman_sachs_top_of_mind, goldman_sachs_research, goldman_sachs_podcasts, gelonghui
+
+### 11.5 新增代码能力
+
+1. **增强 `_infer_published_date`**：支持 BI 的 `/slug-YYYY-M` 和 `/YYYY/M/` URL 日期模式，支持只有年月无日期的情况
+2. **增强 `_classify_freshness`**：支持中文日期 "M月D日 HH:MM"、相对时间 "X小时前/X分钟前/昨天"、MM-DD 格式 "07-01"
+3. **增强 `_extract_date_from_text`**：支持 "X月X日 HH:MM"、"X小时前"、"X分钟前"、"昨天"、HH:MM
+4. **容器级选择器策略**：BI、CLS、ZTC 均采用容器级选择器，一次提取标题+时间+URL+摘要
+
+### 11.6 M3C-5A7.1 边界确认
 
 | 检查项 | 结果 |
 |---|---|
