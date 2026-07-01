@@ -334,3 +334,81 @@
 - 审计报告：`data/foundation_content_validity/reports/content_validity_audit_2026-07-02.md`
 - Trial v2 Allowlist：`configs/foundation_trial_v2_allowlist.example.yaml`
 - Trial v2 Candidates：`docs/foundation_trial_v2_candidates.md`
+
+---
+
+## 10. M3C-5A7 Content Watch 源逐个攻坚（第一轮）
+
+> 更新时间：2026-07-02
+> 关联报告：`docs/foundation_content_watch_repair_report.md`
+
+### 10.1 修复概要
+
+在 M3C-5A5 审计发现 9 个 content_watch 源后，M3C-5A7 阶段对每个源进行定向修复攻坚，核心策略：
+
+1. **定向源选择器**：在 `extract_candidates_from_html()` 中新增 `_SOURCE_SPECIFIC_SELECTORS` 字典，为每个源定义特定的 CSS 选择器和提取策略
+2. **日期提取增强**：新增 `_extract_date_from_text()` 函数，支持英文月份、ISO 格式、中文日期格式
+
+### 10.2 修复结果
+
+| 状态 | 修复前 (M3C-5A5) | 修复后 (M3C-5A7) | 变化 |
+|------|--------|--------|------|
+| content_ready | 4 | 6 | +2 (goldman_sachs_insights, merck_ir) |
+| content_watch | 9 | 7 | -2 |
+| content_reject | 2 | 2 | 不变 |
+| technical_only | 5 | 6 | +1 (benzinga 从 watch 降级为 technical) |
+| **总计** | **20** | **21** | (goldman_sachs_podcasts consolidated 不在 inventory 中) |
+
+### 10.3 升级为 content_ready 的源
+
+| source_id | 修复前分数 | 修复后分数 | 修复方案 |
+|---|---|---|---|
+| goldman_sachs_insights | 60 | 90 | 使用 `a[href*='/insights/articles/']` 选择器，成功抓到 3 条真实文章 |
+| merck_ir | 70 | 90 | 使用 `a[href*='/news/']` 选择器，成功抓到 5 条 IR 新闻 |
+| china_fund_news | 100 | 100 | 已 content_ready（M3C-5A5 时即达标），确认维持 |
+
+### 10.4 保持 content_watch 的源（7 个）
+
+| source_id | 分数 | 原因 |
+|---|---|---|
+| goldman_sachs_reports | 60 | JS 渲染，SSR 不含文章内容 |
+| goldman_sachs_top_of_mind | 60 | JS 渲染限制 |
+| goldman_sachs_research | 60 | 404 + JS 渲染 |
+| goldman_sachs_podcasts | 60 | consolidated 无独立 URL |
+| business_insider | 55 | 日期提取失败 + app_download_page noise |
+| cls_cn | 60 | 日期提取失败（内容真实） |
+| zhitong_caijing | 60 | 日期提取失败（内容真实） |
+
+### 10.5 降级为 technical_only 的源
+
+| source_id | 修复前分数 | 修复后分数 | 原因 |
+|---|---|---|---|
+| benzinga_analyst_ratings | 0 (原 watch) | 0 (technical) | Cloudflare Bot Protection 返回 403，httpx 无法突破 |
+
+### 10.6 典型发现
+
+1. Goldman Sachs 只有 `/insights` 主页有 SSR 文章内容，子页面全 JS 渲染
+2. 中文源（cls_cn、zhitong_caijing）内容真实但日期信息在 JS 渲染区域
+3. Benzinga 使用 Cloudflare Bot Protection，httpx 无法突破
+4. Business Insider 有真实标题但缺少时间和 app_download noise
+
+### 10.7 对 Section 5 Scheduling 建议的影响
+
+基于 M3C-5A7 修复结果，建议更新 scheduling 评估：
+
+- **新增建议纳入 trial_v2 scheduling**：goldman_sachs_insights（分数 90）、merck_ir（分数 90）
+- **content_ready 源从 4 个增至 6 个**：barclays_our_insights, markets_insider, wind_public, china_fund_news, goldman_sachs_insights, merck_ir
+- **technical_only 源从 5 个增至 6 个**：benzinga_analyst_ratings 确认为 Cloudflare Bot Protection 阻挡
+
+### 10.8 M3C-5A7 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v1 | 否 |
+| 是否修改 TRAE scheduling | 否 |
+| 是否配置 production | 否 |
+| 是否抓 blocked/high-risk | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否恢复已删除页面 | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否打 tag | 否 |

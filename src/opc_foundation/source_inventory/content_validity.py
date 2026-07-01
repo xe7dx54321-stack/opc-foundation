@@ -205,6 +205,29 @@ _NOISE_LINK_PATTERNS = re.compile(
 )
 
 
+def _extract_date_from_text(text: str) -> str:
+    """从文本中提取日期字符串。
+    支持格式：
+    - "Jun 15, 2026"
+    - "2026-06-15"
+    - "June 29, 2026"
+    - "6月29日"
+    """
+    # 英文月份格式（如 Jun 15, 2026 / June 29, 2026）
+    m = re.search(r'(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s+\d{1,2},?\s+\d{4}', text)
+    if m:
+        return m.group(0).rstrip(',')
+    # ISO 格式
+    m = re.search(r'\d{4}-\d{2}-\d{2}', text)
+    if m:
+        return m.group(0)
+    # 中文格式
+    m = re.search(r'\d{1,2}月\d{1,2}日', text)
+    if m:
+        return m.group(0)
+    return ""
+
+
 def classify_noise_flags(page_text: str, page_title: str, http_status: int) -> list[str]:
     """
     检测页面噪音标志。返回标志列表。
@@ -405,17 +428,119 @@ _SOURCE_GROUP_CONTENT_TYPE_MAP = {
     "blockchain_explorers": "market_update",
 }
 
+# =============================================================================
+# 源特定选择器映射
+# =============================================================================
+# 每个源对应 (CSS选择器, 提取类型) 列表
+# 当源匹配时，优先使用这些选择器而非通用选择器
+_SOURCE_SPECIFIC_SELECTORS: dict[str, list[tuple[str, str]]] = {
+    # === Goldman Sachs 系列 ===
+    # GS 页面文章卡片是 a.gs-card，内含 .gs-card-eyebrow（分类）和 .gs-card-title（标题）
+    # 日期嵌入在链接文本末尾，格式如 "Jun 15, 2026"
+    "goldman_sachs_insights": [
+        ("a[href*='/insights/articles/']", "gs_article"),
+        ("a[href*='/insights/the-markets/']", "gs_article"),
+        ("a[href*='/insights/top-of-mind/']", "gs_article"),
+    ],
+    "goldman_sachs_reports": [
+        ("a[href*='/insights/articles/']", "gs_article"),
+        ("a[href*='/insights/the-markets/']", "gs_article"),
+    ],
+    "goldman_sachs_top_of_mind": [
+        ("a[href*='/insights/articles/']", "gs_article"),
+        ("a[href*='/insights/top-of-mind/']", "gs_article"),
+    ],
+    "goldman_sachs_research": [
+        ("a[href*='/insights/articles/']", "gs_article"),
+    ],
+    "goldman_sachs_podcasts": [
+        ("a.gs-card", "gs_card"),
+    ],
+
+    # === JP Morgan ===
+    # JP Morgan 使用 li.article-card 包裹文章，h3 为标题
+    "jp_morgan": [
+        ("li.article-card", "jp_article"),
+        ("a.content-headline", "jp_headline"),
+    ],
+
+    # === Morgan Stanley ===
+    # MS 使用 AEM cmp-storycard 组件
+    "morgan_stanley": [
+        ("a.cmp-storycard__link", "ms_storycard"),
+        ("a.link-selector-4up", "ms_4up"),
+    ],
+
+    # === Business Insider ===
+    # BI 使用 a.tout-title-link 标记文章标题
+    "business_insider": [
+        ("a.tout-title-link", "bi_title"),
+    ],
+
+    # === Reuters ===
+    # Reuters 使用 media-story-card 组件
+    "reuters": [
+        ("article.media-story-card", "reuters_article"),
+        ("a.media-story-card__heading", "reuters_heading"),
+    ],
+
+    # === Merck IR ===
+    # Merck 新闻链接格式为 /news/，日期是独立的 <a> 标签在标题之前
+    "merck_ir": [
+        ("a[href*='/news/']", "merck_news"),
+        ("a[href*='/events/']", "merck_events"),
+        ("a[href*='/presentations/']", "merck_presentation"),
+    ],
+
+    # === 财联社 ===
+    # 财联社文章链接格式为 /detail/{id}
+    "cls_cn": [
+        ("a[href*='/detail/']", "cls_detail"),
+    ],
+
+    # === 格隆汇 ===
+    # 格隆汇文章在 div.detail-left 中的 <a> 标签
+    "gelonghui": [
+        ("div.detail-left a[href*='/p/']", "glh_article"),
+    ],
+
+    # === 智通财经 ===
+    # 智通财经文章链接格式为 /content/detail/{id}.html
+    "zhitong_caijing": [
+        ("a[href*='/content/detail/']", "ztc_detail"),
+    ],
+
+    # === Benzinga ===
+    "benzinga_analyst_ratings": [
+        ("a.analyst-rating-card", "benzinga_rating"),
+        ("table.analyst-ratings-table a", "benzinga_table"),
+    ],
+
+    # === 中国基金报 ===
+    "china_fund_news": [
+        ("a[href*='/article/']", "cfn_article"),
+    ],
+}
+
+# 智通财经导航文本过滤集合
+_ZTC_NAV_TEXTS = {
+    "推荐", "港股", "美股", "沪深", "要闻", "基金",
+    "公告", "新股", "研究", "公司", "ESG", "市场",
+}
+
 
 def extract_candidates_from_html(
     html: str,
     base_url: str,
     max_candidates: int = 5,
     source_group: str = "",
+    source_id: str = "",
 ) -> list[ContentCandidate]:
     """
     从 HTML 中提取候选内容（独立函数，不依赖 ContentValidityAuditor 实例）。
     
     策略：
+    0. 如果 source_id 匹配源特定选择器，优先使用源特定选择器提取
     1. 用 BeautifulSoup 解析
     2. 查找文章/新闻/研究链接（<a> 标签 + 周围文本）
     3. 查找列表项（<li> 中的链接）
@@ -431,6 +556,7 @@ def extract_candidates_from_html(
         base_url: 基础 URL（用于补全相对链接）
         max_candidates: 最大候选数量
         source_group: 源分组，用于推断 content_type
+        source_id: 源 ID，用于匹配源特定选择器策略
         
     Returns:
         候选内容列表
@@ -450,6 +576,243 @@ def extract_candidates_from_html(
 
     # 根据 source_group 推断默认 content_type
     default_content_type = _SOURCE_GROUP_CONTENT_TYPE_MAP.get(source_group, "unknown")
+
+    # =========================================================================
+    # 源特定选择器策略：在通用选择器之前尝试
+    # =========================================================================
+    if source_id and source_id in _SOURCE_SPECIFIC_SELECTORS:
+        source_selectors = _SOURCE_SPECIFIC_SELECTORS[source_id]
+        source_candidates = []
+        source_seen_urls = set()
+
+        for css_selector, extraction_type in source_selectors:
+            if len(source_candidates) >= max_candidates:
+                break
+            elements = soup.select(css_selector)
+            for elem in elements:
+                if len(source_candidates) >= max_candidates:
+                    break
+                try:
+                    title = ""
+                    published_at = ""
+                    snippet = ""
+                    category = ""
+
+                    if extraction_type in ("gs_card", "gs_article"):
+                        # GS 文章卡片（两种策略）
+                        if extraction_type == "gs_card":
+                            # 旧策略：从 .gs-card-eyebrow/.gs-card-title 提取
+                            eyebrow = elem.select_one(".gs-card-eyebrow")
+                            title_elem = elem.select_one(".gs-card-title")
+                            if title_elem:
+                                title = title_elem.get_text(strip=True)
+                                category = eyebrow.get_text(strip=True) if eyebrow else ""
+                                if category:
+                                    snippet = f"[{category}] "
+                                full_text = elem.get_text(strip=True)
+                                published_at = _extract_date_from_text(full_text)
+                                snippet += full_text[:200]
+                        else:
+                            # 新策略：a[href*='/insights/articles/'] 直接从链接文本提取
+                            # GS SSR 输出中文章链接文本格式："{Category}{Title}{Date}"
+                            # 例如 "EnergyWhy Oil Prices Could 'Grind Lower'...Jun 18, 2026"
+                            link_text = elem.get_text(strip=True)
+                            published_at = _extract_date_from_text(link_text)
+                            title = link_text
+                            # 移除末尾日期后，文本剩余部分就是 title（含前缀分类名）
+                            if published_at:
+                                title = link_text.replace(published_at, '').strip().rstrip(',')
+                            snippet = link_text[:200]
+
+                    elif extraction_type == "jp_article":
+                        # JP Morgan 文章卡片：li.article-card 内的 h3 是标题
+                        h3 = elem.find("h3")
+                        if h3:
+                            title = h3.get_text(strip=True)
+                            full_text = elem.get_text(strip=True)
+                            published_at = _infer_published_date(base_url, full_text)
+                            # 获取 li 内的描述文本
+                            for p in elem.find_all("p", recursive=False):
+                                p_text = p.get_text(strip=True)
+                                if len(p_text) > len(snippet):
+                                    snippet = p_text
+
+                    elif extraction_type == "jp_headline":
+                        # JP Morgan 标题链接
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "ms_storycard":
+                        # Morgan Stanley storycard
+                        h2 = elem.select_one("h2.cmp-title__text")
+                        if h2:
+                            title = h2.get_text(strip=True)
+                        else:
+                            title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "ms_4up":
+                        # Morgan Stanley 4up 链接
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "bi_title":
+                        # Business Insider 文章标题链接
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type in ("reuters_article", "reuters_heading"):
+                        # Reuters 文章卡片
+                        if extraction_type == "reuters_article":
+                            heading = elem.select_one("a.media-story-card__heading")
+                            title = heading.get_text(strip=True) if heading else elem.get_text(strip=True)
+                        else:
+                            title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "merck_news":
+                        # Merck 新闻链接：只取链接文本长度 > 15 的
+                        link_text = elem.get_text(strip=True)
+                        if len(link_text) > 15:
+                            title = link_text
+                        else:
+                            continue
+
+                    elif extraction_type in ("merck_events", "merck_presentation"):
+                        # Merck 活动/演示文稿链接
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "cls_detail":
+                        # 财联社文章：过滤掉纯导航文本
+                        title = elem.get_text(strip=True)
+                        if len(title) < 8:
+                            continue
+
+                    elif extraction_type == "glh_article":
+                        # 格隆汇文章
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "ztc_detail":
+                        # 智通财经文章：过滤分类标签和导航文本
+                        title = elem.get_text(strip=True)
+                        if len(title) < 10:
+                            continue
+                        if title.strip() in _ZTC_NAV_TEXTS:
+                            continue
+
+                    elif extraction_type in ("benzinga_rating", "benzinga_table"):
+                        # Benzinga 评级/表格链接
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    elif extraction_type == "cfn_article":
+                        # 中国基金报文章
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    else:
+                        # 未知类型，使用默认提取
+                        title = elem.get_text(strip=True)
+                        if not title or len(title) < 5:
+                            continue
+
+                    # 获取链接 href
+                    if extraction_type in ("reuters_article", "jp_article"):
+                        # 这些是容器元素，需要从中找 <a> 标签
+                        a_tag = elem.find("a")
+                        href = a_tag.get("href", "") if a_tag else ""
+                    else:
+                        href = elem.get("href", "")
+
+                    if not href or href in source_seen_urls:
+                        continue
+
+                    # 跳过锚点链接和 JavaScript 链接
+                    if href.startswith('#') or href.startswith('javascript:') or href.startswith('mailto:'):
+                        continue
+
+                    # 补全相对 URL
+                    full_url = urljoin(base_url, href)
+                    full_url = full_url.split('#')[0]
+
+                    if full_url in source_seen_urls:
+                        continue
+
+                    # 排除噪音链接
+                    if _NOISE_LINK_PATTERNS.search(title):
+                        continue
+
+                    source_seen_urls.add(full_url)
+
+                    # 如果没有提取到 snippet，尝试从周围 <p> 获取
+                    if not snippet:
+                        parent = elem.parent
+                        if parent:
+                            for p in parent.find_all('p', recursive=False):
+                                p_text = p.get_text(strip=True)
+                                if len(p_text) > len(snippet):
+                                    snippet = p_text
+                            if not snippet and parent.parent:
+                                for p in parent.parent.find_all('p', recursive=False):
+                                    p_text = p.get_text(strip=True)
+                                    if len(p_text) > len(snippet):
+                                        snippet = p_text
+
+                    # 截断 snippet
+                    if len(snippet) > 200:
+                        snippet = snippet[:200] + "..."
+
+                    # 推断 published_at（如果还没有的话）
+                    if not published_at:
+                        published_at = _infer_published_date(full_url, title + " " + snippet)
+
+                    # 推断 content_type
+                    content_type = _classify_content_type_simple(title + " " + full_url)
+                    if content_type == "unknown":
+                        content_type = default_content_type
+
+                    # 推断 relevance
+                    relevance = "high" if content_type != "unknown" else "medium"
+
+                    # 推断 freshness
+                    freshness = "unknown"
+                    if published_at:
+                        freshness = _classify_freshness(published_at)
+
+                    source_candidates.append(ContentCandidate(
+                        title=title,
+                        url=full_url,
+                        published_at=published_at,
+                        snippet=snippet,
+                        content_type=content_type,
+                        relevance=relevance,
+                        freshness=freshness,
+                    ))
+
+                except Exception:
+                    continue
+
+        # 如果源特定选择器找到了足够候选，直接返回
+        if len(source_candidates) >= max_candidates:
+            return source_candidates[:max_candidates]
+        # 如果源特定选择器找到了一些候选（即使不够），也优先返回
+        if source_candidates:
+            return source_candidates
+
+    # =========================================================================
+    # 通用选择器策略（原始逻辑，未修改）
+    # =========================================================================
 
     # CSS 选择器列表：优先级从高到低
     selectors = [
@@ -1087,14 +1450,18 @@ class ContentValidityAuditor:
         
         支持 consolidated source（如 goldman_sachs_podcasts），记录 member_source_ids，
         使用 classify_noise_flags() 记录详细的 noise_flags，
+        使用 extract_candidates_from_html() 的源特定选择器提取候选。
         使用更完善的 candidate 评估逻辑。
-        
+
         Args:
             source: 源配置字典
             
         Returns:
             审计结果
         """
+        # 确保 HTTP 客户端已初始化
+        self._init_http_client()
+        
         result = ContentAuditResult(
             source_id=source.get('source_id', ''),
             source_name=source.get('source_name', ''),
@@ -1163,6 +1530,7 @@ class ContentValidityAuditor:
                     base_url=final_url,
                     max_candidates=self.max_candidates,
                     source_group=source_group,
+                    source_id=source.get('source_id', ''),
                 )
                 result.candidate_count = len(candidates)
                 result.sample_candidates = candidates
