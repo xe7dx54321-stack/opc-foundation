@@ -1069,3 +1069,169 @@ class TestM3C5A8TrialV2ContentReadyScheduling:
             assert "render_run_log" not in content
             assert "render_failed_queue" not in content
             assert "render_docs" not in content
+
+
+# =============================================================================
+# M3C-5A9: Trial V2 Content-Ready Command-Only Scheduling 启用测试
+# =============================================================================
+
+class TestM3C5A9TrialV2ContentReadySchedulingEnable:
+    """M3C-5A9: 启用 8 源 trial_v2 command-only 调度测试。
+
+    覆盖 18 项检查要求。
+    """
+
+    # ---- TRAE 示例配置 ----
+
+    def test_trae_example_config_exists(self):
+        """TRAE trial_v2 content-ready example config 存在。"""
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        assert p.exists(), f"TRAE example config not found: {p}"
+
+    def test_trae_example_jobs_count(self):
+        """jobs 数量 = 4（morning/afternoon/evening run + daily check）。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        jobs = config.get("jobs", [])
+        assert len(jobs) == 4, f"Expected 4 jobs, got {len(jobs)}"
+
+    def test_trae_example_all_jobs_command_only(self):
+        """所有 job 是 command-only（有 command 字段，无自然语言 prompt）。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for job in config.get("jobs", []):
+            assert "command" in job and job["command"], f"Job {job['job_id']} missing command"
+            notes = job.get("notes", "").lower()
+            assert "prompt" not in notes, f"Job {job['job_id']} notes contain prompt"
+
+    def test_trae_example_all_disabled(self):
+        """所有 job enabled=false in example。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for job in config.get("jobs", []):
+            assert job.get("enabled") == False, f"Job {job['job_id']} is enabled"
+
+    def test_trae_example_production_disabled(self):
+        """production_enabled=false。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        assert config["scope"]["production_enabled"] == False
+
+    def test_trae_example_no_natural_language_prompt(self):
+        """配置不包含自然语言 prompt。"""
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "prompt" not in content or "example" in content
+
+    def test_trae_example_no_proxy_url(self):
+        """配置不包含 proxy URL。"""
+        import re
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        content = p.read_text(encoding="utf-8")
+        for pattern in [r'http://\S+:\d+', r'https://\S+:\d+', r'socks5://', r'socks4://']:
+            assert len(re.findall(pattern, content)) == 0, f"Proxy URL found: {pattern}"
+
+    def test_trae_example_no_absolute_path(self):
+        """配置不包含本地绝对路径。"""
+        import re
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        content = p.read_text(encoding="utf-8")
+        # 排除 Windows 盘符路径和 Unix 绝对路径
+        assert not re.search(r'[A-Za-z]:\\', content), "Windows absolute path found"
+        assert not re.search(r'/(Users|home|tmp|var)/\S+', content), "Unix absolute path found"
+
+    # ---- Allowlist ----
+
+    def test_allowlist_source_count_is_8(self):
+        """allowlist source count = 8。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        count = len(config.get("sources", []))
+        assert count == 8, f"Expected 8 sources, got {count}"
+
+    def test_allowlist_no_merck_ir(self):
+        """allowlist 不包含 merck_ir。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        ids = [s["source_id"] for s in config["sources"]]
+        assert "merck_ir" not in ids
+
+    def test_allowlist_no_watch_reject_technical_only(self):
+        """allowlist 不包含 watch/reject/technical_only 源。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for s in config["sources"]:
+            assert s["content_status"] not in ("content_watch", "content_reject", "technical_only")
+
+    # ---- 脚本 ----
+
+    def test_check_script_recognizes_8_sources(self):
+        """check 脚本检查 source count == 8。"""
+        p = Path("scripts/check_foundation_trial_v2_content_ready.ps1")
+        content = p.read_text(encoding="utf-8")
+        assert "Source count == 8" in content or "$count -eq 8" in content
+
+    def test_run_script_supports_all_modes(self):
+        """run 脚本支持 validate-config/preflight/dry-run/run。"""
+        p = Path("scripts/run_foundation_trial_v2_content_ready.ps1")
+        content = p.read_text(encoding="utf-8")
+        for mode in ["validate-config", "preflight", "dry-run", "run"]:
+            assert mode in content, f"Missing mode: {mode}"
+
+    # ---- 文档 ----
+
+    def test_docs_says_trial_v2_not_production(self):
+        """docs 说明 trial_v2 不是 production。"""
+        p = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "production" in content
+        assert "否" in content or "not" in content
+
+    def test_docs_says_local_config_not_committed(self):
+        """docs 说明 local TRAE config 不提交。"""
+        p = Path("docs/foundation_trae_operations.md")
+        content = p.read_text(encoding="utf-8")
+        assert "不提交" in content or "not commit" in content.lower()
+
+    def test_docs_has_wind_public_garbled_text_warning(self):
+        """docs 包含 wind_public garbled_text watch 提示。"""
+        p = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "wind_public" in content
+        assert "garbled" in content or "乱码" in content
+
+    # ---- Git / 边界 ----
+
+    def test_data_not_committed(self):
+        """data/foundation_trial_v2_content_ready/ 不提交。"""
+        gitignore = Path(".gitignore")
+        assert gitignore.exists(), ".gitignore not found"
+        content = gitignore.read_text()
+        assert "data/" in content or "foundation_trial_v2_content_ready" in content
+
+    def test_no_deleted_dashboard_pages(self):
+        """不恢复总览/运行日志/失败队列/文档入口。"""
+        for p in [
+            Path("docs/foundation_trial_v2_content_ready_scheduling_report.md"),
+            Path("docs/foundation_trae_operations.md"),
+        ]:
+            if p.exists():
+                content = p.read_text(encoding="utf-8")
+                assert "render_overview" not in content
+                assert "render_run_log" not in content
+                assert "render_failed_queue" not in content
+                assert "render_docs" not in content

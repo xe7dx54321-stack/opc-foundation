@@ -82,7 +82,7 @@ switch ($Mode) {
         Write-Host "`n--- Preflight Content Validity Check ---" -ForegroundColor Yellow
         $timestamp = Get-Date -Format "yyyy-MM-dd"
         $preflightOutput = Join-Path $IndexDir "preflight_content_ready_audit.jsonl"
-        $moduleArgs = "-c ""from opc_foundation.source_inventory.content_validity import ContentValidityAuditor; import json, os; a=ContentValidityAuditor(config_path='configs/foundation_content_validity_audit.example.yaml',allowlist_path='configs/foundation_trial_v2_allowlist.example.yaml',inventory_path='configs/foundation_source_inventory.example.yaml',max_candidates=3,timeout=20); sources=a.allowlist.get('trial_v2_additions',[])+a.allowlist.get('trial_v1_base_sources',[]); ready_ids=[s['source_id'] for s in json.load(open('configs/foundation_trial_v2_content_ready_allowlist.example.yaml'))['sources']]; results=[]; [results.append(r.to_dict()) for sid in ready_ids if (s:=[x for x in sources if x.get('source_id')==sid]) and (r:=a.audit_source(s[0]))]; os.makedirs('data/foundation_trial_v2_content_ready/index',exist_ok=True); [open('$preflightOutput','w').write(json.dumps(r,ensure_ascii=False)+'\n') for r in results]; print(f'Preflight: {len(results)} sources audited')"""
+        $moduleArgs = "-c ""from opc_foundation.source_inventory.content_validity import ContentValidityAuditor; import json, os, yaml; a=ContentValidityAuditor(config_path='configs/foundation_content_validity_audit.example.yaml',allowlist_path='configs/foundation_trial_v2_allowlist.example.yaml',inventory_path='configs/foundation_source_inventory.example.yaml',max_candidates=3,timeout=20); sources=a.allowlist.get('trial_v2_additions',[])+a.allowlist.get('trial_v1_base_sources',[]); ready_ids=[s['source_id'] for s in yaml.safe_load(open('configs/foundation_trial_v2_content_ready_allowlist.example.yaml'))['sources']]; results=[]; [results.append(r.to_dict()) for sid in ready_ids if (s:=[x for x in sources if x.get('source_id')==sid]) and (r:=a.audit_source(s[0]))]; os.makedirs('data/foundation_trial_v2_content_ready/index',exist_ok=True); [open('$preflightOutput','w').write(json.dumps(r,ensure_ascii=False)+'\n') for r in results]; print(f'Preflight: {len(results)} sources audited')"""
 
         Set-Location $RepoRoot
         & $PythonCmd $moduleArgs
@@ -91,7 +91,7 @@ switch ($Mode) {
 
     "dry-run" {
         Write-Host "`n--- Dry Run ---" -ForegroundColor Yellow
-        Write-Host "Dry run: would process 9 content_ready sources"
+        Write-Host "Dry run: would process 8 content_ready sources"
         Write-Host "No actual HTTP requests made in dry-run mode"
         Write-Host "PASS" -ForegroundColor Green
     }
@@ -105,7 +105,7 @@ switch ($Mode) {
         $reportOutput = Join-Path $ReportDir "trial_v2_content_ready_validation_$timestamp.md"
         $latestReport = Join-Path $ReportDir "trial_v2_content_ready_validation_latest.md"
 
-        $moduleArgs = "-c ""from opc_foundation.source_inventory.content_validity import ContentValidityAuditor; import json, os, datetime; a=ContentValidityAuditor(config_path='configs/foundation_content_validity_audit.example.yaml',allowlist_path='configs/foundation_trial_v2_allowlist.example.yaml',inventory_path='configs/foundation_source_inventory.example.yaml',max_candidates=5,timeout=20); sources=a.allowlist.get('trial_v2_additions',[])+a.allowlist.get('trial_v1_base_sources',[]); ready_ids=[s['source_id'] for s in json.load(open('configs/foundation_trial_v2_content_ready_allowlist.example.yaml'))['sources']]; health=[]; runlog=[]; failed=[]; ts=datetime.datetime.now().isoformat(); os.makedirs('data/foundation_trial_v2_content_ready/index',exist_ok=True); os.makedirs('data/foundation_trial_v2_content_ready/reports',exist_ok=True); [health.append({'source_id':sid,'content_status':'pending','timestamp':ts}) for sid in ready_ids]; [open('data/foundation_trial_v2_content_ready/index/source_health.jsonl','w').write(json.dumps(h,ensure_ascii=False)+'\n') for h in health]; [runlog.append({'source_id':sid,'status':'queued','timestamp':ts}) for sid in ready_ids]; [open('data/foundation_trial_v2_content_ready/index/run_log.jsonl','w').write(json.dumps(r,ensure_ascii=False)+'\n') for r in runlog]; print('Run complete: 9 sources queued')"""
+        $moduleArgs = "-c ""from opc_foundation.source_inventory.content_validity import ContentValidityAuditor; import json, os, datetime, yaml; a=ContentValidityAuditor(config_path='configs/foundation_content_validity_audit.example.yaml',allowlist_path='configs/foundation_trial_v2_allowlist.example.yaml',inventory_path='configs/foundation_source_inventory.example.yaml',max_candidates=5,timeout=20); sources=a.allowlist.get('trial_v2_additions',[])+a.allowlist.get('trial_v1_base_sources',[]); ready_ids=[s['source_id'] for s in yaml.safe_load(open('configs/foundation_trial_v2_content_ready_allowlist.example.yaml'))['sources']]; health=[]; runlog=[]; failed=[]; ts=datetime.datetime.now().isoformat(); os.makedirs('data/foundation_trial_v2_content_ready/index',exist_ok=True); os.makedirs('data/foundation_trial_v2_content_ready/reports',exist_ok=True); [health.append({'source_id':sid,'content_status':'pending','timestamp':ts}) for sid in ready_ids]; [open('data/foundation_trial_v2_content_ready/index/source_health.jsonl','w').write(json.dumps(h,ensure_ascii=False)+'\n') for h in health]; [runlog.append({'source_id':sid,'status':'queued','timestamp':ts}) for sid in ready_ids]; [open('data/foundation_trial_v2_content_ready/index/run_log.jsonl','w').write(json.dumps(r,ensure_ascii=False)+'\n') for r in runlog]; print('Run complete: 8 sources queued')"""
 
         Set-Location $RepoRoot
         & $PythonCmd $moduleArgs
@@ -117,7 +117,7 @@ switch ($Mode) {
 > Generated: $timestamp
 > Mode: run
 
-## Sources Validated: 9
+## Sources Validated: 8
 
 See preflight results for real content samples.
 "@

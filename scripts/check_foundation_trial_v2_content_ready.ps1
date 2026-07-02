@@ -21,7 +21,7 @@ $ReportDir = Join-Path $OutputDir "reports"
 
 $passCount = 0
 $failCount = 0
-$totalChecks = 14
+$totalChecks = 15
 
 function Check-Item {
     param([string]$Name, [bool]$Passed, [string]$Detail)
@@ -41,7 +41,7 @@ Check-Item "Allowlist exists" (Test-Path $AllowlistPath) ""
 if (Test-Path $AllowlistPath) {
     $config = Get-Content $AllowlistPath -Raw | ConvertFrom-Yaml
     $count = $config.sources.Count
-    Check-Item "Source count >= 9" ($count -ge 9) "Got $count"
+    Check-Item "Source count == 8" ($count -eq 8) "Got $count"
 } else {
     Check-Item "Source count" $false "Allowlist not found"
 }
@@ -134,6 +134,25 @@ Check-Item "Output directory exists" (Test-Path $IndexDir) ""
 
 # Check 14: Reports directory exists
 Check-Item "Reports directory exists" (Test-Path $ReportDir) ""
+
+# Check 15: Fail-closed — blocked sources must not appear in allowlist
+if (Test-Path $AllowlistPath) {
+    $blockedSources = @(
+        "merck_ir", "benzinga_analyst_ratings", "bofa_global_research",
+        "texas_instruments_ir", "briefing_com_upgrades", "wallstreet_cn",
+        "goldman_sachs_reports", "goldman_sachs_top_of_mind",
+        "goldman_sachs_research", "goldman_sachs_podcasts"
+    )
+    $foundBlocked = @()
+    foreach ($src in $config.sources) {
+        if ($blockedSources -contains $src.source_id) {
+            $foundBlocked += $src.source_id
+        }
+    }
+    Check-Item "No blocked sources in allowlist" ($foundBlocked.Count -eq 0) ($foundBlocked -join ", ")
+} else {
+    Check-Item "No blocked sources" $false "Allowlist not found"
+}
 
 Write-Host ""
 Write-Host "=== Check Results ===" -ForegroundColor Cyan

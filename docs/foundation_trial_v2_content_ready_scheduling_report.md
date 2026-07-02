@@ -176,3 +176,135 @@ YES，建议进入 M3C-5A9。
 - 是否纳入 technical_only：否
 - 是否调度 92 全量：否
 - 是否提交 data/local/secrets：否
+
+---
+
+## 11. M3C-5A9：Trial V2 Command-Only 调度启用
+
+> 执行时间：2026-07-02
+> 阶段：M3C-5A9
+> 目标：启用 8 个 content_ready 源 TRAE trial_v2 command-only 调度
+
+### 11.1 调度源清单
+
+| source_id | source_name | content_score | priority | audit_phase |
+|---|---|---:|---|---|
+| barclays_our_insights | Barclays Our Insights | 90 | P0 | M3C-5A5 |
+| markets_insider | Markets Insider | 90 | P0 | M3C-5A5 |
+| china_fund_news | 中国基金报 | 100 | P0 | M3C-5A5 |
+| wind_public | Wind 万得公开内容 | 85 | P0 | M3C-5A5 |
+| goldman_sachs_insights | Goldman Sachs Insights | 90 | P1 | M3C-5A7 |
+| business_insider | Business Insider | 95 | P1 | M3C-5A7.1 |
+| cls_cn | 财联社 | 100 | P1 | M3C-5A7.1 |
+| zhitong_caijing | 智通财经 | 100 | P1 | M3C-5A7.1 |
+
+- source_count：**8**
+- 是否包含 merck_ir：**否**（M3C-5A8 preflight 降级为 technical_only）
+- 是否包含 watch/reject/technical_only：**否**
+
+### 11.2 未纳入源及原因
+
+| source_id | 状态 | 原因 |
+|---|---|---|
+| merck_ir | technical_only | HTTP 403 Forbidden，需特殊 connector |
+| yahoo_finance | technical_only | HTTP 403 |
+| the_fly | technical_only | HTTP 403 |
+| benzinga_analyst_ratings | technical_only | HTTP 403 / Cloudflare |
+| bofa_global_research | technical_only | SSL 错误 |
+| texas_instruments_ir | technical_only | 超时 |
+| briefing_com_upgrades | content_reject | 空页面 |
+| wallstreet_cn | content_reject | 空页面 |
+| goldman_sachs_research | content_watch | JS 渲染，无 SSR 内容 |
+| goldman_sachs_reports | content_watch | JS 渲染 |
+| goldman_sachs_top_of_mind | content_watch | JS 渲染 |
+| goldman_sachs_podcasts | content_watch | JS 渲染，consolidated |
+| gelonghui | content_watch | 导航噪音多 |
+
+### 11.3 TRAE Command-Only 配置
+
+- **config path**：`configs/trae_foundation_trial_v2_content_ready.example.yaml`
+- **jobs**：4 个
+  - `foundation_trial_v2_content_ready_morning_run`
+  - `foundation_trial_v2_content_ready_afternoon_run`
+  - `foundation_trial_v2_content_ready_evening_run`
+  - `foundation_trial_v2_content_ready_daily_check`
+- **enabled in example**：全部 `false`
+- **production_enabled**：`false`
+- **command_only**：`true`
+- **是否包含自然语言 prompt**：否
+- **是否包含 proxy URL**：否
+
+### 11.4 手动执行结果
+
+| 步骤 | 结果 |
+|---|---|
+| validate-config | PASS（source_count=8，全部 content_ready，无 blocked 源） |
+| preflight | 8/8 通过，全部 content_ready |
+| run | PASS（8 sources queued） |
+| check | PASS（15/15 项通过） |
+
+Preflight 详细结果：
+
+| source_id | score | valid | relevant | status |
+|---|---|---:|---:|---|
+| barclays_our_insights | 80 | 3 | 2 | content_ready |
+| markets_insider | 90 | 3 | 3 | content_ready |
+| china_fund_news | 100 | 3 | 3 | content_ready |
+| wind_public | 75 | 3 | 2 | content_ready |
+| goldman_sachs_insights | 65 | 2 | 2 | content_ready |
+| business_insider | 95 | 3 | 3 | content_ready |
+| cls_cn | 100 | 3 | 3 | content_ready |
+| zhitong_caijing | 100 | 3 | 3 | content_ready |
+
+### 11.5 TRAE Manual Trigger 结果
+
+- **manual_trae_setup_required**：`true`
+- **原因**：TRAE 本地任务无法由代码直接配置，需在本地 TRAE 界面手动创建 command-only job
+- **推荐命令**：
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run
+  ```
+- **检查命令**：
+  ```powershell
+  powershell -ExecutionPolicy Bypass -File scripts/check_foundation_trial_v2_content_ready.ps1
+  ```
+- **morning_run trigger**：待本地 TRAE 手动启用（示例配置 enabled=false）
+- **daily_check trigger**：待本地 TRAE 手动启用（示例配置 enabled=false）
+- **source_health 是否新增**：是（run 后生成 8 条记录）
+- **run_log 是否新增**：是（run 后生成 8 条记录）
+- **failed_queue**：已创建（当前为空，fail-soft）
+- **latest report**：`data/foundation_trial_v2_content_ready/reports/trial_v2_content_ready_validation_latest.md`
+
+### 11.6 Wind Public Garbled Text 观察提示
+
+`wind_public` 在 preflight 中 score=75，存在 `garbled_text` 噪音风险。每日检查中需重点观察：
+- 乱码率是否上升
+- 有效候选数是否低于 2
+- 如出现持续乱码，需降级为 content_watch 并暂停调度
+
+### 11.7 运行产物
+
+| 产物 | 路径 | 状态 |
+|---|---|---|
+| source_health | `data/foundation_trial_v2_content_ready/index/source_health.jsonl` | 8 条记录 |
+| run_log | `data/foundation_trial_v2_content_ready/index/run_log.jsonl` | 8 条记录 |
+| failed_queue | `data/foundation_trial_v2_content_ready/index/failed_queue.jsonl` | 已创建（空） |
+| preflight | `data/foundation_trial_v2_content_ready/index/preflight_content_ready_audit.jsonl` | 8 条记录 |
+| report | `data/foundation_trial_v2_content_ready/reports/trial_v2_content_ready_validation_*.md` | 已生成 |
+
+**data 是否提交**：否（已加入 .gitignore）
+
+### 11.8 边界确认（M3C-5A9）
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v1 | 否 |
+| 是否配置 production | 否 |
+| 是否调度 92 全量 | 否 |
+| 是否纳入 merck_ir | 否 |
+| 是否纳入 watch/reject/technical_only | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否提交真实 TRAE local config | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否打 tag | 否 |

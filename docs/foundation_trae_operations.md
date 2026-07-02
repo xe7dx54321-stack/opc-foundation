@@ -354,3 +354,104 @@ M3C-5A5 内容有效性审计完成，21 个 operational 源的审计结果如�
 |---|---|---|
 | M3C-5B | Browser-like connector | goldman_sachs 系列（4个）、business_insider、briefing_com_upgrades、wallstreet_cn 等 |
 | M3C-5C | 特殊 connector / 网络修复 | yahoo_finance、the_fly、benzinga_analyst_ratings、bofa_global_research、texas_instruments_ir |
+
+---
+
+## 13. M3C-5A9：Trial V2 Content-Ready Command-Only 调度运维
+
+> 执行时间：2026-07-02
+> 启用源数：8 个 content_ready 源
+> 配置路径：`configs/trae_foundation_trial_v2_content_ready.example.yaml`
+
+### 13.1 调度对象
+
+只允许调度以下 8 个 source：
+
+| source_id | source_name | priority |
+|---|---|---|
+| barclays_our_insights | Barclays Our Insights | P0 |
+| markets_insider | Markets Insider | P0 |
+| china_fund_news | 中国基金报 | P0 |
+| wind_public | Wind 万得公开内容 | P0 |
+| goldman_sachs_insights | Goldman Sachs Insights | P1 |
+| business_insider | Business Insider | P1 |
+| cls_cn | 财联社 | P1 |
+| zhitong_caijing | 智通财经 | P1 |
+
+**排除源**：merck_ir、benzinga_analyst_ratings、bofa_global_research、texas_instruments_ir、briefing_com_upgrades、wallstreet_cn、goldman_sachs_reports、goldman_sachs_top_of_mind、goldman_sachs_research、goldman_sachs_podcasts、gelonghui
+
+### 13.2 TRAE 本地启用方式
+
+TRAE 本地任务启用方式：
+- 使用 **command-only shell command**
+- **不要填自然语言 prompt**
+- **不要让 TRAE 调模型解释命令**
+
+**步骤**：
+1. 在 TRAE 任务管理中新建定时任务
+2. 任务命令粘贴以下 command-only 命令：
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run
+   ```
+3. 检查任务命令粘贴以下命令：
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts/check_foundation_trial_v2_content_ready.ps1
+   ```
+4. 设置调度时间（建议 morning / afternoon / evening 三个时段）
+5. 每日 run 后执行 check
+
+**注意**：
+- 示例配置 `configs/trae_foundation_trial_v2_content_ready.example.yaml` 中所有 job `enabled=false`
+- 真实启用只发生在本地 TRAE，**不提交 local config 到 Git**
+- 所有 job 必须是 command-only，不允许自然语言 prompt
+
+### 13.3 代理配置（仅本地）
+
+如果本地需要代理，真实命令可以使用：
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run -Proxy "http://127.0.0.1:7890"
+```
+
+但注意：
+- 代理命令只能出现在本地配置，不提交 Git
+- docs / reports 中不得出现完整 proxy URL
+- 只能记录 proxy_enabled=true/false、proxy_mode=cli/env/none
+
+### 13.4 每日检查要点
+
+运行 `scripts/check_foundation_trial_v2_content_ready.ps1` 后检查：
+
+1. source_health.jsonl 是否新增 8 条记录
+2. run_log.jsonl 是否新增 run 记录
+3. failed_queue.jsonl 是否存在且 fail-soft
+4. latest report 是否更新
+5. check 是否 15/15 通过
+
+### 13.5 Wind Public 特殊观察
+
+`wind_public` 存在 `garbled_text` 噪音风险，每日检查中需重点观察：
+- 乱码率是否上升
+- 有效候选数是否低于 2
+- 如出现持续乱码，需降级为 content_watch 并暂停调度
+
+### 13.6 状态分级
+
+| 状态 | 含义 | 操作 |
+|---|---|---|
+| content_ready | 内容有效，可调度 | 正常纳入 trial_v2 run |
+| content_watch | 内容不稳定 | 暂停调度，观察修复 |
+| content_reject | 内容无效 | 不调度，列入 backlog |
+| technical_only | 技术/网络问题 | 不调度，等待 connector 修复 |
+
+### 13.7 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v1 | 否 |
+| 是否配置 production | 否 |
+| 是否调度 92 全量 | 否 |
+| 是否纳入 watch/reject/technical_only | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否提交真实 TRAE local config | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否引入 Playwright/Selenium | 否 |

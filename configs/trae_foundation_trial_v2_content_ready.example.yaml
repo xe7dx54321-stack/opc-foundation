@@ -1,24 +1,40 @@
 # TRAE Foundation Trial V2 Content-Ready Command-Only Example Configuration
-# 阶段: M3C-5A8
+# 阶段: M3C-5A9
 # 用途: 示例配置，不是真实 TRAE scheduling
 # 状态: enabled=false，不执行任何自动调度
+# 注意: 真实启用仅在本地 TRAE，不提交 local config
 
 version: 1
 
 scope:
   name: "foundation_trial_v2_content_ready_command_only"
-  description: "Example command-only TRAE jobs for 9 content_ready trial_v2 sources"
+  description: "Example command-only TRAE jobs for 8 content_ready trial_v2 sources"
   production_enabled: false
   command_only: true
   real_schedule_enabled: false
+  owner_approval_required: true
 
 jobs:
-  - job_id: foundation_trial_v2_content_ready_morning
+  - job_id: foundation_trial_v2_content_ready_morning_run
     enabled: false
+    schedule_hint: "morning"
     command: "powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run"
-    notes: "Example only. Do not enable until owner approval."
+    notes: "Example only. Enable only in local TRAE after owner approval."
 
-  - job_id: foundation_trial_v2_content_ready_check
+  - job_id: foundation_trial_v2_content_ready_afternoon_run
     enabled: false
+    schedule_hint: "afternoon"
+    command: "powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run"
+    notes: "Example only. Enable only in local TRAE after owner approval."
+
+  - job_id: foundation_trial_v2_content_ready_evening_run
+    enabled: false
+    schedule_hint: "evening"
+    command: "powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run"
+    notes: "Example only. Enable only in local TRAE after owner approval."
+
+  - job_id: foundation_trial_v2_content_ready_daily_check
+    enabled: false
+    schedule_hint: "after evening run"
     command: "powershell -ExecutionPolicy Bypass -File scripts/check_foundation_trial_v2_content_ready.ps1"
-    notes: "Example only. Do not enable until owner approval."
+    notes: "Example only. Enable only in local TRAE after owner approval."
