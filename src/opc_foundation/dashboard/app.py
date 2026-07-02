@@ -59,6 +59,7 @@ from opc_foundation.dashboard.models import (
     CapabilityUsageRegistry,
     RuntimeBindingRegistry,
 )
+from opc_foundation.dashboard.trial_v2_status import load_trial_v2_content_ready_summary as load_trial_v2_summary
 
 # 品牌配色
 COLORS = {
@@ -2435,6 +2436,59 @@ def _render_health_monitor(st, registry, runtime_summaries):
     else:
         with st.container():
             st.info("🧪 Foundation Trial Sources：尚未运行，暂无 trial 数据。运行 `scripts/run_foundation_trial_sources.ps1` 后自动刷新。")
+
+    # --- Trial V2 Content Ready (只读卡片) ---
+    trial_v2 = load_trial_v2_summary(_find_project_root())
+    if trial_v2.data_exists:
+        wind_warning = ""
+        if trial_v2.wind_public_watch_flag:
+            wind_style = "color: #ff8c00; font-weight: bold;"
+            wind_text = "wind_public WATCH (garbled_text)"
+            if trial_v2.wind_public_garbled_text_observed:
+                wind_text += " garbled_text_observed=true"
+            wind_warning = f'<span style="{wind_style}">⚠ {wind_text}</span>'
+        else:
+            wind_warning = '<span style="color: #3fb950;">✓ wind_public OK</span>'
+
+        obs_color = {
+            "not_started": "#8b949e",
+            "partial_observation": "#d29922",
+            "completed_24h": "#3fb950",
+        }.get(trial_v2.observation_status, "#8b949e")
+
+        trial_v2_html = f"""
+        <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <span style="font-size: 14px; color: #8b949e;">Foundation Trial V2 Content Ready</span>
+                    <span style="font-size: 12px; color: #8b949e; margin-left: 8px;">（只读，NOT production）</span>
+                </div>
+                <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                    <div><span style="color: #8b949e;">Sources:</span> <strong>{trial_v2.source_count}</strong></div>
+                    <div><span style="color: #8b949e;">Last Run:</span> <strong>{trial_v2.last_run_at[:19] if trial_v2.last_run_at else 'N/A'}</strong></div>
+                    <div><span style="color: #8b949e;">Success:</span> <strong style="color: #3fb950;">{trial_v2.success_count}</strong></div>
+                    <div><span style="color: #8b949e;">Failed:</span> <strong style="color: #f85149;">{trial_v2.failed_count}</strong></div>
+                    <div><span style="color: #8b949e;">Failed Queue:</span> <strong>{trial_v2.failed_queue_count}</strong></div>
+                    <div><span style="color: #8b949e;">Production:</span> <strong style="color: #f85149;">false</strong></div>
+                    <div><span style="color: #8b949e;">Observation:</span> <strong style="color: {obs_color};">{trial_v2.observation_status}</strong></div>
+                </div>
+            </div>
+            <div style="margin-top: 8px; font-size: 13px;">
+                {wind_warning}
+            </div>
+        </div>
+        """
+        st.markdown(trial_v2_html, unsafe_allow_html=True)
+    else:
+        trial_v2_html = """
+        <div style="background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <span style="font-size: 14px; color: #8b949e;">Foundation Trial V2 Content Ready</span>
+                <span style="font-size: 13px; color: #d29922;">尚未运行 (not_started)</span>
+            </div>
+        </div>
+        """
+        st.markdown(trial_v2_html, unsafe_allow_html=True)
 
     # --- 构建表格行 ---
     table_rows = ""

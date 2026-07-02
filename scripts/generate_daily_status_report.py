@@ -21,6 +21,7 @@ from opc_foundation.dashboard.loaders import (
     load_source_inventory_config,
     summarize_source_inventory,
 )
+from opc_foundation.dashboard.trial_v2_status import load_trial_v2_content_ready_summary
 
 
 def generate_report() -> str:
@@ -116,7 +117,38 @@ def generate_report() -> str:
     lines.append("- Default enabled: scheduled tasks")
     lines.append("- Search/Community/Dev: on_demand")
     lines.append("")
-    lines.append("## 8. Next Steps")
+    lines.append("## 8. Foundation Trial V2 Content Ready")
+    lines.append("")
+    lines.append("> trial_v2, NOT production. production_enabled=false")
+    lines.append("")
+
+    trial_v2 = load_trial_v2_content_ready_summary()
+    if trial_v2.data_exists:
+        lines.append(f"- Source count: {trial_v2.source_count}")
+        lines.append(f"- Last run: {trial_v2.last_run_at or 'N/A'}")
+        lines.append(f"- Latest run ID: {trial_v2.latest_run_id or 'N/A'}")
+        lines.append(f"- Success count: {trial_v2.success_count}")
+        lines.append(f"- Failed count: {trial_v2.failed_count}")
+        lines.append(f"- Content ready: {trial_v2.content_ready_count}")
+        lines.append(f"- Content watch: {trial_v2.content_watch_count}")
+        lines.append(f"- Content reject: {trial_v2.content_reject_count}")
+        lines.append(f"- Technical only: {trial_v2.technical_only_count}")
+        lines.append(f"- Failed queue: {trial_v2.failed_queue_count}")
+        lines.append(f"- Production enabled: {trial_v2.production_enabled}")
+        lines.append(f"- Observation status: {trial_v2.observation_status}")
+        lines.append("")
+        if trial_v2.wind_public_watch_flag:
+            lines.append(f"- **wind_public watch flag: {trial_v2.wind_public_watch_flag}**")
+            if trial_v2.wind_public_garbled_text_observed:
+                lines.append(f"- **wind_public garbled_text observed: {trial_v2.wind_public_garbled_text_observed}**")
+                lines.append("  - wind_public 已纳入 trial_v2，但需观察乱码率；若 valid/relevant candidate < 2，应降级为 content_watch。")
+            lines.append("")
+    else:
+        lines.append("- Trial V2 Content-Ready data not yet generated.")
+        lines.append("  observation_status: not_started")
+        lines.append("  Run: `scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run`")
+    lines.append("")
+    lines.append("## 9. Next Steps")
     lines.append("")
     lines.append("- Monitor cls_cn transient watch (HTTP 418)")
     lines.append("- If trial stable for 2 weeks, consider M3C-5 production scheduling")
