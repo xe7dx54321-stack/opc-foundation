@@ -2,15 +2,18 @@
 import subprocess
 import sys
 import os
+from pathlib import Path
 
 
 def _run(args):
-    env = {**os.environ,
-           "PYTHONPATH": "D:\\李少博的文件\\一人公司项目开发\\opc-foundation\\src"}
+    _SRC_PATH = str(Path(__file__).parent.parent / "src")
+    _CWD = str(Path(__file__).parent.parent)
+    run_env = {**os.environ,
+           "PYTHONPATH": _SRC_PATH + os.pathsep + os.environ.get("PYTHONPATH", "")}
     return subprocess.run(
         [sys.executable, "-m", "opc_foundation.cli"] + args,
-        capture_output=True, text=True, env=env,
-        cwd="D:\\李少博的文件\\一人公司项目开发\\opc-foundation"
+        capture_output=True, text=True, env=run_env,
+        cwd=_CWD
     )
 
 

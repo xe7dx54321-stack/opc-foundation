@@ -19,9 +19,9 @@ def _run(args, extra_env=None):
         CompletedProcess 对象
     """
     env = {**os.environ}
-    env["PYTHONPATH"] = _SRC_PATH + os.pathsep + env.get("PYTHONPATH", "")
     if extra_env:
         env.update(extra_env)
+    env["PYTHONPATH"] = _SRC_PATH + os.pathsep + env.get("PYTHONPATH", "")
     return subprocess.run(
         [sys.executable, "-m", "opc_foundation.cli"] + args,
         capture_output=True, text=True, env=env

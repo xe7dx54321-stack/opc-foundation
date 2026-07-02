@@ -250,7 +250,11 @@ class TestTrialCLI:
     def test_trial_validate_command(self):
         """trial-validate 命令应该能正常执行。"""
         import subprocess
+        import os
 
+        _SRC_PATH = str(Path(__file__).parent.parent.parent / "src")
+        _CWD = str(Path(__file__).parent.parent.parent)
+        env = {**os.environ, "PYTHONPATH": _SRC_PATH + os.pathsep + os.environ.get("PYTHONPATH", "")}
         result = subprocess.run(
             [
                 sys.executable, "-m", "opc_foundation.source_inventory.cli",
@@ -258,7 +262,8 @@ class TestTrialCLI:
             ],
             capture_output=True,
             text=True,
-            cwd="src/..",
+            env=env,
+            cwd=_CWD,
         )
         assert result.returncode == 0, f"trial-validate failed: {result.stderr}"
         assert "Trial Configuration Validation: PASSED" in result.stdout
@@ -275,6 +280,9 @@ class TestTrialCLI:
         import tempfile
         import os
 
+        _SRC_PATH = str(Path(__file__).parent.parent.parent / "src")
+        _CWD = str(Path(__file__).parent.parent.parent)
+        env = {**os.environ, "PYTHONPATH": _SRC_PATH + os.pathsep + os.environ.get("PYTHONPATH", "")}
         with tempfile.TemporaryDirectory() as tmp_dir:
             result = subprocess.run(
                 [
@@ -285,7 +293,8 @@ class TestTrialCLI:
                 ],
                 capture_output=True,
                 text=True,
-                cwd="src/..",
+                env=env,
+                cwd=_CWD,
                 timeout=60,
             )
             assert result.returncode == 0, f"trial-run --dry-run failed: {result.stderr}"

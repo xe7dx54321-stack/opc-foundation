@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "opc-foundation"
 dynamic = ["version"]
 description = "Reusable foundation modules for OPC AI product projects"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = [
   "pydantic>=2",
   "PyYAML>=6",
