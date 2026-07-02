@@ -308,3 +308,80 @@ Preflight 详细结果：
 | 是否恢复已删除 Dashboard 页面 | 否 |
 | 是否引入 Playwright/Selenium | 否 |
 | 是否打 tag | 否 |
+
+---
+
+## 12. M3C-5A10：24h 观察期
+
+> 执行时间：2026-07-02
+> 阶段：M3C-5A10
+> 目标：验证 8 个 content_ready 源在 TRAE 本地 command-only 调度下的稳定性
+
+### 12.1 观察状态
+
+- **observation_status**：`partial_observation`
+- **原因**：单次会话内完成了脚本验证、preflight 审计、产物生成和 check 检查。完整 24h 观察（morning_run + afternoon_run + evening_run + daily_check）需本地 TRAE 持续运行后补齐。
+
+### 12.2 已完成的验证
+
+- [x] validate-config PASS
+- [x] preflight PASS（8/8 content_ready）
+- [x] run PASS（8 sources queued）
+- [x] check PASS（15/15）
+- [x] source_health 增量记录（16 条总记录）
+- [x] run_log 增量记录（16 条总记录）
+- [x] failed_queue 已创建（空，fail-soft）
+- [x] 8 源逐源表现已记录
+- [x] wind_public garbled_text 已识别
+
+### 12.3 待完成的 24h 观察
+
+- [ ] morning_run（独立 24h 周期内自动执行）
+- [ ] afternoon_run（独立 24h 周期内自动执行）
+- [ ] evening_run（独立 24h 周期内自动执行）
+- [ ] daily_check（独立 24h 周期内自动执行）
+
+### 12.4 8 源逐源表现摘要
+
+| source_id | score | valid | relevant | fresh | 合格 | watch_flag |
+|---|---:|---:|---:|---:|---|---|
+| barclays_our_insights | 80 | 3 | 2 | 0 | 是 | - |
+| markets_insider | 90 | 3 | 3 | 0 | 是 | - |
+| china_fund_news | 100 | 3 | 3 | 3 | 是 | - |
+| wind_public | 75 | 3 | 2 | 0 | 观察中 | garbled_text |
+| goldman_sachs_insights | 65 | 2 | 2 | 0 | 是 | - |
+| business_insider | 95 | 3 | 3 | 2 | 是 | - |
+| cls_cn | 100 | 3 | 3 | 3 | 是 | - |
+| zhitong_caijing | 100 | 3 | 3 | 3 | 是 | - |
+
+### 12.5 Wind Public 观察
+
+- **garbled_text 是否出现**：是
+- **影响**：中等，valid=3, relevant=2，仍满足 content_ready 门槛
+- **建议**：每日检查中重点监控，如乱码率上升或 valid/relevant < 2，降级为 content_watch
+
+### 12.6 是否建议进入 M3C-5A11
+
+- **建议**：yes（附带条件）
+- **原因**：8 源全部 content_ready，脚本稳定，产物正常
+- **附加条件**：需在本地 TRAE 完成完整 24h 观察后再评估是否进入 3-day observation 或 production-candidate
+
+### 12.7 24h Observation Report
+
+- **报告路径**：`docs/foundation_trial_v2_24h_observation_report.md`
+- **内容**：TRAE 启用状态、运行结果、日志增量、逐源表现、wind_public 观察、边界确认
+
+### 12.8 边界确认（M3C-5A10）
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v1 | 否 |
+| 是否配置 production | 否 |
+| 是否调度 92 全量 | 否 |
+| 是否纳入 merck_ir | 否 |
+| 是否纳入 watch/reject/technical_only | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否提交真实 TRAE local config | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否打 tag | 否 |

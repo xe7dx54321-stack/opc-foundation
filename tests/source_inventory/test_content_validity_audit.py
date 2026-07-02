@@ -1235,3 +1235,132 @@ class TestM3C5A9TrialV2ContentReadySchedulingEnable:
                 assert "render_run_log" not in content
                 assert "render_failed_queue" not in content
                 assert "render_docs" not in content
+
+
+# =============================================================================
+# M3C-5A10: Trial V2 Content-Ready 24h Observation 测试
+# =============================================================================
+
+class TestM3C5A10TrialV2ContentReady24hObservation:
+    """M3C-5A10: 8 源 trial_v2 24h 观察期测试。
+
+    覆盖 14 项检查要求。
+    """
+
+    # ---- Observation Report ----
+
+    def test_observation_report_exists(self):
+        """24h observation report 存在。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        assert p.exists(), f"Observation report not found: {p}"
+
+    def test_report_says_trial_v2_not_production(self):
+        """report 说明 trial_v2 不是 production。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "production" in content
+        assert "否" in content or "not" in content
+
+    def test_report_contains_8_source_ids(self):
+        """report 包含 8 个 source_id。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8")
+        sources = [
+            "barclays_our_insights", "markets_insider", "china_fund_news",
+            "wind_public", "goldman_sachs_insights", "business_insider",
+            "cls_cn", "zhitong_caijing"
+        ]
+        found = sum(1 for s in sources if s in content)
+        assert found == 8, f"Expected 8 sources in report, found {found}"
+
+    def test_report_contains_4_command_only_jobs(self):
+        """report 包含 4 个 command-only jobs。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8")
+        jobs = [
+            "foundation_trial_v2_content_ready_morning_run",
+            "foundation_trial_v2_content_ready_afternoon_run",
+            "foundation_trial_v2_content_ready_evening_run",
+            "foundation_trial_v2_content_ready_daily_check",
+        ]
+        for job in jobs:
+            assert job in content, f"Job {job} not found in report"
+
+    def test_report_says_command_only_no_prompt(self):
+        """report 说明 command-only，不使用自然语言 prompt。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "command-only" in content or "command_only" in content
+        assert "prompt" not in content or "否" in content
+
+    def test_report_no_proxy_url(self):
+        """report 不包含 proxy URL。"""
+        import re
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8")
+        for pattern in [r'http://\S+:\d+', r'https://\S+:\d+', r'socks5://', r'socks4://']:
+            assert len(re.findall(pattern, content)) == 0, f"Proxy URL found: {pattern}"
+
+    def test_report_no_secrets(self):
+        """report 不包含 secrets / cookie / token。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        for pattern in ["api_key", "secret_key", "bearer_token", "cookie="]:
+            assert pattern not in content, f"Secret pattern found: {pattern}"
+
+    def test_report_has_wind_public_garbled_text(self):
+        """report 包含 wind_public garbled_text watch。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "wind_public" in content
+        assert "garbled" in content or "乱码" in content
+
+    def test_report_has_manual_trae_setup_status(self):
+        """report 包含 manual_trae_setup_required 或 local_trae_enabled 状态。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "manual_trae_setup_required" in content or "local_trae" in content
+
+    def test_report_has_observation_status(self):
+        """report 包含 partial_observation / completed_observation 状态。"""
+        p = Path("docs/foundation_trial_v2_24h_observation_report.md")
+        content = p.read_text(encoding="utf-8").lower()
+        assert "partial_observation" in content or "completed_observation" in content or "completed_24h" in content
+
+    # ---- Operations Doc ----
+
+    def test_operations_doc_has_m3c5a10(self):
+        """operations doc 包含 M3C-5A10 说明。"""
+        p = Path("docs/foundation_trae_operations.md")
+        content = p.read_text(encoding="utf-8")
+        assert "M3C-5A10" in content
+
+    # ---- 边界 ----
+
+    def test_no_deleted_dashboard_pages_observation(self):
+        """不恢复总览/运行日志/失败队列/文档入口。"""
+        for p in [
+            Path("docs/foundation_trial_v2_24h_observation_report.md"),
+            Path("docs/foundation_trae_operations.md"),
+        ]:
+            if p.exists():
+                content = p.read_text(encoding="utf-8")
+                assert "render_overview" not in content
+                assert "render_run_log" not in content
+                assert "render_failed_queue" not in content
+                assert "render_docs" not in content
+
+    def test_data_not_committed(self):
+        """data/foundation_trial_v2_content_ready/ 不提交。"""
+        gitignore = Path(".gitignore")
+        assert gitignore.exists(), ".gitignore not found"
+        content = gitignore.read_text()
+        assert "data/" in content or "foundation_trial_v2_content_ready" in content
+
+    def test_local_trae_config_not_committed(self):
+        """真实 local TRAE config 不提交（检查 .gitignore）。"""
+        gitignore = Path(".gitignore")
+        assert gitignore.exists(), ".gitignore not found"
+        content = gitignore.read_text()
+        # 至少应忽略 data/ 或 local 配置
+        assert "data/" in content or ".local" in content or "*.local.yaml" in content

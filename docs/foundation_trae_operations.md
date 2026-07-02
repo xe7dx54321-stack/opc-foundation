@@ -455,3 +455,93 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
 | 是否提交真实 TRAE local config | 否 |
 | 是否恢复已删除 Dashboard 页面 | 否 |
 | 是否引入 Playwright/Selenium | 否 |
+
+---
+
+## 14. M3C-5A10：24h 观察期运维
+
+> 执行时间：2026-07-02
+> 观察对象：8 个 content_ready 源 trial_v2 command-only 调度
+> observation_status：`partial_observation`
+
+### 14.1 观察目标
+
+验证 8 个 content_ready 源是否能在 TRAE 本地 command-only 调度下稳定运行 24 小时。
+
+### 14.2 观察要求
+
+至少观察以下运行：
+
+- [ ] morning_run：至少 1 次
+- [ ] afternoon_run：至少 1 次
+- [ ] evening_run：至少 1 次
+- [ ] daily_check：至少 1 次
+
+### 14.3 每次运行检查清单
+
+1. source_health.jsonl 是否新增 8 条记录
+2. run_log.jsonl 是否新增 run 记录
+3. failed_queue.jsonl 是否存在且 fail-soft
+4. latest report 是否更新
+5. check 是否 15/15 通过
+6. wind_public garbled_text 是否出现
+
+### 14.4 8 源观察标准
+
+| source_id | 合格标准 |
+|---|---|
+| barclays_our_insights | 能拿到 Barclays insights / press / sector links 相关内容 |
+| markets_insider | 能拿到市场新闻、IPO、stock market、公司/行情相关标题 |
+| china_fund_news | 能拿到中文基金/券商/行业资讯，有标题和时间 |
+| wind_public | 能拿到 Wind 公开资讯，但必须重点记录 garbled_text ratio |
+| goldman_sachs_insights | 能拿到 Goldman Sachs insights 文章链接、标题、发布日期 |
+| business_insider | 能拿到 Business Insider 新闻标题、URL、日期或从 URL 推断日期 |
+| cls_cn | 能拿到财联社中文快讯/新闻标题、URL、中文时间 |
+| zhitong_caijing | 能拿到智通财经中文新闻标题、URL、时间或相对时间 |
+
+### 14.5 wind_public 特殊处理
+
+如果 wind_public 乱码过高：
+- 不得直接判定失败
+- 标记为 `content_ready_watch_flag`
+- 后续进入 Wind text-cleaning 专项
+- 如 valid_count < 2 或 relevant_count < 2，降级为 content_watch
+
+### 14.6 24h Observation Report
+
+- **报告路径**：`docs/foundation_trial_v2_24h_observation_report.md`
+- **更新频率**：每完成一轮观察后更新
+- **必须包含**：
+  - observation_status（partial_observation / completed_24h）
+  - 8 源逐源表现
+  - wind_public garbled_text 观察结果
+  - 是否建议进入 M3C-5A11
+
+### 14.7 Daily Status 后续补齐计划
+
+当前 `scripts/generate_daily_status_report.py` 尚未接入 trial_v2 content-ready 数据。后续轻量更新计划：
+
+1. 在 daily status 中增加 `Foundation Trial v2 Content Ready` section
+2. 展示字段：
+   - source_count
+   - last_run_at
+   - success_count
+   - failed_count
+   - latest_check_status
+   - wind_public_watch_flag
+   - production_enabled=false
+
+### 14.8 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v1 | 否 |
+| 是否配置 production | 否 |
+| 是否调度 92 全量 | 否 |
+| 是否纳入 merck_ir | 否 |
+| 是否纳入 watch/reject/technical_only | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否提交真实 TRAE local config | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否打 tag | 否 |
