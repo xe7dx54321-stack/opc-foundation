@@ -54,3 +54,6 @@ data/foundation_control_center/
 data/foundation_trial/
 data/foundation_content_validity/
 configs/foundation_source_inventory.local.yaml
+
+# Trial V2 Content-Ready Scheduling 归档数据（严禁提交）
+data/foundation_trial_v2_content_ready/

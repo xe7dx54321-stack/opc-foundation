@@ -224,3 +224,38 @@ M3C-5A7 第一轮后，以下 3 个源仍为 content_watch：
 - content_ready 总数：6 → 9（+3）
 - content_watch 总数：7 → 5（-2，gelonghui 和 GS 系列仍为 watch）
 - 建议进入 TRAE trial_v2 scheduling（第 2 批）
+
+---
+
+## M3C-5A8：Trial V2 Content-Ready Scheduling 配置
+
+> 更新时间：2026-07-02
+
+### M3C-5A8.1 Scheduling 候选
+
+基于 M3C-5A7.1 修复结果，9 个 content_ready 源进入 M3C-5A8 scheduling 候选配置：
+
+| source_id | content_score | scheduling_priority |
+|---|---:|---|
+| barclays_our_insights | 80 | P0 |
+| markets_insider | 90 | P0 |
+| china_fund_news | 100 | P0 |
+| wind_public | 75 | P0 |
+| goldman_sachs_insights | 65 | P1 |
+| business_insider | 95 | P1 |
+| cls_cn | 100 | P1 |
+| zhitong_caijing | 100 | P1 |
+
+### M3C-5A8.2 Preflight 降级
+
+| source_id | 降级原因 |
+|---|---|
+| merck_ir | HTTP 403 Forbidden |
+
+merck_ir 从 content_ready 降级为 technical_only，移出 scheduling 候选。
+
+### M3C-5A8.3 TRAE Scheduling 策略
+
+- 只纳入 content_ready
+- content_watch / content_reject / technical_only 不得进入 scheduling
+- M3C-5A8 只是候选配置与验证，不是正式启用

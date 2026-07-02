@@ -1,0 +1,99 @@
+# OPC Foundation Trial V2 Content-Ready Candidate Allowlist
+# 阶段: M3C-5A8
+# 依据: M3C-5A5/M3C-5A7/M3C-5A7.1 内容有效性审计
+# 用途: TRAE trial_v2 command-only 候选配置
+#
+# 注意: merck_ir 已在 preflight 中降级（HTTP 403 Forbidden），
+#       从 allowlist 中移除，expected_source_count 从 9 调整为 8。
+
+version: 1
+
+scope:
+  name: "foundation_trial_v2_content_ready_candidates"
+  description: "TRAE trial_v2 command-only candidate allowlist based only on content_ready sources"
+  source_selection_basis: "M3C-5A5/M3C-5A7/M3C-5A7.1 content validity audit"
+  expected_source_count: 8
+  production_enabled: false
+  trae_scheduling_enabled: false
+  command_only_required: true
+
+input:
+  source_inventory: "configs/foundation_source_inventory.example.yaml"
+  content_validity_report: "docs/foundation_content_validity_audit_report.md"
+  content_watch_repair_report: "docs/foundation_content_watch_repair_report.md"
+
+policy:
+  include_status:
+    - content_ready
+  exclude_status:
+    - content_watch
+    - content_reject
+    - technical_only
+    - not_audited
+  require_real_sample_validation: true
+  min_candidates_per_source: 3
+
+sources:
+  - source_id: barclays_our_insights
+    source_name: "Barclays Our Insights"
+    content_status: content_ready
+    content_score: 90
+    scheduling_candidate: true
+    priority: P0
+    audit_phase: "M3C-5A5"
+
+  - source_id: markets_insider
+    source_name: "Markets Insider"
+    content_status: content_ready
+    content_score: 90
+    scheduling_candidate: true
+    priority: P0
+    audit_phase: "M3C-5A5"
+
+  - source_id: china_fund_news
+    source_name: "中国基金报"
+    content_status: content_ready
+    content_score: 100
+    scheduling_candidate: true
+    priority: P0
+    audit_phase: "M3C-5A5"
+
+  - source_id: wind_public
+    source_name: "Wind 万得公开内容"
+    content_status: content_ready
+    content_score: 85
+    scheduling_candidate: true
+    priority: P0
+    audit_phase: "M3C-5A5"
+
+  - source_id: goldman_sachs_insights
+    source_name: "Goldman Sachs Insights"
+    content_status: content_ready
+    content_score: 90
+    scheduling_candidate: true
+    priority: P1
+    audit_phase: "M3C-5A7"
+
+  - source_id: business_insider
+    source_name: "Business Insider"
+    content_status: content_ready
+    content_score: 95
+    scheduling_candidate: true
+    priority: P1
+    audit_phase: "M3C-5A7.1"
+
+  - source_id: cls_cn
+    source_name: "财联社"
+    content_status: content_ready
+    content_score: 100
+    scheduling_candidate: true
+    priority: P1
+    audit_phase: "M3C-5A7.1"
+
+  - source_id: zhitong_caijing
+    source_name: "智通财经"
+    content_status: content_ready
+    content_score: 100
+    scheduling_candidate: true
+    priority: P1
+    audit_phase: "M3C-5A7.1"

@@ -324,6 +324,37 @@
 
 ---
 
+## 12. M3C-5A8 Trial V2 Content-Ready Scheduling
+
+> 更新时间：2026-07-02
+> 关联阶段：M3C-5A8
+
+### 12.1 Scheduling 候选
+
+基于 M3C-5A5/M3C-5A7/M3C-5A7.1 内容有效性审计，9 个 content_ready 源进入 M3C-5A8 scheduling 候选配置阶段。
+
+### 12.2 Preflight 结果
+
+Preflight 联网复核 9 个源，8 个保留为 content_ready，1 个降级：
+
+| source_id | 降级原因 |
+|---|---|
+| merck_ir | HTTP 403 Forbidden |
+
+### 12.3 最终 scheduling 候选数
+
+**8 个** content_ready 源进入 trial_v2 command-only 候选配置。
+
+详见：`docs/foundation_trial_v2_content_ready_scheduling_report.md`
+
+### 12.4 TRAE Scheduling 策略
+
+- **纳入策略**：只纳入 content_ready 源
+- **排除策略**：content_watch / content_reject / technical_only 不得进入 scheduling
+- **当前阶段**：M3C-5A8 只是候选配置与验证，不是正式启用
+
+---
+
 ## 9. 相关文件
 
 - 配置文件：`configs/foundation_content_validity_audit.example.yaml`

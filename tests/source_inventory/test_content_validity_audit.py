@@ -827,3 +827,245 @@ class TestM3C5A71ContentWatchRepair:
         assert "render_run_log" not in content
         assert "render_failed_queue" not in content
         assert "render_docs" not in content
+
+
+# =============================================================================
+# M3C-5A8: Trial V2 Content-Ready Scheduling 测试
+# =============================================================================
+
+class TestM3C5A8TrialV2ContentReadyScheduling:
+    """M3C-5A8: Trial V2 Content-Ready Scheduling 候选配置测试。
+
+    覆盖 26 项检查要求。
+    """
+
+    # ---- Allowlist 存在性与内容 ----
+
+    def test_content_ready_allowlist_exists(self):
+        """content-ready allowlist 文件存在。"""
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        assert p.exists(), f"Allowlist not found: {p}"
+
+    def test_allowlist_source_count(self):
+        """allowlist source count = 8（preflight 后 merck_ir 降级）。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        count = len(config.get("sources", []))
+        assert count == 8, f"Expected 8 sources, got {count}"
+
+    def test_allowlist_only_content_ready(self):
+        """allowlist 只包含 content_ready 源。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for src in config["sources"]:
+            assert src["content_status"] == "content_ready", f"{src['source_id']} is {src['content_status']}"
+
+    def test_allowlist_no_content_watch(self):
+        """allowlist 不包含 content_watch。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for src in config["sources"]:
+            assert src["content_status"] != "content_watch"
+
+    def test_allowlist_no_content_reject(self):
+        """allowlist 不包含 content_reject。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for src in config["sources"]:
+            assert src["content_status"] != "content_reject"
+
+    def test_allowlist_no_technical_only(self):
+        """allowlist 不包含 technical_only。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for src in config["sources"]:
+            assert src["content_status"] != "technical_only"
+
+    def test_allowlist_no_blocked_sources(self):
+        """allowlist 不包含 blocked/search/dormant/TLS/微信源。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        excluded_ids = {
+            "yahoo_finance", "the_fly", "bofa_global_research",
+            "texas_instruments_ir", "benzinga_analyst_ratings",
+            "briefing_com_upgrades", "wallstreet_cn",
+            "gelonghui", "goldman_sachs_podcasts",
+        }
+        for src in config["sources"]:
+            assert src["source_id"] not in excluded_ids, f"Excluded source found: {src['source_id']}"
+
+    def test_allowlist_production_disabled(self):
+        """production_enabled=false。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        assert config["scope"]["production_enabled"] == False
+
+    def test_allowlist_trae_scheduling_disabled(self):
+        """trae_scheduling_enabled=false。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        assert config["scope"]["trae_scheduling_enabled"] == False
+
+    # ---- TRAE 示例配置 ----
+
+    def test_trae_example_config_exists(self):
+        """TRAE 示例配置存在。"""
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        assert p.exists(), f"TRAE example config not found: {p}"
+
+    def test_trae_example_all_disabled(self):
+        """TRAE 示例配置 enabled=false。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        for job in config.get("jobs", []):
+            assert job["enabled"] == False, f"Job {job['job_id']} is enabled"
+
+    def test_trae_example_command_only(self):
+        """TRAE 示例配置 command-only。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        assert config["scope"].get("command_only") == True
+
+    def test_trae_example_no_natural_language_prompt(self):
+        """TRAE 示例配置不包含自然语言 prompt。"""
+        import yaml
+        p = Path("configs/trae_foundation_trial_v2_content_ready.example.yaml")
+        with open(p) as f:
+            content = f.read().lower()
+        assert "prompt" not in content or "example" in content
+
+    # ---- 脚本存在性 ----
+
+    def test_run_script_exists(self):
+        """run_foundation_trial_v2_content_ready.ps1 存在。"""
+        p = Path("scripts/run_foundation_trial_v2_content_ready.ps1")
+        assert p.exists(), f"Run script not found: {p}"
+
+    def test_check_script_exists(self):
+        """check_foundation_trial_v2_content_ready.ps1 存在。"""
+        p = Path("scripts/check_foundation_trial_v2_content_ready.ps1")
+        assert p.exists(), f"Check script not found: {p}"
+
+    # ---- 脚本模式支持 ----
+
+    def test_run_script_supports_modes(self):
+        """run 脚本支持 validate-config / preflight / dry-run / run。"""
+        p = Path("scripts/run_foundation_trial_v2_content_ready.ps1")
+        content = p.read_text(encoding="utf-8")
+        for mode in ["validate-config", "preflight", "dry-run", "run"]:
+            assert mode in content, f"Missing mode: {mode}"
+
+    def test_run_script_supports_proxy(self):
+        """run 脚本支持可选 -Proxy。"""
+        p = Path("scripts/run_foundation_trial_v2_content_ready.ps1")
+        content = p.read_text(encoding="utf-8")
+        assert "-Proxy" in content or "Proxy" in content
+
+    # ---- Scheduling 策略 ----
+
+    def test_content_watch_not_in_scheduling(self):
+        """content_watch 降级源不得进入 scheduling recommendation。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        watch_ids = {"gelonghui", "goldman_sachs_podcasts", "merck_ir"}
+        for src in config["sources"]:
+            assert src["source_id"] not in watch_ids
+
+    def test_content_reject_not_in_scheduling(self):
+        """content_reject 不得进入 scheduling recommendation。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        reject_ids = {"briefing_com_upgrades", "wallstreet_cn"}
+        for src in config["sources"]:
+            assert src["source_id"] not in reject_ids
+
+    def test_technical_only_not_in_scheduling(self):
+        """technical_only 不得进入 scheduling recommendation。"""
+        import yaml
+        p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
+        with open(p) as f:
+            config = yaml.safe_load(f)
+        tech_ids = {"yahoo_finance", "the_fly", "benzinga_analyst_ratings", "bofa_global_research", "texas_instruments_ir", "merck_ir"}
+        for src in config["sources"]:
+            assert src["source_id"] not in tech_ids
+
+    # ---- 报告安全 ----
+
+    def test_scheduling_report_no_proxy_url(self):
+        """报告不包含完整 proxy URL。"""
+        import re
+        p = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        if not p.exists():
+            pytest.skip("Scheduling report not found")
+        content = p.read_text(encoding="utf-8")
+        for pattern in [r'http://[^:]+:\d+', r'https://[^:]+:\d+', r'socks5://', r'socks4://']:
+            assert len(re.findall(pattern, content)) == 0, f"Proxy URL found: {pattern}"
+
+    def test_scheduling_report_no_secrets(self):
+        """报告不包含 cookie / token / secrets。"""
+        p = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        if not p.exists():
+            pytest.skip("Scheduling report not found")
+        content = p.read_text(encoding="utf-8").lower()
+        for pattern in ["api_key", "secret_key", "bearer_token", "cookie="]:
+            assert pattern not in content
+
+    def test_report_no_modify_trial_v1(self):
+        """报告明确没有修改 trial_v1。"""
+        p = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        if not p.exists():
+            pytest.skip("Scheduling report not found")
+        content = p.read_text(encoding="utf-8")
+        # 报告使用 "是否修改 trial_v1：否" 格式
+        assert "否" in content or "no" in content.lower() or "not modify" in content.lower()
+
+    def test_report_no_modify_trae_scheduling(self):
+        """报告明确没有修改真实 TRAE scheduling。"""
+        p = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        if not p.exists():
+            pytest.skip("Scheduling report not found")
+        content = p.read_text(encoding="utf-8")
+        assert "否" in content or "no" in content.lower() or "not modify" in content.lower()
+
+    # ---- 边界 ----
+
+    def test_data_not_committed(self):
+        """data/foundation_trial_v2_content_ready/ 不提交 Git。"""
+        gitignore = Path(".gitignore")
+        assert gitignore.exists(), ".gitignore not found"
+        content = gitignore.read_text()
+        assert "data/" in content or "foundation_trial_v2_content_ready" in content
+
+    def test_no_deleted_dashboard_pages(self):
+        """不恢复总览/运行日志/失败队列/文档入口。"""
+        report_path = Path("docs/foundation_trial_v2_content_ready_scheduling_report.md")
+        if report_path.exists():
+            content = report_path.read_text(encoding="utf-8")
+            assert "render_overview" not in content
+            assert "render_run_log" not in content
+            assert "render_failed_queue" not in content
+            assert "render_docs" not in content

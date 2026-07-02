@@ -1,0 +1,24 @@
+# TRAE Foundation Trial V2 Content-Ready Command-Only Example Configuration
+# 阶段: M3C-5A8
+# 用途: 示例配置，不是真实 TRAE scheduling
+# 状态: enabled=false，不执行任何自动调度
+
+version: 1
+
+scope:
+  name: "foundation_trial_v2_content_ready_command_only"
+  description: "Example command-only TRAE jobs for 9 content_ready trial_v2 sources"
+  production_enabled: false
+  command_only: true
+  real_schedule_enabled: false
+
+jobs:
+  - job_id: foundation_trial_v2_content_ready_morning
+    enabled: false
+    command: "powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content_ready.ps1 -Mode run"
+    notes: "Example only. Do not enable until owner approval."
+
+  - job_id: foundation_trial_v2_content_ready_check
+    enabled: false
+    command: "powershell -ExecutionPolicy Bypass -File scripts/check_foundation_trial_v2_content_ready.ps1"
+    notes: "Example only. Do not enable until owner approval."
