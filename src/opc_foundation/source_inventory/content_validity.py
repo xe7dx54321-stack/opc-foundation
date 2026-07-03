@@ -536,7 +536,7 @@ _SOURCE_SPECIFIC_SELECTORS: dict[str, list[tuple[str, str]]] = {
     # === 格隆汇 ===
     # 格隆汇文章在 div.detail-left 中的 <a> 标签
     "gelonghui": [
-        ("div.detail-left a[href*='/p/']", "glh_article"),
+        ("a[href*='/p/']", "glh_article"),
     ],
 
     # === 智通财经 ===
@@ -752,18 +752,30 @@ def extract_candidates_from_html(
                         if not title or len(title) < 5:
                             continue
 
-                    elif extraction_type == "merck_news":
-                        # Merck 新闻链接：只取链接文本长度 > 15 的
-                        link_text = elem.get_text(strip=True)
-                        if len(link_text) > 15:
-                            title = link_text
+                    elif extraction_type in ("merck_news", "merck_events", "merck_presentation"):
+                        if extraction_type == "merck_news":
+                            # Merck 新闻链接：只取链接文本长度 > 15 的
+                            link_text = elem.get_text(strip=True)
+                            if len(link_text) > 15:
+                                title = link_text
+                            else:
+                                continue
                         else:
+                            # Merck 活动/演示文稿链接
+                            title = elem.get_text(strip=True)
+
+                        if not title or any(x in title for x in ["Icons /", "See full agenda", "MicrophoneWebcast"]):
                             continue
 
-                    elif extraction_type in ("merck_events", "merck_presentation"):
-                        # Merck 活动/演示文稿链接
-                        title = elem.get_text(strip=True)
-                        if not title or len(title) < 5:
+                        MERCK_NOISE = {
+                            "See full agenda", "Icons /", "MicrophoneWebcast",
+                            "News releases", "Events & presentations", "Events", "Presentations",
+                            "Financial information", "SEC filings", "Stock information",
+                            "Investor resources", "Investors overview", "Investors",
+                        }
+                        if title in MERCK_NOISE:
+                            continue
+                        if len(title) < 10:
                             continue
 
                     elif extraction_type == "cls_news_container":
@@ -813,9 +825,56 @@ def extract_candidates_from_html(
 
                     elif extraction_type == "glh_article":
                         # 格隆汇文章
-                        title = elem.get_text(strip=True)
-                        if not title or len(title) < 5:
+                        GELONGHUI_NOISE_TITLE = {
+                            "登录", "注册", "下载APP", "APP下载", "广告", "隐私政策",
+                            "免责声明", "联系我们", "搜索", "行情", "首页", "港股",
+                            "美股", "沪深", "基金", "新股", "公告", "专栏", "要闻",
+                            "推荐", "快讯", "热股", "龙虎榜", "榜单", "排行",
+                            "更多", "查看更多", "点击下载", "立即下载", "APP",
+                        }
+                        GELONGHUI_NOISE_KEYWORDS = {
+                            "登录", "注册", "下载app", "app下载", "广告", "隐私政策",
+                            "免责声明", "联系我们", "搜索", "行情", "首页", "推荐",
+                            "点击下载", "立即下载", "二维码", "扫码",
+                        }
+                        title_elem = elem.find(["h2", "h3", "h4", "h1", "span", "div", "p"])
+                        if title_elem:
+                            title = title_elem.get_text(strip=True)
+                        else:
+                            title = elem.get_text(strip=True)
+                        if not title or len(title) < 10:
                             continue
+                        if title in GELONGHUI_NOISE_TITLE:
+                            continue
+                        title_lower = title.lower()
+                        if any(nk in title_lower for nk in GELONGHUI_NOISE_KEYWORDS):
+                            continue
+                        # 格隆汇文章直接设为 news 类型（中文新闻，通用推断器无法识别）
+                        content_type = "news"
+                        relevance = "high"
+                        # 提取 URL
+                        href = elem.get("href", "")
+                        if not href or href.startswith('#') or href.startswith('javascript:'):
+                            continue
+                        full_url = urljoin(base_url, href).split('#')[0]
+                        if full_url in source_seen_urls:
+                            continue
+                        source_seen_urls.add(full_url)
+                        if _NOISE_LINK_PATTERNS.search(title):
+                            continue
+                        snippet = title[:200]
+                        published_at = _infer_published_date(full_url, title + " " + snippet)
+                        freshness = _classify_freshness(published_at) if published_at else "unknown"
+                        source_candidates.append(ContentCandidate(
+                            title=title,
+                            url=full_url,
+                            published_at=published_at,
+                            snippet=snippet,
+                            content_type=content_type,
+                            relevance=relevance,
+                            freshness=freshness,
+                        ))
+                        continue
 
                     elif extraction_type in ("ztc_detail", "ztc_item"):
                         # 智通财经文章

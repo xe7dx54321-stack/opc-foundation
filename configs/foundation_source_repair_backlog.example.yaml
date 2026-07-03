@@ -25,12 +25,20 @@ categories:
     scheduling_allowed_default: true
     count: 8
 
+  p0_repaired_ready:
+    description: >-
+      Sources repaired during M3C-5B1 P0 round 1 and verified as content_ready
+      via real network crawl. Not yet added to trial v2 scheduling; marked as
+      next_scheduling_candidate for future batches.
+    scheduling_allowed_default: false
+    count: 2
+
   content_watch:
     description: >-
       Sources that produce partial or degraded content. Require repair or
       alternative extraction strategy before scheduling approval.
     scheduling_allowed_default: false
-    count: 5
+    count: 4
 
   content_reject:
     description: >-
@@ -44,7 +52,14 @@ categories:
       Sources blocked by technical barriers (HTTP 403, TLS/SSL failure,
       timeout, Cloudflare). Require specialized handling routes.
     scheduling_allowed_default: false
-    count: 6
+    count: 5
+
+  browser_like_backlog:
+    description: >-
+      Sources requiring JavaScript rendering or browser-like extraction.
+      Deferred to M3C-5B2 browser-like spike.
+    scheduling_allowed_default: false
+    count: 1
 
   matrix_uncategorized:
     description: >-
@@ -194,28 +209,32 @@ sources:
       JS rendering limitation prevents static extraction.
 
   - source_id: goldman_sachs_podcasts
-    category: content_watch
-    status: non_ready
+    category: browser_like_backlog
+    status: browser_like_candidate
     scheduling_allowed: false
     score: 60
-    primary_issue: consolidated_modeling_issue
-    recommended_action: find_rss_or_feed
+    primary_issue: js_rendering_required
+    recommended_action: move_to_browser_like_spike
     priority: P0
-    next_stage: M3C-5B1
+    next_stage: M3C-5B2
     notes: >-
-      Consolidated under a parent page; no independent per-episode URL.
+      Hub page has no SSR episodes; no RSS/Atom/JSON-LD feed found.
+      Requires browser-like extraction (M3C-5B2).
 
   - source_id: gelonghui
-    category: content_watch
-    status: non_ready
+    category: p0_repaired_ready
+    status: content_ready
     scheduling_allowed: false
-    score: 60
-    primary_issue: noise_filter_issue
-    recommended_action: repair_noise_filter
+    score: 90
+    primary_issue: repaired
+    recommended_action: next_scheduling_candidate
     priority: P0
-    next_stage: M3C-5B1
+    next_stage: null
     notes: >-
-      Navigation noise too high; selector or date/noise filter repair needed.
+      M3C-5B1 repaired: selector fixed (a[href*='/p/']), noise filter added,
+      explicit content_type=news/relevance=high for Chinese titles.
+      Verified via real network crawl: 5 valid, 5 relevant, score=90.
+      NOT added to trial_v2 allowlist; next_scheduling_candidate=true.
 
   # --------------------------------------------------------------------------
   # content_reject (2) — empty page, must find alternative
@@ -248,16 +267,19 @@ sources:
   # technical_only (6) — blocked by technical barrier
   # --------------------------------------------------------------------------
   - source_id: merck_ir
-    category: technical_only
-    status: non_ready
+    category: p0_repaired_ready
+    status: content_ready
     scheduling_allowed: false
-    score: 0
-    primary_issue: http_403_or_forbidden
-    recommended_action: find_official_alternative_url
+    score: 90
+    primary_issue: repaired
+    recommended_action: next_scheduling_candidate
     priority: P0
-    next_stage: M3C-5B1
+    next_stage: null
     notes: >-
-      HTTP 403 Forbidden. May require referer check or alternative domain.
+      M3C-5B1 repaired: URL updated to www.merck.com/investor-relations/,
+      noise filter added for navigation elements.
+      Verified via real network crawl: 5 valid, 3 relevant, score=90.
+      NOT added to trial_v2 allowlist; next_scheduling_candidate=true.
 
   - source_id: yahoo_finance
     category: technical_only
