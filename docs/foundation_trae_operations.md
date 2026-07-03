@@ -460,9 +460,9 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
 
 ## 14. M3C-5A10：24h 观察期运维
 
-> 执行时间：2026-07-02
+> 执行时间：2026-07-02 ~ 2026-07-03
 > 观察对象：8 个 content_ready 源 trial_v2 command-only 调度
-> observation_status：`partial_observation`
+> observation_status：`completed_24h`
 
 ### 14.1 观察目标
 
@@ -472,10 +472,10 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
 
 至少观察以下运行：
 
-- [ ] morning_run：至少 1 次
-- [ ] afternoon_run：至少 1 次
-- [ ] evening_run：至少 1 次
-- [ ] daily_check：至少 1 次
+- [x] morning_run：2026-07-03 09:02，8 源 × 8 records
+- [x] afternoon_run：2026-07-03 15:01，8 源 × 8 records
+- [x] evening_run：2026-07-03 21:01，8 源 × 8 records
+- [x] daily_check：2026-07-03 21:32，检查通过
 
 ### 14.3 每次运行检查清单
 
@@ -517,16 +517,22 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
   - wind_public garbled_text 观察结果
   - 是否建议进入 M3C-5A11
 
-### 14.7 Daily Status 后续补齐计划
+### 14.7 Daily Status Trial V2 集成
 
-当前 `scripts/generate_daily_status_report.py` 尚未接入 trial_v2 content-ready 数据。后续轻量更新计划：
+`scripts/generate_daily_status_report.py` 已通过 sidecar 分支（M3C-5A10-sidecar）接入 trial_v2 content-ready 数据。
 
-1. 在 daily status 中增加 `Foundation Trial v2 Content Ready` section
-2. 展示字段：
-   - source_count
-   - last_run_at
-   - success_count
-   - failed_count
+**已展示字段**：
+- source_count
+- last_run_at
+- success_count
+- failed_count
+- failed_queue_count
+- observation_status
+
+**集成模块**：`src/opc_foundation/dashboard/trial_v2_status.py`
+- fail-soft 设计：数据缺失时返回安全默认值
+- 不修改 trial_v1
+- 不恢复已删除 Dashboard 页面
    - latest_check_status
    - wind_public_watch_flag
    - production_enabled=false

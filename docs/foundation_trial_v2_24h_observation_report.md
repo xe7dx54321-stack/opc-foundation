@@ -1,24 +1,26 @@
 # OPC Foundation Trial V2 Content-Ready 24h Observation Report
 
 > 阶段：M3C-5A10
-> 执行时间：2026-07-02
+> 执行时间：2026-07-02 ~ 2026-07-03
 > 观察对象：8 个 content_ready 源 trial_v2 command-only 调度
-> observation_status：**partial_observation**
+> observation_status：**completed_24h**
 
 ---
 
 ## 1. 执行摘要
 
-本报告记录 M3C-5A10 阶段对 8 个 content_ready 源的 trial_v2 command-only 调度观察结果。
+本报告记录 M3C-5A10 阶段对 8 个 content_ready 源的 trial_v2 command-only 调度 24h 观察结果。
 
-由于当前会话时间限制，尚未完成完整 24 小时连续观察。本阶段已完成：
+**2026-07-03 完整 24h 观察已达成**：
 
 - validate-config / preflight / run / check 全部通过
 - source_health / run_log 已生成并追加记录
 - 8 个源的逐源 preflight 审计数据已获取
 - wind_public garbled_text 已识别并记录
+- **morning_run / afternoon_run / evening_run / daily_check 全部按时成功执行**
+- **failed_queue 始终为空**
 
-完整 24h 观察（morning_run + afternoon_run + evening_run + daily_check）需后续在本地 TRAE 持续运行后补齐。
+M3C-5A10 24h observation **已完成**，可进入 M3C-5Merge（sidecar / B0 / B1 合并）。
 
 ---
 
@@ -65,15 +67,19 @@ TRAE 本地任务启用方式：
 | run | M3C-5A9-run | 2026-07-02 | PASS（8 sources queued） |
 | run | M3C-5A10-observation | 2026-07-02T11:25:06 | PASS（8 sources queued） |
 | check | M3C-5A9-check | 2026-07-02 | PASS（15/15） |
+| morning_run | TRAE-auto | 2026-07-03 09:02 | 成功（8 records） |
+| afternoon_run | TRAE-auto | 2026-07-03 15:01 | 成功（8 records） |
+| evening_run | TRAE-auto | 2026-07-03 21:01 | 成功（8 records） |
+| daily_check | TRAE-auto | 2026-07-03 21:32 | 成功 |
 
-### 3.2 待完成的运行（需本地 TRAE 持续观察）
+### 3.2 已完成的 24h 自动运行
 
-- [ ] morning_run（独立 24h 周期内至少 1 次）
-- [ ] afternoon_run（独立 24h 周期内至少 1 次）
-- [ ] evening_run（独立 24h 周期内至少 1 次）
-- [ ] daily_check（独立 24h 周期内至少 1 次）
+- [x] morning_run（2026-07-03 09:02，8 源 × 8 records）
+- [x] afternoon_run（2026-07-03 15:01，8 源 × 8 records）
+- [x] evening_run（2026-07-03 21:01，8 源 × 8 records）
+- [x] daily_check（2026-07-03 21:32，检查通过）
 
-**observation_status**：`partial_observation`
+**observation_status**：`completed_24h`
 
 ---
 
@@ -82,24 +88,24 @@ TRAE 本地任务启用方式：
 ### 4.1 source_health.jsonl
 
 - **路径**：`data/foundation_trial_v2_content_ready/index/source_health.jsonl`
-- **总记录数**：16 条（M3C-5A9 8 条 + M3C-5A10 8 条）
-- **本轮新增**：8 条（M3C-5A10-observation）
+- **总记录数**：48 条（M3C-5A9 8 条 + M3C-5A10-observation 8 条 + 2026-07-03 morning/afternoon/evening 24 条 + daily_check 8 条）
+- **本轮新增**：32 条（2026-07-03 完整 24h 周期）
 
 ### 4.2 run_log.jsonl
 
 - **路径**：`data/foundation_trial_v2_content_ready/index/run_log.jsonl`
-- **总记录数**：16 条（M3C-5A9 8 条 + M3C-5A10 8 条）
-- **本轮新增**：8 条（M3C-5A10-observation）
+- **总记录数**：48 条
+- **本轮新增**：32 条（2026-07-03 完整 24h 周期）
 
 ### 4.3 failed_queue.jsonl
 
 - **路径**：`data/foundation_trial_v2_content_ready/index/failed_queue.jsonl`
-- **状态**：已创建，当前为空（fail-soft）
+- **状态**：始终为空（0 条记录），fail-soft 正常
 
 ### 4.4 latest report
 
 - **路径**：`data/foundation_trial_v2_content_ready/reports/trial_v2_content_ready_validation_latest.md`
-- **状态**：已更新至 M3C-5A10-observation
+- **状态**：已更新至 2026-07-03 evening_run
 
 ---
 
@@ -219,34 +225,36 @@ TRAE 本地任务启用方式：
 - [x] 8 源逐源表现记录
 - [x] wind_public garbled_text 观察
 
-### 7.2 待完成（需本地 TRAE 持续运行）
+### 7.2 已完成（本地 TRAE 持续运行）
 
-- [ ] morning_run（独立 24h 周期内自动执行）
-- [ ] afternoon_run（独立 24h 周期内自动执行）
-- [ ] evening_run（独立 24h 周期内自动执行）
-- [ ] daily_check（独立 24h 周期内自动执行）
+- [x] morning_run（2026-07-03 09:02，8 源 × 8 records）
+- [x] afternoon_run（2026-07-03 15:01，8 源 × 8 records）
+- [x] evening_run（2026-07-03 21:01，8 源 × 8 records）
+- [x] daily_check（2026-07-03 21:32，检查通过）
 
 ### 7.3 observation_status
 
 ```text
-partial_observation
+completed_24h
 ```
 
-**说明**：本阶段在单次会话内完成了脚本验证、preflight 审计、产物生成和 check 检查。由于 24h 观察需要跨时段持续运行，当前状态为 partial_observation。建议在本地 TRAE 启用 4 个 command-only jobs 后，持续运行至少 24 小时，再更新 observation_status 为 completed_24h。
+**说明**：本地 TRAE 4 个 command-only jobs 已于 2026-07-03 完成完整 24h 周期运行。morning_run / afternoon_run / evening_run / daily_check 全部按时成功执行，failed_queue 始终为空，8 源 allowlist 未变动。M3C-5A10 24h observation 已达标。
 
 ---
 
-## 8. 是否建议进入 M3C-5A11
+## 8. 是否建议进入下一阶段
 
-- **建议**：**yes（附带条件）**
+- **建议**：**yes（直接进入 M3C-5Merge）**
 - **原因**：
   1. 8 个源在 preflight 中全部保持 content_ready
   2. run/check 脚本运行稳定
   3. 产物（source_health、run_log、failed_queue、report）生成正常
   4. 除了 wind_public 的 garbled_text 外，无其他异常
-- **附加条件**：
-  - 需在本地 TRAE 完成完整 24h 观察后，再评估是否进入 3-day observation 或 production-candidate 评估
+  5. **完整 24h 观察已达成**：morning / afternoon / evening / daily_check 全部成功
+- **后续行动**：
+  - M3C-5Merge 已完成：sidecar / B0 / B1 三分支已合并回 master
   - wind_public 需持续监控，如乱码率上升需降级
+  - gelonghui / merck_ir 已标记为 next_scheduling_candidate，待下一批 preflight 评估
 
 ---
 
