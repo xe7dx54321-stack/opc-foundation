@@ -554,6 +554,11 @@ def main():
         default="docs/foundation_m3c_5b1_1_next_candidate_preflight_report.md",
         help="Output report path",
     )
+    parser.add_argument(
+        "--source",
+        default=None,
+        help="Filter to specific source(s), e.g. --source gelonghui. Comma-separated for multiple.",
+    )
     args = parser.parse_args()
 
     config_path = repo_root / args.config
@@ -593,8 +598,20 @@ def main():
 
     # Run preflight for each candidate
     results = []
+
+    # Apply --source filter if specified
+    source_filter = None
+    if args.source:
+        source_filter = set(s.strip() for s in args.source.split(","))
+        print(f"Source filter: {source_filter}")
+
     for candidate_cfg in config.get("next_scheduling_candidates", []):
         source_id = candidate_cfg.get("source_id")
+
+        # Skip if --source filter is active and source not in filter
+        if source_filter and source_id not in source_filter:
+            print(f"Skipping {source_id} (not in --source filter)")
+            continue
         # Find source in inventory
         source = None
         for s in all_sources:

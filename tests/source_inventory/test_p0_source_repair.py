@@ -56,21 +56,43 @@ class TestGelonghuiRepair:
     """gelonghui 修复验证测试。"""
 
     def test_gelonghui_selector_updated(self):
-        """gelonghui selector 已更新为 a[href*='/p/']，移除 div.detail-left 包装。"""
+        """gelonghui selector 已更新为容器级 li.article-li (M3C-5B1.1a)。"""
         from opc_foundation.source_inventory.content_validity import _SOURCE_SPECIFIC_SELECTORS
         selectors = _SOURCE_SPECIFIC_SELECTORS.get("gelonghui", [])
-        assert any("a[href*='/p/']" == sel for sel, _ in selectors), "gelonghui selector should match article links"
+        assert any("li.article-li" == sel for sel, _ in selectors), "gelonghui selector should use container-level li.article-li"
         assert not any("div.detail-left" in sel for sel, _ in selectors), "old wrapper selector should be removed"
 
     def test_gelonghui_noise_filter_has_login(self):
         """gelonghui 噪音过滤包含 登录 / 注册 / App 下载。"""
         from opc_foundation.source_inventory.content_validity import extract_candidates_from_html
-        # 用一段包含噪音的 HTML 测试过滤逻辑
-        html = '<html><body><a href="/p/123">暴跌7%！特斯拉交付大捷</a><a href="/login">登录</a><a href="/register">注册</a><a href="/app">下载APP</a></body></html>'
+        # M3C-5B1.1a: 使用容器级选择器格式
+        html = '''<html><body><ul>
+<li class="article-li"><div class="article-li__main">
+<a class="detail-left" href="/p/123">暴跌7%！特斯拉交付大捷创历史新高</a>
+<section class="detail-right"><a href="/p/123">暴跌7%！特斯拉交付大捷创历史新高</a>
+<section class="source-time">来自主题：汽车资讯1小时前</section>
+</section></div></li>
+<li class="article-li"><div class="article-li__main">
+<a class="detail-left" href="/login">登录</a>
+<section class="detail-right"><a href="/login">登录</a>
+<section class="source-time">刚刚</section>
+</section></div></li>
+<li class="article-li"><div class="article-li__main">
+<a class="detail-left" href="/register">注册</a>
+<section class="detail-right"><a href="/register">注册</a>
+<section class="source-time">刚刚</section>
+</section></div></li>
+<li class="article-li"><div class="article-li__main">
+<a class="detail-left" href="/app">下载APP</a>
+<section class="detail-right"><a href="/app">下载APP</a>
+<section class="source-time">刚刚</section>
+</section></div></li>
+</ul></body></html>'''
         candidates = extract_candidates_from_html(html, "https://www.gelonghui.com", source_id="gelonghui")
         titles = [c.title for c in candidates]
-        assert "暴跌7%！特斯拉交付大捷" in titles
+        assert "暴跌7%！特斯拉交付大捷创历史新高" in titles
         assert "登录" not in titles
+        assert "下载APP" not in titles
         assert "注册" not in titles
         assert "下载APP" not in titles
 
@@ -87,7 +109,16 @@ class TestGelonghuiRepair:
 
     def test_gelonghui_extracts_financial_news(self):
         """gelonghui 能抽取财经新闻候选，并标记为 news / high relevance。"""
-        html = '<html><body><a href="/p/789">中国6月PMI跌至54.1</a></body></html>'
+        # M3C-5B1.1a: 使用容器级选择器 li.article-li 格式
+        html = '''<html><body><ul>
+<li class="article-li"><div class="article-li__main">
+<a class="detail-left" href="/p/789">中国6月PMI跌至54.1</a>
+<section class="detail-right">
+<a href="/p/789">中国6月PMI跌至54.1</a>
+<section class="source-time">来自主题：财经研究所1小时前</section>
+</section>
+</div></li>
+</ul></body></html>'''
         from opc_foundation.source_inventory.content_validity import extract_candidates_from_html
         candidates = extract_candidates_from_html(html, "https://www.gelonghui.com", source_id="gelonghui")
         assert len(candidates) >= 1

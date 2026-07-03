@@ -534,9 +534,11 @@ _SOURCE_SPECIFIC_SELECTORS: dict[str, list[tuple[str, str]]] = {
     ],
 
     # === 格隆汇 ===
-    # 格隆汇文章在 div.detail-left 中的 <a> 标签
+    # M3C-5B1.1a: 改用容器级选择器 li.article-li
+    # 结构: li.article-li > div.article-li__main > a.detail-left[href="/p/"]
+    #       + section.detail-right > section.source-time（含时间如 "36分钟前"）
     "gelonghui": [
-        ("a[href*='/p/']", "glh_article"),
+        ("li.article-li", "glh_container"),
     ],
 
     # === 智通财经 ===
@@ -823,8 +825,12 @@ def extract_candidates_from_html(
                         ))
                         continue
 
-                    elif extraction_type == "glh_article":
+                    elif extraction_type in ("glh_article", "glh_container"):
                         # 格隆汇文章
+                        # M3C-5B1.1a: glh_container 使用容器级选择器 li.article-li
+                        # 结构: li.article-li > div.article-li__main
+                        #   > a.detail-left[href="/p/"] (标题链接)
+                        #   > section.detail-right > section.source-time (时间)
                         GELONGHUI_NOISE_TITLE = {
                             "登录", "注册", "下载APP", "APP下载", "广告", "隐私政策",
                             "免责声明", "联系我们", "搜索", "行情", "首页", "港股",
@@ -837,44 +843,125 @@ def extract_candidates_from_html(
                             "免责声明", "联系我们", "搜索", "行情", "首页", "推荐",
                             "点击下载", "立即下载", "二维码", "扫码",
                         }
-                        title_elem = elem.find(["h2", "h3", "h4", "h1", "span", "div", "p"])
-                        if title_elem:
-                            title = title_elem.get_text(strip=True)
+
+                        if extraction_type == "glh_container":
+                            # 容器级提取：从 li.article-li 中提取标题链接和时间
+                            # 1. 找标题链接
+                            link_elem = elem.select_one("a.detail-left[href*='/p/']") or elem.select_one("a[href*='/p/']")
+                            if not link_elem:
+                                continue
+                            href = link_elem.get("href", "")
+                            if not href or href.startswith('#') or href.startswith('javascript:'):
+                                continue
+
+                            # 2. 提取标题 — 优先从 section.detail-right > a 获取（更完整）
+                            detail_right = elem.select_one("section.detail-right")
+                            if detail_right:
+                                title = detail_right.find("a")
+                                if title:
+                                    title = title.get_text(strip=True)
+                                else:
+                                    title = link_elem.get_text(strip=True)
+                            else:
+                                title = link_elem.get_text(strip=True)
+
+                            if not title or len(title) < 10:
+                                continue
+                            if title in GELONGHUI_NOISE_TITLE:
+                                continue
+                            title_lower = title.lower()
+                            if any(nk in title_lower for nk in GELONGHUI_NOISE_KEYWORDS):
+                                continue
+
+                            full_url = urljoin(base_url, href).split('#')[0]
+                            if full_url in source_seen_urls:
+                                continue
+                            source_seen_urls.add(full_url)
+                            if _NOISE_LINK_PATTERNS.search(title):
+                                continue
+
+                            # 3. 提取时间 — 从 section.source-time 中提取
+                            published_at = ""
+                            source_time_elem = elem.select_one("section.source-time")
+                            if source_time_elem:
+                                time_text = source_time_elem.get_text(strip=True)
+                                # 匹配时间模式：36分钟前, 1小时前, 今天 14:30, 昨天 09:15, 07-03 14:30, 2026-07-03
+                                import re as _re
+                                time_patterns = [
+                                    r'(\d+分钟前)',
+                                    r'(\d+小时前)',
+                                    r'(今天\s*\d{1,2}:\d{2})',
+                                    r'(昨天\s*\d{1,2}:\d{2})',
+                                    r'(\d{1,2}-\d{1,2}\s+\d{1,2}:\d{2})',
+                                    r'(\d{4}[-/]\d{1,2}[-/]\d{1,2})',
+                                    r'(\d{4}年\d{1,2}月\d{1,2}日)',
+                                ]
+                                for pat in time_patterns:
+                                    m = _re.search(pat, time_text)
+                                    if m:
+                                        published_at = m.group(1)
+                                        break
+                                # If relative time found, also try to infer date
+                                if published_at and not _re.match(r'\d{4}', published_at):
+                                    inferred = _infer_published_date(full_url, title + " " + published_at)
+                                    if inferred and inferred != published_at:
+                                        published_at = f"{published_at} ({inferred})"
+                            else:
+                                # Fallback: infer from URL + title
+                                published_at = _infer_published_date(full_url, title)
+
+                            snippet = title[:200]
+                            content_type = "news"
+                            relevance = "high"
+                            freshness = _classify_freshness(published_at) if published_at else "unknown"
+                            source_candidates.append(ContentCandidate(
+                                title=title,
+                                url=full_url,
+                                published_at=published_at,
+                                snippet=snippet,
+                                content_type=content_type,
+                                relevance=relevance,
+                                freshness=freshness,
+                            ))
+                            continue
                         else:
-                            title = elem.get_text(strip=True)
-                        if not title or len(title) < 10:
+                            # Legacy glh_article (backward compat)
+                            title_elem = elem.find(["h2", "h3", "h4", "h1", "span", "div", "p"])
+                            if title_elem:
+                                title = title_elem.get_text(strip=True)
+                            else:
+                                title = elem.get_text(strip=True)
+                            if not title or len(title) < 10:
+                                continue
+                            if title in GELONGHUI_NOISE_TITLE:
+                                continue
+                            title_lower = title.lower()
+                            if any(nk in title_lower for nk in GELONGHUI_NOISE_KEYWORDS):
+                                continue
+                            content_type = "news"
+                            relevance = "high"
+                            href = elem.get("href", "")
+                            if not href or href.startswith('#') or href.startswith('javascript:'):
+                                continue
+                            full_url = urljoin(base_url, href).split('#')[0]
+                            if full_url in source_seen_urls:
+                                continue
+                            source_seen_urls.add(full_url)
+                            if _NOISE_LINK_PATTERNS.search(title):
+                                continue
+                            snippet = title[:200]
+                            published_at = _infer_published_date(full_url, title + " " + snippet)
+                            freshness = _classify_freshness(published_at) if published_at else "unknown"
+                            source_candidates.append(ContentCandidate(
+                                title=title,
+                                url=full_url,
+                                published_at=published_at,
+                                snippet=snippet,
+                                content_type=content_type,
+                                relevance=relevance,
+                                freshness=freshness,
+                            ))
                             continue
-                        if title in GELONGHUI_NOISE_TITLE:
-                            continue
-                        title_lower = title.lower()
-                        if any(nk in title_lower for nk in GELONGHUI_NOISE_KEYWORDS):
-                            continue
-                        # 格隆汇文章直接设为 news 类型（中文新闻，通用推断器无法识别）
-                        content_type = "news"
-                        relevance = "high"
-                        # 提取 URL
-                        href = elem.get("href", "")
-                        if not href or href.startswith('#') or href.startswith('javascript:'):
-                            continue
-                        full_url = urljoin(base_url, href).split('#')[0]
-                        if full_url in source_seen_urls:
-                            continue
-                        source_seen_urls.add(full_url)
-                        if _NOISE_LINK_PATTERNS.search(title):
-                            continue
-                        snippet = title[:200]
-                        published_at = _infer_published_date(full_url, title + " " + snippet)
-                        freshness = _classify_freshness(published_at) if published_at else "unknown"
-                        source_candidates.append(ContentCandidate(
-                            title=title,
-                            url=full_url,
-                            published_at=published_at,
-                            snippet=snippet,
-                            content_type=content_type,
-                            relevance=relevance,
-                            freshness=freshness,
-                        ))
-                        continue
 
                     elif extraction_type in ("ztc_detail", "ztc_item"):
                         # 智通财经文章
