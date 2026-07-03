@@ -4,7 +4,7 @@
 **Worktree 路径**: `/Users/apple/Documents/一人公司OPC/opc-foundation-m3c-5b1-p0-repair`
 **Branch**: `feature/m3c-5b1-p0-source-repair`
 **Base Branch**: `feature/m3c-5b0-source-repair-backlog`
-**Commit Hash**: `c54173a`
+**Commit Hash**: `38e3868`
 
 ---
 
@@ -146,7 +146,7 @@
 
 ## 9. Commit 信息
 
-- **Branch commit hash**: `c54173a`
+- **Branch commit hash**: `38e3868`
 - **Push branch**: `feature/m3c-5b1-p0-source-repair`
 - **git status**: clean
 - **是否 merge master**: 否
