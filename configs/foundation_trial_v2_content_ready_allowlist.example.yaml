@@ -1,10 +1,11 @@
 # OPC Foundation Trial V2 Content-Ready Candidate Allowlist
-# 阶段: M3C-5A8
-# 依据: M3C-5A5/M3C-5A7/M3C-5A7.1 内容有效性审计
+# 阶段: M3C-5B1.3
+# 依据: M3C-5A5/M3C-5A7/M3C-5A7.1 内容有效性审计 + M3C-5B1.2 扩容前验证
 # 用途: TRAE trial_v2 command-only 候选配置
 #
-# 注意: merck_ir 已在 preflight 中降级（HTTP 403 Forbidden），
-#       从 allowlist 中移除，expected_source_count 从 9 调整为 8。
+# 注意: merck_ir 已在 preflight 中降级（HTTP 403 Forbidden），未加入。
+#       M3C-5B1.3 将 gelonghui 从 next_scheduling_candidate 扩容为正式 allowlist，
+#       expected_source_count 从 8 调整为 9。
 
 version: 1
 
@@ -12,7 +13,7 @@ scope:
   name: "foundation_trial_v2_content_ready_candidates"
   description: "TRAE trial_v2 command-only candidate allowlist based only on content_ready sources"
   source_selection_basis: "M3C-5A5/M3C-5A7/M3C-5A7.1 content validity audit"
-  expected_source_count: 8
+  expected_source_count: 9
   production_enabled: false
   trae_scheduling_enabled: false
   command_only_required: true
@@ -97,3 +98,12 @@ sources:
     scheduling_candidate: true
     priority: P1
     audit_phase: "M3C-5A7.1"
+
+  - source_id: gelonghui
+    source_name: "格隆汇"
+    content_status: content_ready
+    content_score: 100
+    scheduling_candidate: true
+    priority: P0
+    audit_phase: "M3C-5B1.3"
+    note: "Expanded from next_scheduling_candidate (M3C-5B1.1 -> M3C-5B1.2 -> M3C-5B1.3)"

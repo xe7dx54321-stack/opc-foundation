@@ -81,9 +81,10 @@ class Test9SourceExpansionConfig:
     def test_candidate_allowlist_no_goldman_sachs_podcasts(self, config):
         assert "goldman_sachs_podcasts" not in config["candidate_allowlist"]
 
-    def test_formal_allowlist_no_gelonghui(self, config, formal_allowlist):
+    def test_formal_allowlist_has_gelonghui(self, config, formal_allowlist):
+        """M3C-5B1.3: gelonghui is now in formal trial_v2 allowlist."""
         ids = [s["source_id"] for s in formal_allowlist.get("sources", [])]
-        assert "gelonghui" not in ids
+        assert "gelonghui" in ids
 
     def test_scheduling_allowed_now_false(self, config):
         assert config["new_candidates"][0]["scheduling_allowed_now"] == False
@@ -168,13 +169,15 @@ class Test9SourceExpansionReport:
 class Test9SourceExpansionIsolation:
     """Ensure expansion preflight is isolated."""
 
-    def test_formal_allowlist_unchanged(self, formal_allowlist):
+    def test_formal_allowlist_has_9_sources(self, formal_allowlist):
+        """M3C-5B1.3: formal allowlist expanded to 9 sources."""
         sources = formal_allowlist.get("sources", [])
-        assert len(sources) == 8
+        assert len(sources) == 9
 
-    def test_formal_allowlist_no_gelonghui(self, formal_allowlist):
+    def test_formal_allowlist_has_gelonghui(self, formal_allowlist):
+        """M3C-5B1.3: gelonghui is now in formal trial_v2 allowlist."""
         ids = [s["source_id"] for s in formal_allowlist.get("sources", [])]
-        assert "gelonghui" not in ids
+        assert "gelonghui" in ids
 
     def test_formal_allowlist_no_merck_ir(self, formal_allowlist):
         ids = [s["source_id"] for s in formal_allowlist.get("sources", [])]

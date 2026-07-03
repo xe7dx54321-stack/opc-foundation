@@ -222,14 +222,15 @@ class TestNextCandidatePreflightReport:
 class TestNextCandidatePreflightIsolation:
     """Ensure preflight work is isolated from trial_v2 allowlist."""
 
-    def test_allowlist_unchanged(self, base_allowlist):
-        """Trial_v2 allowlist must still be 8 sources."""
+    def test_allowlist_has_9_sources(self, base_allowlist):
+        """M3C-5B1.3: Trial_v2 allowlist expanded to 9 sources."""
         sources = base_allowlist.get("sources", [])
-        assert len(sources) == 8
+        assert len(sources) == 9
 
-    def test_allowlist_no_gelonghui(self, base_allowlist):
+    def test_allowlist_has_gelonghui(self, base_allowlist):
+        """M3C-5B1.3: gelonghui is now in trial_v2 allowlist."""
         ids = [s["source_id"] for s in base_allowlist.get("sources", [])]
-        assert "gelonghui" not in ids
+        assert "gelonghui" in ids
 
     def test_allowlist_no_merck_ir(self, base_allowlist):
         ids = [s["source_id"] for s in base_allowlist.get("sources", [])]

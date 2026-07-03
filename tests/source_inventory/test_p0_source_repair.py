@@ -294,14 +294,14 @@ class TestContentReadyThresholds:
 class TestBoundaryConstraints:
     """M3C-5B1 边界约束测试。"""
 
-    def test_no_gelonghui_in_trial_v2_allowlist(self, trial_v2_allowlist):
-        """即使 gelonghui 升级 ready，也不得修改 trial_v2 content-ready allowlist。"""
+    def test_gelonghui_in_trial_v2_allowlist(self, trial_v2_allowlist):
+        """M3C-5B1.3: gelonghui 已扩容加入 trial_v2 content-ready allowlist (9 源)。"""
         sources = trial_v2_allowlist.get("sources", [])
         ids = [s.get("source_id") for s in sources]
-        assert "gelonghui" not in ids, "gelonghui must NOT be added to trial_v2 allowlist"
+        assert "gelonghui" in ids, "gelonghui must be in trial_v2 allowlist after M3C-5B1.3"
 
     def test_no_merck_ir_in_trial_v2_allowlist(self, trial_v2_allowlist):
-        """即使 merck_ir 升级 ready，也不得修改 trial_v2 content-ready allowlist。"""
+        """merck_ir 不得加入 trial_v2 content-ready allowlist。"""
         sources = trial_v2_allowlist.get("sources", [])
         ids = [s.get("source_id") for s in sources]
         assert "merck_ir" not in ids, "merck_ir must NOT be added to trial_v2 allowlist"
