@@ -1,0 +1,62 @@
+# OPC Foundation Trial V2 Next Candidates Preflight Configuration
+# Phase: M3C-5B1.1
+# Purpose: Independent preflight for gelonghui / merck_ir as next_scheduling_candidate
+# Note: scheduling_allowed_now must be false; does NOT modify trial_v2 allowlist
+
+version: 1
+
+scope:
+  name: "foundation_trial_v2_next_candidates_preflight"
+  description: "Independent preflight for 2 next_scheduling_candidate sources (gelonghui, merck_ir)"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  base_trial_v2_content_ready_count: 8
+  candidate_count: 2
+
+base_allowlist:
+  - barclays_our_insights
+  - markets_insider
+  - china_fund_news
+  - wind_public
+  - goldman_sachs_insights
+  - business_insider
+  - cls_cn
+  - zhitong_caijing
+
+next_scheduling_candidates:
+  - source_id: gelonghui
+    source_name: "格隆汇"
+    expected_status: content_ready
+    min_valid_candidates: 2
+    min_relevant_candidates: 2
+    min_dated_candidates: 2
+    min_content_score: 70
+    rounds: 3
+    scheduling_allowed_now: false
+    repair_phase: "M3C-5B1"
+    repair_score: 90
+
+  - source_id: merck_ir
+    source_name: "Merck Investor Relations"
+    expected_status: content_ready
+    min_valid_candidates: 2
+    min_relevant_candidates: 2
+    min_dated_candidates: 2
+    min_content_score: 70
+    rounds: 3
+    scheduling_allowed_now: false
+    repair_phase: "M3C-5B1"
+    repair_score: 90
+
+policy:
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+  no_browser_runtime: true
+  no_new_sources: true
+
+network:
+  stable_network_required: true
+  allow_proxy: true
+  timeout_seconds: 20
