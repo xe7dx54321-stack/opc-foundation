@@ -184,7 +184,8 @@ class TestRepairBacklogSources:
             "dns_failure", "login_or_paywall_required", "empty_page",
             "navigation_or_marketing_only", "consolidated_modeling_issue", "garbled_text_issue",
             "needs_wechat_archive_mapping", "on_demand_only", "blocked_by_policy",
-            "dormant_or_low_value", "replace_with_alternative_source", "not_audited", None,
+            "dormant_or_low_value", "replace_with_alternative_source", "not_audited",
+            "repaired", None,
         }
         for s in sources:
             if s.get("category") != "scheduled_observation":
@@ -200,7 +201,8 @@ class TestRepairBacklogSources:
             "replace_with_public_secondary_source", "move_to_browser_like_spike",
             "move_to_tls_ssl_spike", "move_to_cloudflare_backlog", "map_to_wechat_archive",
             "keep_on_demand_only", "keep_excluded", "remove_from_default_ops",
-            "re_audit_after_network_change", "continue_observation", None,
+            "re_audit_after_network_change", "continue_observation",
+            "next_scheduling_candidate", None,
         }
         for s in sources:
             action = s.get("recommended_action")

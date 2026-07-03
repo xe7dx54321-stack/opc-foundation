@@ -16,7 +16,9 @@
 - Score ~60, primary issue = `noise_filter_issue` or `selector_mismatch`
 
 **Known sources**:
-- `gelonghui` — navigation noise too high
+- `gelonghui` — navigation noise too high ✅ **REPAIRED in M3C-5B1**
+  - Selector fixed (`a[href*='/p/']`), noise filter added, explicit `content_type=news`/`relevance=high` for Chinese titles.
+  - Verified: score=90, content_ready. Next_scheduling_candidate for future batch.
 
 **Repair actions**:
 1. Refine CSS/XPath selector to target the primary content container.
@@ -40,7 +42,9 @@
 - Primary issue = `consolidated_modeling_issue` or `empty_page`
 
 **Known sources**:
-- `goldman_sachs_podcasts` — consolidated under parent page, no independent URL
+- `goldman_sachs_podcasts` — consolidated hub page, no SSR episodes, no RSS/feed found ❌ **MOVED to Route 3 (browser-like) in M3C-5B1**
+  - Real crawl confirmed hub page only contains navigation cards; episodes are JS-rendered.
+  - No discoverable RSS, Atom, or JSON-LD feed.
 - `briefing_com_upgrades` — empty page, may expose RSS
 - `wallstreet_cn` — empty page, may expose feed
 
@@ -71,6 +75,7 @@
 - `goldman_sachs_research`
 - `goldman_sachs_reports`
 - `goldman_sachs_top_of_mind`
+- `goldman_sachs_podcasts` — hub page, no SSR episodes (added in M3C-5B1)
 
 **Repair actions**:
 1. Spike Playwright or Puppeteer extraction with stealth plugins.
@@ -178,8 +183,7 @@
 **Use cases**:
 1. `briefing_com_upgrades` — search for "briefing.com upgrades RSS" to locate an official feed.
 2. `wallstreet_cn` — search for "wallstreet.cn API" or "wallstreet.cn feed".
-3. `merck_ir` — search for "Merck IR press releases RSS" to find an alternative endpoint.
-4. `goldman_sachs_china_wechat` — search for recent article titles to confirm account identity.
+3. `goldman_sachs_china_wechat` — search for recent article titles to confirm account identity.
 
 **Integration**:
 - Use existing `search_provider_registry` and `search_runner`.
@@ -205,15 +209,17 @@
 - Re-audit of `not_audited` sources after network environment changes
 
 **Key sources to resolve**:
-- `gelonghui`
-- `goldman_sachs_podcasts`
 - `briefing_com_upgrades`
 - `wallstreet_cn`
-- `merck_ir`
 - `goldman_sachs_china_wechat`
 - `morgan_stanley_china_wechat`
 - `citi_research`
 - `ubs_insights`
+
+**Resolved in M3C-5B1**:
+- `gelonghui` ✅ Repaired (score=90, content_ready)
+- `merck_ir` ✅ Repaired (score=90, content_ready)
+- `goldman_sachs_podcasts` ❌ Escalated to M3C-5B2 (browser-like required)
 
 **Exit criteria**:
 - All P0 and P1 M3C-5B1 items are either repaired, rerouted, or definitively escalated.
@@ -231,9 +237,10 @@
 - `goldman_sachs_research`
 - `goldman_sachs_reports`
 - `goldman_sachs_top_of_mind`
+- `goldman_sachs_podcasts` — added from M3C-5B1 (hub page, JS-rendered episodes)
 
 **Exit criteria**:
-- Browser extraction achieves score >= 80 on all three Goldman sources.
+- Browser extraction achieves score >= 80 on all four Goldman sources.
 - Cold-start latency and memory usage are documented and acceptable for batch runs.
 - A fallback policy is defined (static first, browser second, fail open).
 

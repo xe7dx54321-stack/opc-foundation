@@ -40,7 +40,23 @@ These 8 sources are the only ones with `scheduling_allowed: true`.
 
 ---
 
-## 3. content_watch — Degraded Content (5 sources)
+## 3. p0_repaired_ready — M3C-5B1 Round 1 Repaired (2 sources)
+
+Sources successfully repaired during M3C-5B1 P0 round 1 and verified as `content_ready` via real network crawl. They are **NOT** added to the current trial v2 allowlist; marked as `next_scheduling_candidate` for future batches.
+
+| Source ID | Score | Primary Issue | Recommended Action | Priority | Next Stage |
+|-----------|-------|---------------|--------------------|----------|------------|
+| `gelonghui` | 90 | Repaired | next_scheduling_candidate | P0 | — |
+| `merck_ir` | 90 | Repaired | next_scheduling_candidate | P0 | — |
+
+### Per-Source Details
+
+- **gelonghui**: Selector fixed (`a[href*='/p/']`), aggressive noise filter added, explicit `content_type=news`/`relevance=high` set for Chinese titles. Verified: 5 valid, 5 relevant, score=90. Not in trial_v2 allowlist.
+- **merck_ir**: URL updated to `www.merck.com/investor-relations/`, noise filter added for navigation elements. Verified: 5 valid, 3 relevant, score=90. Not in trial_v2 allowlist.
+
+---
+
+## 4. content_watch — Degraded Content (4 sources)
 
 These sources return partial or degraded content. They must **NOT** enter scheduling until repaired or rerouted.
 
@@ -49,16 +65,14 @@ These sources return partial or degraded content. They must **NOT** enter schedu
 | `goldman_sachs_research` | 60 | JS rendering + 404 | Move to browser-like spike | P1 | M3C-5B2 |
 | `goldman_sachs_reports` | 60 | JS rendering, SSR lacks article content | Move to browser-like spike | P1 | M3C-5B2 |
 | `goldman_sachs_top_of_mind` | 60 | JS rendering limitation | Move to browser-like spike | P1 | M3C-5B2 |
-| `goldman_sachs_podcasts` | 60 | Consolidated modeling issue (no independent URL) | Find RSS or feed | P0 | M3C-5B1 |
-| `gelonghui` | 60 | Noise filter issue (navigation noise too much) | Repair noise filter | P0 | M3C-5B1 |
+| `goldman_sachs_podcasts` | 60 | JS rendering required (hub page, no SSR episodes) | Move to browser-like spike | P0 | M3C-5B2 |
 
 ### Per-Source Details
 
 - **goldman_sachs_research**: Direct fetch yields 404; content is present only after JavaScript rendering. Static extraction is insufficient. Route to browser-like specialized spike in M3C-5B2.
 - **goldman_sachs_reports**: Server-side render does not include article body. Full content loaded dynamically. Route to browser-like specialized spike in M3C-5B2.
 - **goldman_sachs_top_of_mind**: Same JS rendering limitation as above. Route to browser-like specialized spike in M3C-5B2.
-- **goldman_sachs_podcasts**: Episodes are consolidated under a single parent page without independent per-episode URLs. Requires RSS/feed discovery or consolidated modeling fix in M3C-5B1.
-- **gelonghui**: Page structure contains excessive navigation noise that overwhelms the content selector. Requires selector refinement or date/noise light repair in M3C-5B1.
+- **goldman_sachs_podcasts**: Hub page has no SSR episode list; no RSS/Atom/JSON-LD feed found. Requires browser-like extraction (M3C-5B2). Moved from M3C-5B1 after real crawl confirmed JS-only content.
 
 ---
 
@@ -78,13 +92,12 @@ These sources return empty pages and must **NOT** enter scheduling until an offi
 
 ---
 
-## 5. technical_only — Technical Barriers (6 sources)
+## 5. technical_only — Technical Barriers (5 sources)
 
 These sources are blocked by HTTP 403, TLS/SSL failure, timeout, or Cloudflare anti-bot. They must **NOT** enter scheduling until the relevant specialized route is ready.
 
 | Source ID | Score | Primary Issue | Recommended Action | Priority | Next Stage |
 |-----------|-------|---------------|--------------------|----------|------------|
-| `merck_ir` | 0 | HTTP 403 Forbidden | Find official alternative URL | P0 | M3C-5B1 |
 | `yahoo_finance` | 0 | HTTP 403 Forbidden | Move to TLS/SSL spike | P2 | M3C-5C0 |
 | `the_fly` | 0 | HTTP 403 Forbidden | Move to TLS/SSL spike | P2 | M3C-5C0 |
 | `benzinga_analyst_ratings` | 0 | Cloudflare anti-bot 403 | Move to Cloudflare backlog | P2 | M3C-5C0 |
@@ -93,7 +106,6 @@ These sources are blocked by HTTP 403, TLS/SSL failure, timeout, or Cloudflare a
 
 ### Per-Source Details
 
-- **merck_ir**: HTTP 403 Forbidden. May require referer validation or an alternative IR domain. Because it is IR content, attempt to locate an official alternative URL or feed first (P0).
 - **yahoo_finance**: HTTP 403. Suspected TLS fingerprint or user-agent blocking. Route to TLS/SSL specialized spike in M3C-5C0.
 - **the_fly**: HTTP 403. Aggressive bot detection at the TLS layer. Route to TLS/SSL specialized spike in M3C-5C0.
 - **benzinga_analyst_ratings**: Cloudflare anti-bot 403. This is a boundary case; route to dedicated Cloudflare/anti-bot handling backlog in M3C-5C0.
@@ -104,7 +116,7 @@ These sources are blocked by HTTP 403, TLS/SSL failure, timeout, or Cloudflare a
 
 ## 6. 92 Matrix Uncategorized — High-Level View
 
-The full inventory contains 92 sources. After accounting for the 8 scheduled observation, 5 content_watch, 2 content_reject, and 6 technical_only sources, **71 sources remain uncategorized** in the detailed backlog.
+The full inventory contains 92 sources. After accounting for the 8 scheduled observation, 2 p0_repaired_ready, 4 content_watch, 2 content_reject, and 5 technical_only sources, **71 sources remain uncategorized** in the detailed backlog.
 
 These 71 sources span:
 
@@ -136,9 +148,10 @@ The remaining uncategorized sources will be triaged in M3C-5B1, M3C-5C0, or M3C-
 
 The following sources **must NOT enter scheduling** in M3C-5B0:
 
-- All `content_watch` sources (5)
+- All `p0_repaired_ready` sources (2) — repaired but awaiting future batch
+- All `content_watch` sources (4)
 - All `content_reject` sources (2)
-- All `technical_only` sources (6)
+- All `technical_only` sources (5)
 - All `matrix_uncategorized` sources (71 represented; full 92 minus 8 observation)
 
 In other words, every source except the 8 `scheduled_observation` items is blocked from scheduling.
@@ -154,11 +167,9 @@ The following sources should be **removed from default operational runs** (e.g.,
 | `goldman_sachs_research` | JS rendering required; static fetch fails |
 | `goldman_sachs_reports` | SSR lacks content; static fetch fails |
 | `goldman_sachs_top_of_mind` | JS rendering required; static fetch fails |
-| `goldman_sachs_podcasts` | No independent URL; consolidated modeling issue |
-| `gelonghui` | Noise filter issue; yields low-quality extraction |
+| `goldman_sachs_podcasts` | JS rendering required; hub page has no SSR episodes |
 | `briefing_com_upgrades` | Empty page; no content to extract |
 | `wallstreet_cn` | Empty page; no content to extract |
-| `merck_ir` | HTTP 403; static fetch blocked |
 | `yahoo_finance` | HTTP 403; static fetch blocked |
 | `the_fly` | HTTP 403; static fetch blocked |
 | `benzinga_analyst_ratings` | Cloudflare anti-bot; static fetch blocked |
@@ -174,12 +185,13 @@ Removing these from default ops prevents noise in run logs, reduces wasted compu
 | Category | Count | Scheduling Allowed | Action Theme |
 |----------|-------|--------------------|--------------|
 | scheduled_observation | 8 | Yes | Continue observation |
-| content_watch | 5 | No | Repair or reroute |
+| p0_repaired_ready | 2 | No | Repaired; next_scheduling_candidate |
+| content_watch | 4 | No | Repair or reroute |
 | content_reject | 2 | No | Find alternative URL/feed |
-| technical_only | 6 | No | Specialized route (TLS/SSL/anti-bot) |
+| technical_only | 5 | No | Specialized route (TLS/SSL/anti-bot) |
 | matrix_uncategorized | 71 | No | Audit and triage |
 | **Total** | **92** | **8 only** | — |
 
 ---
 
-*Generated for stage M3C-5B0. No browser runtime, no proxy URLs, no secrets.*
+*Generated for stage M3C-5B1. No browser runtime, no proxy URLs, no secrets.*
