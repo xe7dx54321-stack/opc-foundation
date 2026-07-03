@@ -1,0 +1,407 @@
+---
+# Foundation Source Repair Backlog Configuration
+# Worktree: feature/m3c-5b0-source-repair-backlog
+# Purpose: Track non-ready sources and define repair routing without modifying
+#          trial v1 or trial v2 allowlists.
+version: 1
+
+scope:
+  source_inventory_count: 92
+  active_trial_v2_content_ready_count: 8
+  production_enabled: false
+  affects_trial_v2_scheduling: false
+
+policy:
+  do_not_modify_trial_v1: true
+  do_not_modify_trial_v2_allowlist: true
+  no_browser_runtime_in_this_stage: true
+  no_source_repair_in_this_stage: true
+
+categories:
+  scheduled_observation:
+    description: >-
+      Sources currently under active 24h observation in trial v2 content-ready.
+      These 8 sources are the only ones permitted in scheduling for this stage.
+    scheduling_allowed_default: true
+    count: 8
+
+  content_watch:
+    description: >-
+      Sources that produce partial or degraded content. Require repair or
+      alternative extraction strategy before scheduling approval.
+    scheduling_allowed_default: false
+    count: 5
+
+  content_reject:
+    description: >-
+      Sources returning empty or effectively useless pages. Must not enter
+      scheduling until an official alternative URL or feed is located.
+    scheduling_allowed_default: false
+    count: 2
+
+  technical_only:
+    description: >-
+      Sources blocked by technical barriers (HTTP 403, TLS/SSL failure,
+      timeout, Cloudflare). Require specialized handling routes.
+    scheduling_allowed_default: false
+    count: 6
+
+  matrix_uncategorized:
+    description: >-
+      The remaining sources in the 92-item inventory that have not yet been
+      audited or triaged. Represented here by key examples; the full matrix
+      is maintained in the source inventory report.
+    scheduling_allowed_default: false
+    count: 71
+
+sources:
+  # --------------------------------------------------------------------------
+  # scheduled_observation (8) — actively observed, scheduling permitted
+  # --------------------------------------------------------------------------
+  - source_id: barclays_our_insights
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: markets_insider
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: china_fund_news
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: wind_public
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: goldman_sachs_insights
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: business_insider
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: cls_cn
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  - source_id: zhitong_caijing
+    category: scheduled_observation
+    status: trial_v2_content_ready
+    scheduling_allowed: true
+    score: null
+    primary_issue: null
+    recommended_action: continue_observation
+    priority: null
+    next_stage: null
+    notes: >-
+      Part of the active 8-source trial v2 content-ready observation set.
+
+  # --------------------------------------------------------------------------
+  # content_watch (5) — degraded content, repair needed
+  # --------------------------------------------------------------------------
+  - source_id: goldman_sachs_research
+    category: content_watch
+    status: non_ready
+    scheduling_allowed: false
+    score: 60
+    primary_issue: js_rendering_required
+    recommended_action: move_to_browser_like_spike
+    priority: P1
+    next_stage: M3C-5B2
+    notes: >-
+      JS rendering plus 404 on direct fetch. Content exists in browser context.
+
+  - source_id: goldman_sachs_reports
+    category: content_watch
+    status: non_ready
+    scheduling_allowed: false
+    score: 60
+    primary_issue: js_rendering_required
+    recommended_action: move_to_browser_like_spike
+    priority: P1
+    next_stage: M3C-5B2
+    notes: >-
+      SSR lacks article content; full content only available after JS execution.
+
+  - source_id: goldman_sachs_top_of_mind
+    category: content_watch
+    status: non_ready
+    scheduling_allowed: false
+    score: 60
+    primary_issue: js_rendering_required
+    recommended_action: move_to_browser_like_spike
+    priority: P1
+    next_stage: M3C-5B2
+    notes: >-
+      JS rendering limitation prevents static extraction.
+
+  - source_id: goldman_sachs_podcasts
+    category: content_watch
+    status: non_ready
+    scheduling_allowed: false
+    score: 60
+    primary_issue: consolidated_modeling_issue
+    recommended_action: find_rss_or_feed
+    priority: P0
+    next_stage: M3C-5B1
+    notes: >-
+      Consolidated under a parent page; no independent per-episode URL.
+
+  - source_id: gelonghui
+    category: content_watch
+    status: non_ready
+    scheduling_allowed: false
+    score: 60
+    primary_issue: noise_filter_issue
+    recommended_action: repair_noise_filter
+    priority: P0
+    next_stage: M3C-5B1
+    notes: >-
+      Navigation noise too high; selector or date/noise filter repair needed.
+
+  # --------------------------------------------------------------------------
+  # content_reject (2) — empty page, must find alternative
+  # --------------------------------------------------------------------------
+  - source_id: briefing_com_upgrades
+    category: content_reject
+    status: non_ready
+    scheduling_allowed: false
+    score: 10
+    primary_issue: empty_page
+    recommended_action: find_official_alternative_url
+    priority: P2
+    next_stage: M3C-5B1
+    notes: >-
+      Returns empty page. Likely URL change or paywall redirect.
+
+  - source_id: wallstreet_cn
+    category: content_reject
+    status: non_ready
+    scheduling_allowed: false
+    score: 10
+    primary_issue: empty_page
+    recommended_action: find_official_alternative_url
+    priority: P2
+    next_stage: M3C-5B1
+    notes: >-
+      Returns empty page. Verify official endpoint or feed availability.
+
+  # --------------------------------------------------------------------------
+  # technical_only (6) — blocked by technical barrier
+  # --------------------------------------------------------------------------
+  - source_id: merck_ir
+    category: technical_only
+    status: non_ready
+    scheduling_allowed: false
+    score: 0
+    primary_issue: http_403_or_forbidden
+    recommended_action: find_official_alternative_url
+    priority: P0
+    next_stage: M3C-5B1
+    notes: >-
+      HTTP 403 Forbidden. May require referer check or alternative domain.
+
+  - source_id: yahoo_finance
+    category: technical_only
+    status: non_ready
+    scheduling_allowed: false
+    score: 0
+    primary_issue: http_403_or_forbidden
+    recommended_action: move_to_tls_ssl_spike
+    priority: P2
+    next_stage: M3C-5C0
+    notes: >-
+      HTTP 403. Suspected TLS fingerprint or user-agent blocking.
+
+  - source_id: the_fly
+    category: technical_only
+    status: non_ready
+    scheduling_allowed: false
+    score: 0
+    primary_issue: http_403_or_forbidden
+    recommended_action: move_to_tls_ssl_spike
+    priority: P2
+    next_stage: M3C-5C0
+    notes: >-
+      HTTP 403. Likely aggressive bot detection at TLS layer.
+
+  - source_id: benzinga_analyst_ratings
+    category: technical_only
+    status: non_ready
+    scheduling_allowed: false
+    score: 0
+    primary_issue: cloudflare_or_anti_bot
+    recommended_action: move_to_cloudflare_backlog
+    priority: P2
+    next_stage: M3C-5C0
+    notes: >-
+      Cloudflare anti-bot 403. Requires dedicated anti-bot boundary handling.
+
+  - source_id: bofa_global_research
+    category: technical_only
+    status: non_ready
+    scheduling_allowed: false
+    score: 0
+    primary_issue: tls_or_ssl_failure
+    recommended_action: move_to_tls_ssl_spike
+    priority: P2
+    next_stage: M3C-5C0
+    notes: >-
+      SSL/connection failure. May require TLS version negotiation or cert bundle.
+
+  - source_id: texas_instruments_ir
+    category: technical_only
+    status: non_ready
+    scheduling_allowed: false
+    score: 0
+    primary_issue: timeout_or_network_unstable
+    recommended_action: move_to_tls_ssl_spike
+    priority: P1
+    next_stage: M3C-5C0
+    notes: >-
+      Timeout/connection failure. Network path or TLS handshake issue suspected.
+
+  # --------------------------------------------------------------------------
+  # matrix_uncategorized — representative examples from the 92-item inventory
+  # --------------------------------------------------------------------------
+  - source_id: citi_research
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: not_audited
+    recommended_action: re_audit_after_network_change
+    priority: P2
+    next_stage: M3C-5B1
+    notes: >-
+      Not yet audited. Re-audit after network environment change.
+
+  - source_id: ubs_insights
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: not_audited
+    recommended_action: re_audit_after_network_change
+    priority: P2
+    next_stage: M3C-5B1
+    notes: >-
+      Not yet audited. Re-audit after network environment change.
+
+  - source_id: jp_morgan_research
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: not_audited
+    recommended_action: re_audit_after_network_change
+    priority: P3
+    next_stage: M3C-5D0
+    notes: >-
+      Not yet audited. Low priority; defer to later stage.
+
+  - source_id: morgan_stanley_insights
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: not_audited
+    recommended_action: re_audit_after_network_change
+    priority: P3
+    next_stage: M3C-5D0
+    notes: >-
+      Not yet audited. Low priority; defer to later stage.
+
+  - source_id: goldman_sachs_china_wechat
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: needs_wechat_archive_mapping
+    recommended_action: map_to_wechat_archive
+    priority: P1
+    next_stage: M3C-5B1
+    notes: >-
+      Content appears on WeChat. Requires WeChat archive mapping route.
+
+  - source_id: morgan_stanley_china_wechat
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: needs_wechat_archive_mapping
+    recommended_action: map_to_wechat_archive
+    priority: P1
+    next_stage: M3C-5B1
+    notes: >-
+      Content appears on WeChat. Requires WeChat archive mapping route.
+
+  - source_id: reuters
+    category: matrix_uncategorized
+    status: not_audited
+    scheduling_allowed: false
+    score: null
+    primary_issue: not_audited
+    recommended_action: re_audit_after_network_change
+    priority: P3
+    next_stage: M3C-5D0
+    notes: >-
+      Not yet audited. Re-audit after network environment change.
