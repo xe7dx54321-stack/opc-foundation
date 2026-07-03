@@ -847,13 +847,13 @@ class TestM3C5A8TrialV2ContentReadyScheduling:
         assert p.exists(), f"Allowlist not found: {p}"
 
     def test_allowlist_source_count(self):
-        """allowlist source count = 8（preflight 后 merck_ir 降级）。"""
+        """allowlist source count = 9（M3C-5B1.3 gelonghui 扩容）。"""
         import yaml
         p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
         with open(p) as f:
             config = yaml.safe_load(f)
         count = len(config.get("sources", []))
-        assert count == 8, f"Expected 8 sources, got {count}"
+        assert count == 9, f"Expected 9 sources, got {count}"
 
     def test_allowlist_only_content_ready(self):
         """allowlist 只包含 content_ready 源。"""
@@ -901,7 +901,7 @@ class TestM3C5A8TrialV2ContentReadyScheduling:
             "yahoo_finance", "the_fly", "bofa_global_research",
             "texas_instruments_ir", "benzinga_analyst_ratings",
             "briefing_com_upgrades", "wallstreet_cn",
-            "gelonghui", "goldman_sachs_podcasts",
+            "goldman_sachs_podcasts",
         }
         for src in config["sources"]:
             assert src["source_id"] not in excluded_ids, f"Excluded source found: {src['source_id']}"
@@ -989,7 +989,7 @@ class TestM3C5A8TrialV2ContentReadyScheduling:
         p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
         with open(p) as f:
             config = yaml.safe_load(f)
-        watch_ids = {"gelonghui", "goldman_sachs_podcasts", "merck_ir"}
+        watch_ids = {"goldman_sachs_podcasts", "merck_ir"}
         for src in config["sources"]:
             assert src["source_id"] not in watch_ids
 
@@ -1150,14 +1150,14 @@ class TestM3C5A9TrialV2ContentReadySchedulingEnable:
 
     # ---- Allowlist ----
 
-    def test_allowlist_source_count_is_8(self):
-        """allowlist source count = 8。"""
+    def test_allowlist_source_count_is_9(self):
+        """allowlist source count = 9（M3C-5B1.3 gelonghui 扩容后）。"""
         import yaml
         p = Path("configs/foundation_trial_v2_content_ready_allowlist.example.yaml")
         with open(p) as f:
             config = yaml.safe_load(f)
         count = len(config.get("sources", []))
-        assert count == 8, f"Expected 8 sources, got {count}"
+        assert count == 9, f"Expected 9 sources, got {count}"
 
     def test_allowlist_no_merck_ir(self):
         """allowlist 不包含 merck_ir。"""
