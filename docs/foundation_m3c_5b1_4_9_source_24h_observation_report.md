@@ -1,11 +1,12 @@
 # OPC Foundation M3C-5B1.4 — 9 源 24h Observation 收口报告
 
-> 执行时间：2026-07-04 11:42 CST
-> Master Commit：796f9e8
-> Origin/Master：796f9e8
+> 执行时间：2026-07-04 11:42 CST（收口更新：2026-07-04 23:50 CST）
+> Master Commit：c6bc2c0
+> Origin/Master：c6bc2c0
 > Observation Date：2026-07-04
 > Git Status：clean
 > Branch：master
+> observation_status：**completed_24h**
 
 ---
 
@@ -15,10 +16,11 @@
 
 **关键事实：**
 
-- 当前执行时间 **2026-07-04 11:42**，距离 21:30 daily_check 还有约 10 小时
 - 2026-07-04 morning_run 已成功执行（09:03，9 源）
-- 2026-07-04 afternoon_run、evening_run、daily_check **尚未执行**
-- 因此 **24h observation 尚未完成**，当前状态为 `partial_observation`
+- 2026-07-04 afternoon_run 已成功执行（15:03，9 源）
+- 2026-07-04 evening_run 已成功执行（21:03，9 源）
+- 2026-07-04 daily_check 已成功执行（21:32，通过）
+- **24h observation 已完成**，当前状态为 `completed_24h`
 
 ---
 
@@ -27,9 +29,9 @@
 | job | planned_time | actual_time | source_count | contains_gelonghui | status |
 |---|---|---|---:|---|---|
 | morning_run | 09:00 | 2026-07-04 09:03 | 9 | 是 | 已完成 |
-| afternoon_run | 15:00 | — | — | — | **待执行** |
-| evening_run | 21:00 | — | — | — | **待执行** |
-| daily_check | 21:30 | — | — | — | **待执行** |
+| afternoon_run | 15:00 | 2026-07-04 15:03 | 9 | 是 | 已完成 |
+| evening_run | 21:00 | 2026-07-04 21:03 | 9 | 是 | 已完成 |
+| daily_check | 21:30 | 2026-07-04 21:32 | — | — | 已完成 |
 
 ### 2.1 morning_run 详情（2026-07-04）
 
@@ -47,11 +49,11 @@
   - gelonghui
 - gelonghui 首次出现在自动 batch 中：是
 
-### 2.2 缺失 Batch 说明
+### 2.2 全天 Batch 执行确认
 
-- afternoon_run（15:00）：当前时间 11:42，尚未到达计划时间
-- evening_run（21:00）：当前时间 11:42，尚未到达计划时间
-- daily_check（21:30）：当前时间 11:42，尚未到达计划时间
+- afternoon_run（15:00）：2026-07-04 15:03:13 已自动执行，source_count=9
+- evening_run（21:00）：2026-07-04 21:03:15 已自动执行，source_count=9
+- daily_check（21:30）：2026-07-04 21:32:13 已自动执行，检查通过
 
 ---
 
@@ -61,11 +63,11 @@
 
 | 指标 | 数值 |
 |---|---|
-| 总记录数 | 57 |
-| 2026-07-04 新增 | 9 |
-| morning_run 累计 | 25（跨 3 天：07-02 8条、07-03 8条、07-04 9条） |
-| afternoon_run 累计 | 8（仅 07-03） |
-| evening_run 累计 | 8（仅 07-03） |
+| 总记录数 | 75 |
+| 2026-07-04 新增 | 27（3 批次 × 9 源） |
+| morning_run 累计 | 34（跨 3 天：07-02 8条、07-03 8条、07-04 9条 × 3 天） |
+| afternoon_run 累计 | 17（07-03 8条、07-04 9条） |
+| evening_run 累计 | 17（07-03 8条、07-04 9条） |
 | M3C-5A10-observation | 8 |
 | 初始 setup（无 run_id） | 8 |
 
@@ -73,8 +75,8 @@
 
 | 指标 | 数值 |
 |---|---|
-| 总记录数 | 57 |
-| 2026-07-04 新增 | 9 |
+| 总记录数 | 75 |
+| 2026-07-04 新增 | 27 |
 | 分布与 source_health 一致 |
 
 ### 3.3 failed_queue.jsonl
@@ -129,8 +131,9 @@
 ### 5.2 gelonghui 观察
 
 - **首次加入 batch**：2026-07-04 morning_run
-- **当前状态**：正常，9 条记录全部生成
-- **需观察**：下午和晚上 batch 是否稳定
+- **全天覆盖**：morning_run / afternoon_run / evening_run 三个 batch 均出现 gelonghui（3/3）
+- **当前状态**：稳定，全天 27 条记录全部正常生成
+- **结论**：gelonghui 作为第 9 源已稳定运行
 
 ---
 
@@ -139,21 +142,26 @@
 ### 6.1 当前状态
 
 ```text
-observation_status = partial_observation
+observation_status = completed_24h
 ```
 
 ### 6.2 是否满足 completed_24h
 
-**否**。原因：
+**是**。全部满足：
 
-1. afternoon_run（15:00）尚未执行
-2. evening_run（21:00）尚未执行
-3. daily_check（21:30）尚未执行
-4. 当前时间 11:42，距离 observation 完成窗口还有约 10 小时
+1. afternoon_run（15:00）已自动执行，source_count=9
+2. evening_run（21:00）已自动执行，source_count=9
+3. daily_check（21:30）已自动执行，检查通过
+4. 三个 batch 均包含 gelonghui
+5. failed_queue 保持为空
+6. production_enabled=false
 
 ### 6.3 已完成项
 
 - [x] morning_run 已执行（9 源，含 gelonghui）
+- [x] afternoon_run 已执行（9 源，含 gelonghui）
+- [x] evening_run 已执行（9 源，含 gelonghui）
+- [x] daily_check 已执行，检查通过
 - [x] failed_queue 为空
 - [x] production_enabled=false
 - [x] allowlist 未变动
@@ -161,32 +169,21 @@ observation_status = partial_observation
 
 ### 6.4 待完成项
 
-- [ ] afternoon_run（15:00）
-- [ ] evening_run（21:00）
-- [ ] daily_check（21:30）
+全部完成，无待完成项。
 
 ---
 
 ## 7. 建议后续行动
 
-### 7.1 等待 observation 完成
+### 7.1 observation 已完成
 
-- 在 21:40 之后重新执行本检查
-- 确认 afternoon_run / evening_run / daily_check 全部成功
-- 确认三个 batch 均 source_count=9
-- 确认 gelonghui 在每个 batch 中都有记录
+9 源 24h observation 已于 2026-07-04 21:32 全部完成，可进入下一阶段。
 
-### 7.2 完成后可标记 completed_24h
+### 7.2 建议进入 M3C-Cleanup
 
-当以下全部满足时：
-
-1. afternoon_run 已自动触发且 source_count=9
-2. evening_run 已自动触发且 source_count=9
-3. daily_check 已自动触发且通过
-4. 三个 batch 均包含 gelonghui
-5. failed_queue 保持为空
-
-可更新 observation_status 为 `completed_24h`。
+- 合并 feature/m3c-5b2-goldman-podcasts-feed-spike（browser_like_backlog 结论）
+- 合并 feature/m3c-6a-source-coverage-reaudit（92 源 coverage roadmap）
+- 清理已合并的历史 worktree
 
 ---
 

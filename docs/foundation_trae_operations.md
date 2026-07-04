@@ -525,7 +525,7 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
 
 > 执行时间：2026-07-04
 > 观察对象：9 个 content_ready 源 trial_v2 command-only 调度
-> observation_status：`partial_observation`（进行中）
+> observation_status：`completed_24h`
 
 ### 15.1 扩容背景
 
@@ -551,28 +551,26 @@ M3C-5B1.3 将 trial_v2 allowlist 从 8 源扩容到 9 源：
 | zhitong_caijing | 智通财经 | P1 | content_ready |
 | gelonghui | 格隆汇 | P0 | content_ready |
 
-### 15.3 观察进度（截至 2026-07-04 11:42）
+### 15.3 观察进度（2026-07-04 全天）
 
 - [x] morning_run：2026-07-04 09:03，9 源 × 9 records（含 gelonghui）
-- [ ] afternoon_run：2026-07-04 15:00，待执行
-- [ ] evening_run：2026-07-04 21:00，待执行
-- [ ] daily_check：2026-07-04 21:30，待执行
+- [x] afternoon_run：2026-07-04 15:03，9 源 × 9 records（含 gelonghui）
+- [x] evening_run：2026-07-04 21:03，9 源 × 9 records（含 gelonghui）
+- [x] daily_check：2026-07-04 21:32，检查通过
 
-### 15.4 收口标准
+### 15.4 收口标准（全部满足）
 
-必须全部满足才能标记 `completed_24h`：
-
-1. afternoon_run 已自动触发且 source_count=9
-2. evening_run 已自动触发且 source_count=9
-3. daily_check 已自动触发且通过
-4. 三个 batch 均包含 gelonghui
-5. failed_queue 保持为空
-6. production_enabled=false
+1. afternoon_run 已自动触发且 source_count=9 ✅
+2. evening_run 已自动触发且 source_count=9 ✅
+3. daily_check 已自动触发且通过 ✅
+4. 三个 batch 均包含 gelonghui ✅
+5. failed_queue 保持为空 ✅
+6. production_enabled=false ✅
 
 ### 15.5 当前报告
 
 - **报告路径**：`docs/foundation_m3c_5b1_4_9_source_24h_observation_report.md`
-- **当前状态**：partial_observation（3/4 batch 待执行）
+- **当前状态**：completed_24h（2026-07-04 21:32 收口）
 
 ### 14.7 Daily Status Trial V2 集成
 

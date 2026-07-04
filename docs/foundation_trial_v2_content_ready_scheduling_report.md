@@ -334,8 +334,8 @@ Preflight 详细结果：
 
 ### 12.1 观察状态
 
-- **observation_status**：`partial_observation`
-- **原因**：单次会话内完成了脚本验证、preflight 审计、产物生成和 check 检查。完整 24h 观察（morning_run + afternoon_run + evening_run + daily_check）需本地 TRAE 持续运行后补齐。
+- **observation_status**：`completed_24h`
+- **原因**：2026-07-02 ~ 2026-07-03 完成 8 源 24h 观察；2026-07-04 完成 9 源 24h 观察（含 gelonghui）。全部 batch 按时成功执行，failed_queue 始终为空。
 
 ### 12.2 已完成的验证
 
