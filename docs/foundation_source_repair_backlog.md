@@ -73,6 +73,7 @@ These sources return partial or degraded content. They must **NOT** enter schedu
 - **goldman_sachs_reports**: Server-side render does not include article body. Full content loaded dynamically. Route to browser-like specialized spike in M3C-5B2.
 - **goldman_sachs_top_of_mind**: Same JS rendering limitation as above. Route to browser-like specialized spike in M3C-5B2.
 - **goldman_sachs_podcasts**: Hub page has no SSR episode list; no RSS/Atom/JSON-LD feed found. Requires browser-like extraction (M3C-5B2). Moved from M3C-5B1 after real crawl confirmed JS-only content.
+- **M3C-5B2 Update (2026-07-04)**: Feed/metadata spike completed. Attempted RSS/Atom (all 404), sitemap.xml (1 podcast URL, no episodes), series pages (all 404), JSON-LD/OpenGraph (hub page only, no episode metadata). No stable non-browser entry found. Final decision: `browser_like_backlog`. Continue to defer browser-like extraction.
 
 ---
 

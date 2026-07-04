@@ -238,6 +238,7 @@
 - `goldman_sachs_reports`
 - `goldman_sachs_top_of_mind`
 - `goldman_sachs_podcasts` — added from M3C-5B1 (hub page, JS-rendered episodes)
+- **M3C-5B2 feed spike (2026-07-04)**: No public RSS/Atom feed, sitemap episode list, or JSON-LD metadata entry found. All static extraction paths return 404 or navigation-only content. `goldman_sachs_podcasts` remains in browser-like backlog pending headless evaluation.
 
 **Exit criteria**:
 - Browser extraction achieves score >= 80 on all four Goldman sources.
