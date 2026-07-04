@@ -41,6 +41,22 @@ from .execution_capabilities import (
     TRAE_AUTOMATION_ELIGIBLE_DECISIONS,
     FINAL_DECISIONS,
 )
+from .trae_execution_assessment import (
+    TraeBrowserSampleItem,
+    TraeBrowserObservation,
+    TraeSkillObservation,
+    TraeAutomationDryRunObservation,
+    TraeAssistedDecision,
+    TraeExecutionAssessmentReport,
+    validate_trae_assessment,
+    compute_trae_decision,
+    apply_trae_decision,
+    is_m3c_6g_candidate,
+    make_default_trae_report,
+    M3C_6G_ALLOWED_CANDIDATES,
+    TRAE_FINAL_DECISIONS,
+    TRAE_AUTOMATION_ALLOWED_VALUES,
+)
 
 __all__ = [
     "LiveSmokeStatus",
@@ -64,4 +80,18 @@ __all__ = [
     "TRIAL_V2_ALLOWLIST_ELIGIBLE_DECISIONS",
     "TRAE_AUTOMATION_ELIGIBLE_DECISIONS",
     "FINAL_DECISIONS",
+    "TraeBrowserSampleItem",
+    "TraeBrowserObservation",
+    "TraeSkillObservation",
+    "TraeAutomationDryRunObservation",
+    "TraeAssistedDecision",
+    "TraeExecutionAssessmentReport",
+    "validate_trae_assessment",
+    "compute_trae_decision",
+    "apply_trae_decision",
+    "is_m3c_6g_candidate",
+    "make_default_trae_report",
+    "M3C_6G_ALLOWED_CANDIDATES",
+    "TRAE_FINAL_DECISIONS",
+    "TRAE_AUTOMATION_ALLOWED_VALUES",
 ]

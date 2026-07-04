@@ -1,0 +1,130 @@
+# OPC Foundation M3C-6G TRAE Browser-assisted Spike Configuration
+# Phase: M3C-6G
+# Purpose: Use TRAE built-in browser / agent-browser to perform one-shot public
+#          page observation on reuters / marketwatch / streetinsider, which all
+#          failed Python static HTTP preflight in M3C-6B (HTTP 401/403).
+# Note:
+#   - production_enabled must be false
+#   - affects_trial_v2_allowlist must be false (no allowlist change)
+#   - affects_trae_scheduling must be false (no TRAE scheduling change)
+#   - creates_permanent_automation must be false (one-shot only)
+#   - TRAE browser candidates must NOT auto-promote to trial_v2
+#   - No login / paywall / captcha / Cloudflare bypass allowed
+
+version: 1
+
+scope:
+  name: "m3c_6g_trae_browser_assisted_spike"
+  description: "TRAE browser-assisted public page observation for 3 scheduled_candidate sources that failed static preflight"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  creates_permanent_automation: false
+  base_trial_v2_content_ready_count: 9
+  candidate_count: 3
+  candidate_sources:
+    - reuters
+    - marketwatch
+    - streetinsider
+
+base_allowlist:
+  - barclays_our_insights
+  - markets_insider
+  - china_fund_news
+  - wind_public
+  - goldman_sachs_insights
+  - business_insider
+  - cls_cn
+  - zhitong_caijing
+  - gelonghui
+
+policy:
+  public_pages_only: true
+  no_login: true
+  no_paywall_bypass: true
+  no_captcha_solving: true
+  no_cloudflare_bypass: true
+  no_cookie_commit: true
+  no_raw_html_commit: true
+  no_screenshot_commit: true
+  no_browser_dependency_in_repo: true
+  no_production_dependency: true
+  no_permanent_automation: true
+  no_tag: true
+
+allowed_execution_checks:
+  trae_browser_public_observation: true
+  agent_browser_public_observation: true
+  agent_reach_public_observation_if_available: true
+  one_shot_manual_automation_dry_run_if_available: true
+
+disallowed_promotions:
+  promote_to_trial_v2_allowlist: true
+  promote_to_production: true
+  create_trae_scheduled_task: true
+
+candidates:
+  - source_id: reuters
+    source_name: Reuters
+    expected_value: high
+    prior_static_result: "http_401"
+    preferred_observation_mode: "trae_browser_public"
+    start_urls:
+      - "https://www.reuters.com"
+    inventory_url: "https://www.reuters.com"
+
+  - source_id: marketwatch
+    source_name: MarketWatch
+    expected_value: high
+    prior_static_result: "http_401"
+    preferred_observation_mode: "trae_browser_public"
+    start_urls:
+      - "https://www.marketwatch.com"
+    inventory_url: "https://www.marketwatch.com"
+
+  - source_id: streetinsider
+    source_name: StreetInsider
+    expected_value: medium
+    prior_static_result: "http_403"
+    preferred_observation_mode: "trae_browser_public"
+    start_urls:
+      - "https://www.streetinsider.com"
+    inventory_url: "https://www.streetinsider.com"
+
+observation:
+  max_sample_items_per_source: 3
+  record_only_structured_fields: true
+  forbidden_artifacts:
+    - screenshots
+    - raw_html
+    - cookies
+    - session_id
+    - tokens
+    - login_state
+    - bypass_procedure
+
+trae_assessment:
+  browser_observation_enabled: true
+  skill_observation_enabled: true
+  one_shot_automation_dry_run: "optional"
+  do_not_create_permanent_task: true
+  do_not_install_skill_artifacts_into_repo: true
+  do_not_write_production_dependency: true
+
+# Final decision values allowed for M3C-6G
+allowed_final_decisions:
+  - trae_browser_assisted_candidate
+  - trae_skill_assisted_candidate
+  - trae_low_frequency_candidate
+  - trae_on_demand_candidate
+  - public_browser_blocked
+  - login_or_paywall_blocked
+  - captcha_or_antibot_blocked
+  - manual_review_only
+  - not_worth_it
+
+# Thresholds for trae_browser_assisted_candidate
+candidate_thresholds:
+  min_visible_items: 3
+  min_visible_dated_items: 2
+  max_sample_items_recorded: 3
