@@ -70,12 +70,13 @@
 
 ## 4. 被排除源
 
-### content_watch（5 个，不纳入）
+### content_watch（4 个，不纳入）
 - goldman_sachs_research（JS 渲染，无研究内容）
 - goldman_sachs_reports（JS 渲染）
 - goldman_sachs_top_of_mind（JS 渲染）
-- gelonghui（导航噪音多）
 - goldman_sachs_podcasts（JS 渲染，consolidated）
+
+> 注：gelonghui 在 M3C-5B1.3 中已修复并纳入 trial_v2 allowlist（9 源），不再属于排除源。
 
 ### content_reject（2 个，不纳入）
 - briefing_com_upgrades（空页面）
@@ -95,7 +96,8 @@
 
 `configs/foundation_trial_v2_content_ready_allowlist.example.yaml`
 
-8 个源：
+### 5.1 M3C-5A8 初始 allowlist（8 源）
+
 - barclays_our_insights (P0)
 - markets_insider (P0)
 - china_fund_news (P0)
@@ -104,6 +106,19 @@
 - business_insider (P1)
 - cls_cn (P1)
 - zhitong_caijing (P1)
+
+### 5.2 M3C-5B1.3 扩容后 allowlist（9 源）
+
+在上述 8 源基础上新增：
+
+- gelonghui (P0)
+
+扩容验证：
+- validate-config：PASS
+- preflight：PASS 9/9
+- dry-run：PASS source_count=9
+- manual run：PASS +9 source_health / +9 run_log
+- check：PASS
 
 ---
 

@@ -357,15 +357,15 @@ M3C-5A5 内容有效性审计完成，21 个 operational 源的审计结果如�
 
 ---
 
-## 13. M3C-5A9：Trial V2 Content-Ready Command-Only 调度运维
+## 13. M3C-5A9 / M3C-5B1：Trial V2 Content-Ready Command-Only 调度运维
 
-> 执行时间：2026-07-02
-> 启用源数：8 个 content_ready 源
+> 执行时间：2026-07-02 ~ 2026-07-04
+> 启用源数：9 个 content_ready 源（M3C-5B1.3 从 8 扩容到 9）
 > 配置路径：`configs/trae_foundation_trial_v2_content_ready.example.yaml`
 
 ### 13.1 调度对象
 
-只允许调度以下 8 个 source：
+只允许调度以下 9 个 source：
 
 | source_id | source_name | priority |
 |---|---|---|
@@ -377,8 +377,9 @@ M3C-5A5 内容有效性审计完成，21 个 operational 源的审计结果如�
 | business_insider | Business Insider | P1 |
 | cls_cn | 财联社 | P1 |
 | zhitong_caijing | 智通财经 | P1 |
+| gelonghui | 格隆汇 | P0 |
 
-**排除源**：merck_ir、benzinga_analyst_ratings、bofa_global_research、texas_instruments_ir、briefing_com_upgrades、wallstreet_cn、goldman_sachs_reports、goldman_sachs_top_of_mind、goldman_sachs_research、goldman_sachs_podcasts、gelonghui
+**排除源**：merck_ir、benzinga_analyst_ratings、bofa_global_research、texas_instruments_ir、briefing_com_upgrades、wallstreet_cn、goldman_sachs_reports、goldman_sachs_top_of_mind、goldman_sachs_research、goldman_sachs_podcasts
 
 ### 13.2 TRAE 本地启用方式
 
@@ -421,11 +422,12 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
 
 运行 `scripts/check_foundation_trial_v2_content_ready.ps1` 后检查：
 
-1. source_health.jsonl 是否新增 8 条记录
+1. source_health.jsonl 是否新增 9 条记录
 2. run_log.jsonl 是否新增 run 记录
 3. failed_queue.jsonl 是否存在且 fail-soft
 4. latest report 是否更新
 5. check 是否 15/15 通过
+6. gelonghui 是否在新增记录中
 
 ### 13.5 Wind Public 特殊观察
 
@@ -513,9 +515,64 @@ powershell -ExecutionPolicy Bypass -File scripts/run_foundation_trial_v2_content
 - **更新频率**：每完成一轮观察后更新
 - **必须包含**：
   - observation_status（partial_observation / completed_24h）
-  - 8 源逐源表现
+  - 8/9 源逐源表现
   - wind_public garbled_text 观察结果
-  - 是否建议进入 M3C-5A11
+  - 是否建议进入下一阶段
+
+---
+
+## 15. M3C-5B1.4：9 源 24h Observation 运维
+
+> 执行时间：2026-07-04
+> 观察对象：9 个 content_ready 源 trial_v2 command-only 调度
+> observation_status：`partial_observation`（进行中）
+
+### 15.1 扩容背景
+
+M3C-5B1.3 将 trial_v2 allowlist 从 8 源扩容到 9 源：
+
+- **新增源**：`gelonghui`（格隆汇）
+- **扩容验证**：validate-config PASS、preflight PASS 9/9、dry-run PASS
+- **扩容时间**：2026-07-04
+
+### 15.2 9 源列表
+
+在原有 8 源基础上增加 gelonghui：
+
+| source_id | source_name | priority | 状态 |
+|---|---|---|---|
+| barclays_our_insights | Barclays Our Insights | P0 | content_ready |
+| markets_insider | Markets Insider | P0 | content_ready |
+| china_fund_news | 中国基金报 | P0 | content_ready |
+| wind_public | Wind 万得公开内容 | P0 | content_ready（garbled_text watch） |
+| goldman_sachs_insights | Goldman Sachs Insights | P1 | content_ready |
+| business_insider | Business Insider | P1 | content_ready |
+| cls_cn | 财联社 | P1 | content_ready |
+| zhitong_caijing | 智通财经 | P1 | content_ready |
+| gelonghui | 格隆汇 | P0 | content_ready |
+
+### 15.3 观察进度（截至 2026-07-04 11:42）
+
+- [x] morning_run：2026-07-04 09:03，9 源 × 9 records（含 gelonghui）
+- [ ] afternoon_run：2026-07-04 15:00，待执行
+- [ ] evening_run：2026-07-04 21:00，待执行
+- [ ] daily_check：2026-07-04 21:30，待执行
+
+### 15.4 收口标准
+
+必须全部满足才能标记 `completed_24h`：
+
+1. afternoon_run 已自动触发且 source_count=9
+2. evening_run 已自动触发且 source_count=9
+3. daily_check 已自动触发且通过
+4. 三个 batch 均包含 gelonghui
+5. failed_queue 保持为空
+6. production_enabled=false
+
+### 15.5 当前报告
+
+- **报告路径**：`docs/foundation_m3c_5b1_4_9_source_24h_observation_report.md`
+- **当前状态**：partial_observation（3/4 batch 待执行）
 
 ### 14.7 Daily Status Trial V2 集成
 
