@@ -25,6 +25,22 @@ from .models import (
 )
 from .live_smoke import run_live_smoke
 from .reports import generate_live_smoke_report
+from .execution_capabilities import (
+    ExecutionMode,
+    SourceExecutionCapability,
+    TraeBrowserAssessment,
+    SampleItem,
+    validate_execution_capability,
+    compute_recommended_execution_mode,
+    compute_allowlist_flags,
+    apply_recommendations,
+    is_candidate_source,
+    make_default_capability,
+    M3C_6B_ALLOWED_CANDIDATES,
+    TRIAL_V2_ALLOWLIST_ELIGIBLE_DECISIONS,
+    TRAE_AUTOMATION_ELIGIBLE_DECISIONS,
+    FINAL_DECISIONS,
+)
 
 __all__ = [
     "LiveSmokeStatus",
@@ -34,4 +50,18 @@ __all__ = [
     "LiveSmokeRunConfig",
     "run_live_smoke",
     "generate_live_smoke_report",
+    "ExecutionMode",
+    "SourceExecutionCapability",
+    "TraeBrowserAssessment",
+    "SampleItem",
+    "validate_execution_capability",
+    "compute_recommended_execution_mode",
+    "compute_allowlist_flags",
+    "apply_recommendations",
+    "is_candidate_source",
+    "make_default_capability",
+    "M3C_6B_ALLOWED_CANDIDATES",
+    "TRIAL_V2_ALLOWLIST_ELIGIBLE_DECISIONS",
+    "TRAE_AUTOMATION_ELIGIBLE_DECISIONS",
+    "FINAL_DECISIONS",
 ]
