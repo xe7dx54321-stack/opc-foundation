@@ -53,18 +53,20 @@ def test_trafilatura_extractor_no_crash_on_bad_url():
 
 def test_trafilatura_extractor_returns_text():
     mock_client = _make_mock_httpx_client(text="<html><body>Hello world content here</body></html>")
-    with patch("opc_foundation.web.trafilatura_extractor.httpx.Client", return_value=mock_client):
-        with patch("opc_foundation.web.trafilatura_extractor.trafilatura.extract", return_value="Hello world content here"):
-            with patch("opc_foundation.web.trafilatura_extractor.trafilatura.extract_metadata", return_value=None):
-                extractor = TrafilaturaExtractor()
-                page = extractor.extract("https://example.com")
+    with patch("opc_foundation.web.trafilatura_extractor.validate_url", return_value=None):
+        with patch("opc_foundation.web.trafilatura_extractor.httpx.Client", return_value=mock_client):
+            with patch("opc_foundation.web.trafilatura_extractor.trafilatura.extract", return_value="Hello world content here"):
+                with patch("opc_foundation.web.trafilatura_extractor.trafilatura.extract_metadata", return_value=None):
+                    extractor = TrafilaturaExtractor()
+                    page = extractor.extract("https://example.com")
     assert "Hello world" in page.text
 
 
 def test_trafilatura_extractor_handles_exception():
     mock_client = _make_mock_httpx_client(exc=Exception("timeout"))
-    with patch("opc_foundation.web.trafilatura_extractor.httpx.Client", return_value=mock_client):
-        extractor = TrafilaturaExtractor()
-        page = extractor.extract("https://example.com")
+    with patch("opc_foundation.web.trafilatura_extractor.validate_url", return_value=None):
+        with patch("opc_foundation.web.trafilatura_extractor.httpx.Client", return_value=mock_client):
+            extractor = TrafilaturaExtractor()
+            page = extractor.extract("https://example.com")
     assert len(page.errors) > 0
     assert page.text == ""
