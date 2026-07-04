@@ -1,0 +1,125 @@
+# OPC Foundation M3C-6B Scheduled Candidate Preflight Configuration
+# Phase: M3C-6B
+# Purpose: Independent preflight for reuters / marketwatch / streetinsider
+#          as next scheduled_candidate, including TRAE execution capability
+#          assessment (browser / skill / automation).
+# Note:
+#   - production_enabled must be false
+#   - affects_trial_v2_allowlist must be false (no allowlist change)
+#   - affects_trae_scheduling must be false (no TRAE scheduling change)
+#   - TRAE browser/skill candidates must NOT auto-promote to trial_v2
+#   - No login / paywall / captcha bypass allowed
+
+version: 1
+
+scope:
+  name: "m3c_6b_scheduled_candidate_preflight"
+  description: "Independent preflight for 3 scheduled_candidate sources (reuters, marketwatch, streetinsider) with TRAE execution capability assessment"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  base_trial_v2_content_ready_count: 9
+  candidate_count: 3
+  candidate_sources:
+    - reuters
+    - marketwatch
+    - streetinsider
+
+base_allowlist:
+  - barclays_our_insights
+  - markets_insider
+  - china_fund_news
+  - wind_public
+  - goldman_sachs_insights
+  - business_insider
+  - cls_cn
+  - zhitong_caijing
+  - gelonghui
+
+policy:
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+  no_cloudflare_bypass: true
+  no_login_bypass: true
+  no_paywall_bypass: true
+  no_cookie_commit: true
+  no_browser_dependency_in_repo: true
+  no_raw_html_in_repo: true
+  no_screenshot_in_repo: true
+  no_tag: true
+
+execution_modes:
+  python_static_http:
+    allowed: true
+    can_promote_to_trial_v2: true
+  rss_or_sitemap:
+    allowed: true
+    can_promote_to_trial_v2: true
+  public_json_ld_or_metadata:
+    allowed: true
+    can_promote_to_trial_v2: true
+  trae_browser_public:
+    allowed: true
+    can_promote_to_trial_v2: false
+    can_promote_to_trae_automation: "manual_approval_required"
+  trae_skill_agent_reach:
+    allowed: true
+    can_promote_to_trial_v2: false
+    can_promote_to_trae_automation: "manual_approval_required"
+  trae_scheduled_automation:
+    allowed: true
+    can_promote_to_trial_v2: false
+    can_promote_to_trae_automation: "manual_approval_required"
+  on_demand_search:
+    allowed: true
+    can_promote_to_trial_v2: false
+
+candidates:
+  - source_id: reuters
+    source_name: Reuters
+    expected_value: high
+    initial_layer: scheduled_candidate
+    preferred_modes:
+      - python_static_http
+      - rss_or_sitemap
+      - trae_browser_public
+    url: "https://www.reuters.com"
+
+  - source_id: marketwatch
+    source_name: MarketWatch
+    expected_value: high
+    initial_layer: scheduled_candidate
+    preferred_modes:
+      - python_static_http
+      - rss_or_sitemap
+      - trae_browser_public
+    url: "https://www.marketwatch.com"
+
+  - source_id: streetinsider
+    source_name: StreetInsider
+    expected_value: medium
+    initial_layer: scheduled_candidate
+    preferred_modes:
+      - python_static_http
+      - rss_or_sitemap
+      - trae_browser_public
+    url: "https://www.streetinsider.com"
+
+# Preflight thresholds for scheduled_preflight_pass_static / _feed
+preflight_thresholds:
+  min_valid_items: 3
+  min_dated_items: 2
+  min_content_score: 70
+
+network:
+  timeout_seconds: 20
+  max_retries: 1
+  user_agent: "OPC-Foundation-M3C-6B-Preflight/1.0 (+https://github.com/xe7dx54321-stack/opc-foundation)"
+
+trae_assessment:
+  browser_observation_enabled: true
+  skill_observation_enabled: true
+  automation_design_only: true
+  do_not_create_permanent_task: true
+  do_not_install_skill_artifacts_into_repo: true
