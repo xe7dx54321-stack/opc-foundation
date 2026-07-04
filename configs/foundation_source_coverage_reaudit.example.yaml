@@ -1,0 +1,1803 @@
+# =============================================================================
+# foundation_source_coverage_reaudit.example.yaml
+# M3C-6A: 92-source coverage reaudit configuration
+# 10-layer classification (L1-L10)
+# =============================================================================
+# This is an EXAMPLE configuration. Do NOT use in production.
+# Scope: read-only reaudit classification; no scheduling, no repair, no data commit.
+# =============================================================================
+
+version: 1
+
+scope:
+  name: "foundation_source_coverage_reaudit"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  source_inventory_count: 92
+  current_scheduled_ready_count: 9
+  target_usable_sources_short_term: 25
+  target_usable_sources_mid_term: 46
+  target_scheduled_sources_mid_term: 15
+
+coverage_layers:
+  scheduled_ready: {}
+  scheduled_candidate: {}
+  low_frequency_candidate: {}
+  rss_or_sitemap_candidate: {}
+  wechat_archive_candidate: {}
+  on_demand_candidate: {}
+  browser_like_backlog: {}
+  tls_or_proxy_backlog: {}
+  cloudflare_or_anti_bot_backlog: {}
+  excluded_or_low_value: {}
+
+policy:
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+  no_browser_runtime_in_this_stage: true
+  no_source_repair_in_this_stage: true
+  no_data_commit: true
+
+# =============================================================================
+# L1: scheduled_ready (9 sources) — already running in trial_v2 schedule
+# =============================================================================
+sources:
+  # --- L1: scheduled_ready (9) ---
+  - source_id: "barclays_our_insights"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P0"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A5 audit"
+    notes: ""
+
+  - source_id: "markets_insider"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P0"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A5 audit"
+    notes: ""
+
+  - source_id: "china_fund_news"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P0"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A5 audit"
+    notes: ""
+
+  - source_id: "wind_public"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P0"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A5 audit"
+    notes: "garbled_text watch; monitor for encoding regressions"
+
+  - source_id: "goldman_sachs_insights"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P1"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A7 audit"
+    notes: ""
+
+  - source_id: "business_insider"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P1"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A7.1 audit"
+    notes: ""
+
+  - source_id: "cls_cn"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P1"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A7.1 audit"
+    notes: ""
+
+  - source_id: "zhitong_caijing"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P1"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5A7.1 audit"
+    notes: ""
+
+  - source_id: "gelonghui"
+    current_layer: "scheduled_ready"
+    current_status: "content_ready"
+    usable_state: "usable_scheduled"
+    recommended_next_action: "keep_observing"
+    priority: "P0"
+    expected_path_to_usable: "already_running"
+    scheduling_allowed_now: true
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-5B1.3 9-source expansion"
+    notes: "date-format repaired in M3C-5B1.1a; now running stable"
+
+  # --- L2: scheduled_candidate (3) ---
+  - source_id: "reuters"
+    current_layer: "scheduled_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "manual_reaudit"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_schedule"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "high"
+    failure_or_gap_reason: "mainstream media; not yet audited for content validity"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "high-priority mainstream media candidate; needs content validity preflight before scheduling"
+
+  - source_id: "marketwatch"
+    current_layer: "scheduled_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "manual_reaudit"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_schedule"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "high"
+    failure_or_gap_reason: "mainstream media; not yet audited for content validity"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "high-priority mainstream media candidate; needs content validity preflight before scheduling"
+
+  - source_id: "streetinsider"
+    current_layer: "scheduled_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "manual_reaudit"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_schedule"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "analyst rating source; not yet audited for content validity"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "analyst rating source; may have partial RSS; needs preflight"
+
+  # --- L3: low_frequency_candidate (14) ---
+  - source_id: "quanshang_china"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "Chinese media; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "Chinese media source; candidate for low-frequency polling (weekly or less)"
+
+  - source_id: "us_stock_research"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "Chinese media; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "US stock research from Chinese media; low-frequency candidate"
+
+  - source_id: "hk_stock_research"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "Chinese media; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "HK stock research from Chinese media; low-frequency candidate"
+
+  - source_id: "jiwen_vip_public"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_light_repair"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "Wallstreetcn VIP public content; likely needs URL adaptation"
+    evidence_basis: "M3C-6A reaudit; wallstreetcn VIP public variant"
+    notes: "Wallstreetcn VIP public articles; may need URL pattern adaptation for free content"
+
+  - source_id: "jp_morgan_insights"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P1"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "JP Morgan public insights page; may have SSR content but low update frequency"
+
+  - source_id: "morgan_stanley_thoughts_on_market"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P1"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "Morgan Stanley Thoughts on Market; low update frequency expected"
+
+  - source_id: "morgan_stanley_insights"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P1"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; likely JS-rendered; not yet audited"
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley likely uses JS rendering"
+    notes: "May need browser-like spike if SSR content is incomplete"
+
+  - source_id: "tipranks"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "analyst rating source; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "Analyst rating aggregation; may have partial free content or RSS"
+
+  - source_id: "morgan_stanley_thoughts_podcast"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "podcast source; not yet audited; likely no static feed"
+    evidence_basis: "M3C-6A reaudit; podcast variant of thoughts_on_market"
+    notes: "Podcast format; check for RSS/podcast feed availability"
+
+  - source_id: "jp_morgan_research_insights_podcast"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "podcast source; not yet audited; likely no static feed"
+    evidence_basis: "M3C-6A reaudit; podcast variant of jp_morgan_research_insights"
+    notes: "Podcast format; check for RSS/podcast feed availability"
+
+  - source_id: "bofa_global_research_unlocked"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "podcast source; not yet audited"
+    evidence_basis: "M3C-6A reaudit; BofA podcast hub variant"
+    notes: "BofA Global Research Unlocked podcast; check for feed availability"
+
+  - source_id: "ubs_global_research_pod_hub"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "podcast source; not yet audited"
+    evidence_basis: "M3C-6A reaudit; UBS podcast hub variant"
+    notes: "UBS Global Research podcast hub; check for feed availability"
+
+  - source_id: "wallstreet_cn"
+    current_layer: "low_frequency_candidate"
+    current_status: "content_reject"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "find_rss_or_sitemap_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5A audit returned empty page; possible paywall or URL migration"
+    evidence_basis: "M3C-5A audit: content_reject empty page"
+    notes: "Main page returned empty; try RSS feed discovery or URL pattern adaptation"
+
+  - source_id: "bofa_weekly_market_recap"
+    current_layer: "low_frequency_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "unknown_needs_reaudit"
+    recommended_next_action: "low_frequency_preflight"
+    priority: "P2"
+    expected_path_to_usable: "preflight_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; not yet audited"
+    evidence_basis: "M3C-6A reaudit; not in M3C-5A scope"
+    notes: "BofA Weekly Market Recap; low update frequency expected"
+
+  # --- L4: rss_or_sitemap_candidate (24) ---
+  - source_id: "goldman_sachs_greater_china"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P1"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs sitemap/RSS discovery"
+    evidence_basis: "M3C-6A reaudit; Goldman Sachs Greater China specific channel"
+    notes: "Regional Greater China research; look for RSS feed or sitemap"
+
+  - source_id: "morgan_stanley_china"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P1"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs sitemap/RSS discovery"
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley China specific channel"
+    notes: "Regional China research; look for RSS feed or sitemap"
+
+  - source_id: "morgan_stanley_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P1"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs sitemap/RSS discovery"
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley research hub"
+    notes: "Research publication hub; look for RSS feed or sitemap"
+
+  - source_id: "morgan_stanley_fund_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "low"
+    failure_or_gap_reason: "investment management research; niche; no known RSS"
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley IM research"
+    notes: "Investment Management division research; lower value than IB research"
+
+  - source_id: "jp_morgan_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; JP Morgan research publication hub"
+    notes: "Research publication hub; look for RSS feed or sitemap"
+
+  - source_id: "jp_morgan_global_research_reports"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; JP Morgan global research reports"
+    notes: "Global research reports section; look for RSS feed or sitemap"
+
+  - source_id: "jp_morgan_research_insights"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; likely JS-rendered; needs discovery"
+    evidence_basis: "M3C-6A reaudit; JP Morgan Research Insights hub"
+    notes: "Insights hub; try RSS/sitemap first; may fall back to browser-like spike"
+
+  - source_id: "bofa_global_research_insights"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; not yet audited; needs discovery"
+    evidence_basis: "M3C-6A reaudit; BofA Global Research Insights"
+    notes: "BofA research insights section; try RSS/sitemap first"
+
+  - source_id: "barclays_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P1"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Barclays Research publication hub"
+    notes: "Barclays Research hub; separate from barclays_our_insights (L1)"
+
+  - source_id: "barclays_ib_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Barclays IB Research specific section"
+    notes: "Investment Banking research; separate from general Research hub"
+
+  - source_id: "citi_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Citi Research publication hub"
+    notes: "Citi Research hub; look for RSS feed or sitemap"
+
+  - source_id: "citi_institute"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Citi Institute / thought leadership"
+    notes: "Citi Institute content; look for RSS feed or sitemap"
+
+  - source_id: "citi_gps"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Citi GPS report series"
+    notes: "Citi GPS publications; look for RSS feed or sitemap"
+
+  - source_id: "citi_insights"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Citi Insights hub"
+    notes: "Citi Insights content; look for RSS feed or sitemap"
+
+  - source_id: "ubs_global_research"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; UBS Global Research hub"
+    notes: "UBS Global Research; look for RSS feed or sitemap"
+
+  - source_id: "ubs_cio_insights"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; UBS CIO Insights"
+    notes: "UBS CIO thought leadership; look for RSS feed or sitemap"
+
+  - source_id: "ubs_investment_bank_insights"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "official public research; no known RSS; needs discovery"
+    evidence_basis: "M3C-6A reaudit; UBS Investment Bank Insights"
+    notes: "UBS IB Insights content; look for RSS feed or sitemap"
+
+  - source_id: "briefing_com_upgrades"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "content_reject"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "find_rss_or_sitemap"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5A audit returned empty page; needs alternative entry point"
+    evidence_basis: "M3C-5A audit: content_reject empty page"
+    notes: "Analyst upgrades/downgrades; empty page from direct URL; try RSS or sitemap discovery"
+
+  - source_id: "morgan_stanley_tmt_conference"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_conference_page"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "conference source; event-driven; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley TMT Conference"
+    notes: "Event-driven conference source; check for event page/sitemap"
+
+  - source_id: "ubs_global_tech_conference"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_conference_page"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "conference source; event-driven; needs discovery"
+    evidence_basis: "M3C-6A reaudit; UBS Global Technology Conference"
+    notes: "Event-driven conference source; check for event page/sitemap"
+
+  - source_id: "bofa_global_tech_conference"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_conference_page"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "conference source; event-driven; needs discovery"
+    evidence_basis: "M3C-6A reaudit; BofA Global Technology Conference"
+    notes: "Event-driven conference source; check for event page/sitemap"
+
+  - source_id: "barclays_global_tech_conference"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_conference_page"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "conference source; event-driven; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Barclays Global Technology Conference"
+    notes: "Event-driven conference source; check for event page/sitemap"
+
+  - source_id: "deutsche_bank_tech_conference"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_conference_page"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "conference source; event-driven; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Deutsche Bank Technology Conference"
+    notes: "Event-driven conference source; check for event page/sitemap"
+
+  - source_id: "bernstein_strategic_decisions"
+    current_layer: "rss_or_sitemap_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "needs_alternative_entry"
+    recommended_next_action: "rss_sitemap_discovery"
+    priority: "P2"
+    expected_path_to_usable: "discover_conference_page"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "conference source; event-driven; needs discovery"
+    evidence_basis: "M3C-6A reaudit; Bernstein Strategic Decisions Conference"
+    notes: "Event-driven conference source; check for event page/sitemap"
+
+  # --- L5: wechat_archive_candidate (6) ---
+  - source_id: "goldman_sachs_china_wechat"
+    current_layer: "wechat_archive_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_archive_candidate"
+    recommended_next_action: "wechat_archive_mapping"
+    priority: "P1"
+    expected_path_to_usable: "wechat_archive_consumer"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: true
+    estimated_effort: "small"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; Goldman Sachs China WeChat official account"
+    notes: "Goldman Sachs China WeChat OA; map to wechat_archive consumer"
+
+  - source_id: "morgan_stanley_china_wechat"
+    current_layer: "wechat_archive_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_archive_candidate"
+    recommended_next_action: "wechat_archive_mapping"
+    priority: "P1"
+    expected_path_to_usable: "wechat_archive_consumer"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: true
+    estimated_effort: "small"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley China WeChat official account"
+    notes: "Morgan Stanley China WeChat OA; map to wechat_archive consumer"
+
+  - source_id: "morgan_stanley_fund_wechat"
+    current_layer: "wechat_archive_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_archive_candidate"
+    recommended_next_action: "wechat_archive_mapping"
+    priority: "P2"
+    expected_path_to_usable: "wechat_archive_consumer"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: true
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; Morgan Stanley Fund WeChat official account"
+    notes: "Morgan Stanley IM WeChat OA; map to wechat_archive consumer"
+
+  - source_id: "yanbaoshe_wechat"
+    current_layer: "wechat_archive_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_archive_candidate"
+    recommended_next_action: "wechat_archive_mapping"
+    priority: "P2"
+    expected_path_to_usable: "wechat_archive_consumer"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: true
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; Yanbaoshe WeChat official account"
+    notes: "Yanbaoshe research aggregator WeChat OA; map to wechat_archive consumer"
+
+  - source_id: "touyan_circle_wechat"
+    current_layer: "wechat_archive_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_archive_candidate"
+    recommended_next_action: "wechat_archive_mapping"
+    priority: "P2"
+    expected_path_to_usable: "wechat_archive_consumer"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: true
+    estimated_effort: "small"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; Touyan Circle WeChat official account"
+    notes: "Touyan Circle investment community WeChat OA; lower priority"
+
+  - source_id: "wechat_secondary_broadcast"
+    current_layer: "wechat_archive_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_archive_candidate"
+    recommended_next_action: "wechat_archive_mapping"
+    priority: "P2"
+    expected_path_to_usable: "wechat_archive_consumer"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: true
+    estimated_effort: "medium"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; secondary WeChat broadcast aggregator"
+    notes: "Secondary WeChat content broadcast channel; needs OA identification"
+
+  # --- L6: on_demand_candidate (18) ---
+  - source_id: "tavily_search"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "Tavily AI search API; register as on-demand search provider"
+
+  - source_id: "brave_search"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "Brave Search API; register as on-demand search provider"
+
+  - source_id: "serpapi"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "SerpAPI Google search proxy; register as on-demand search provider"
+
+  - source_id: "bing_search"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "Bing Search API; register as on-demand search provider"
+
+  - source_id: "google_cse"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "Google Custom Search Engine; register as on-demand search provider"
+
+  - source_id: "searx"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "SearX meta-search; self-hosted option; register as on-demand provider"
+
+  - source_id: "duckduckgo"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "DuckDuckGo search; register as on-demand search provider"
+
+  - source_id: "yahoo_search"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement"
+    notes: "Yahoo Search API; register as on-demand search provider"
+
+  - source_id: "baidu_search"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; search provider supplement; Chinese language"
+    notes: "Baidu Search; Chinese-language search; register as on-demand provider"
+
+  - source_id: "custom_search"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_search_provider"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; generic custom search provider slot"
+    notes: "Generic custom search provider slot for future extensibility"
+
+  - source_id: "github_issues"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_community_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; community supplement source"
+    notes: "GitHub Issues; community signal source for project/company mentions"
+
+  - source_id: "hacker_news"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P3"
+    expected_path_to_usable: "register_as_community_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "none"
+    expected_value: "low"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; community supplement source"
+    notes: "Hacker News; community signal source for tech/company mentions"
+
+  - source_id: "jp_morgan_healthcare_conference"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P2"
+    expected_path_to_usable: "register_as_event_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; high-value annual healthcare conference"
+    notes: "J.P. Morgan Healthcare Conference; annual event-driven; trigger on demand"
+
+  - source_id: "goldman_sachs_communacopia"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P2"
+    expected_path_to_usable: "register_as_event_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "high"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; high-value annual conference"
+    notes: "Goldman Sachs Communacopia; annual event-driven; trigger on demand"
+
+  - source_id: "microsoft_ir"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P2"
+    expected_path_to_usable: "register_as_ir_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; company IR event-driven source"
+    notes: "Microsoft Investor Relations; quarterly earnings; trigger on demand around earnings"
+
+  - source_id: "marketwatch_upgrades_downgrades"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P2"
+    expected_path_to_usable: "register_as_analyst_rating_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; analyst rating supplement"
+    notes: "MarketWatch upgrades/downgrades feed; on-demand analyst rating source"
+
+  - source_id: "wsj_upgrades_downgrades"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P2"
+    expected_path_to_usable: "register_as_analyst_rating_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; analyst rating supplement"
+    notes: "WSJ upgrades/downgrades; on-demand analyst rating source"
+
+  - source_id: "investing_com_analyst_ratings"
+    current_layer: "on_demand_candidate"
+    current_status: "not_yet_audited"
+    usable_state: "usable_on_demand_candidate"
+    recommended_next_action: "on_demand_registry_mapping"
+    priority: "P2"
+    expected_path_to_usable: "register_as_analyst_rating_source"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: true
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: ""
+    evidence_basis: "M3C-6A reaudit; analyst rating supplement"
+    notes: "Investing.com analyst ratings; on-demand analyst rating source"
+
+  # --- L7: browser_like_backlog (6) ---
+  - source_id: "goldman_sachs_research"
+    current_layer: "browser_like_backlog"
+    current_status: "content_watch"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "browser_like_spike"
+    priority: "P1"
+    expected_path_to_usable: "browser_like_extraction"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5A audit: JS-rendered page + 404 on some URLs; no SSR content"
+    evidence_basis: "M3C-5A audit: content_watch JS rendering + 404"
+    notes: "Goldman Sachs Research publication hub; needs browser-like runtime for JS rendering"
+
+  - source_id: "goldman_sachs_reports"
+    current_layer: "browser_like_backlog"
+    current_status: "content_watch"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "browser_like_spike"
+    priority: "P1"
+    expected_path_to_usable: "browser_like_extraction"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5A audit: JS-rendered page; no SSR content"
+    evidence_basis: "M3C-5A audit: content_watch JS rendering"
+    notes: "Goldman Sachs Reports listing; needs browser-like runtime for JS rendering"
+
+  - source_id: "goldman_sachs_top_of_mind"
+    current_layer: "browser_like_backlog"
+    current_status: "content_watch"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "browser_like_spike"
+    priority: "P1"
+    expected_path_to_usable: "browser_like_extraction"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5A audit: JS-rendered page; no SSR content"
+    evidence_basis: "M3C-5A audit: content_watch JS rendering"
+    notes: "Goldman Sachs Top of Mind newsletter; needs browser-like runtime for JS rendering"
+
+  - source_id: "goldman_sachs_exchanges"
+    current_layer: "browser_like_backlog"
+    current_status: "content_watch"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "browser_like_spike"
+    priority: "P1"
+    expected_path_to_usable: "browser_like_extraction"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5B2 feed spike: no static RSS/feed found; consolidated into podcasts hub"
+    evidence_basis: "M3C-5B2 feed spike; consolidated with goldman_sachs_podcasts"
+    notes: "Goldman Sachs Exchanges podcast; no static feed; needs browser-like extraction"
+
+  - source_id: "goldman_sachs_the_markets"
+    current_layer: "browser_like_backlog"
+    current_status: "content_watch"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "browser_like_spike"
+    priority: "P1"
+    expected_path_to_usable: "browser_like_extraction"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5B2 feed spike: no static RSS/feed found; consolidated into podcasts hub"
+    evidence_basis: "M3C-5B2 feed spike; consolidated with goldman_sachs_podcasts"
+    notes: "Goldman Sachs The Markets podcast; no static feed; needs browser-like extraction"
+
+  - source_id: "goldman_sachs_top_of_mind_podcast"
+    current_layer: "browser_like_backlog"
+    current_status: "content_watch"
+    usable_state: "needs_browser_like_spike"
+    recommended_next_action: "browser_like_spike"
+    priority: "P1"
+    expected_path_to_usable: "browser_like_extraction"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "M3C-5B2 feed spike: no static RSS/feed found; consolidated into podcasts hub"
+    evidence_basis: "M3C-5B2 feed spike; consolidated with goldman_sachs_podcasts"
+    notes: "Goldman Sachs Top of Mind podcast variant; no static feed; needs browser-like extraction"
+
+  # --- L8: tls_or_proxy_backlog (6) ---
+  - source_id: "merck_ir"
+    current_layer: "tls_or_proxy_backlog"
+    current_status: "content_ready_repaired"
+    usable_state: "needs_proxy_retry"
+    recommended_next_action: "proxy_retry"
+    priority: "P0"
+    expected_path_to_usable: "proxy_then_scheduled"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "high"
+    failure_or_gap_reason: "M3C-5B1 repaired to content_ready (score 90); M3C-5A8 preflight HTTP 403 from macOS direct; needs proxy to bypass TLS/bot detection"
+    evidence_basis: "M3C-5B1 repair + M3C-5A8 preflight downgrade to proxy_retry"
+    notes: "Content verified ready; macOS direct access blocked (HTTP 403); proxy retry needed"
+
+  - source_id: "yahoo_finance"
+    current_layer: "tls_or_proxy_backlog"
+    current_status: "content_reject"
+    usable_state: "needs_proxy_retry"
+    recommended_next_action: "proxy_retry"
+    priority: "P2"
+    expected_path_to_usable: "proxy_then_scheduled"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "HTTP 403 from direct access; TLS/bot detection"
+    evidence_basis: "M3C-6A reaudit; Yahoo Finance anti-bot blocking"
+    notes: "Yahoo Finance; HTTP 403 bot detection; needs proxy to access"
+
+  - source_id: "the_fly"
+    current_layer: "tls_or_proxy_backlog"
+    current_status: "content_reject"
+    usable_state: "needs_proxy_retry"
+    recommended_next_action: "proxy_retry"
+    priority: "P2"
+    expected_path_to_usable: "proxy_then_scheduled"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "HTTP 403 TLS bot detection; direct access blocked"
+    evidence_basis: "M3C-6A reaudit; The Fly anti-bot blocking"
+    notes: "The Fly real-time news; HTTP 403 TLS bot detection; needs proxy"
+
+  - source_id: "bofa_global_research"
+    current_layer: "tls_or_proxy_backlog"
+    current_status: "content_reject"
+    usable_state: "needs_proxy_retry"
+    recommended_next_action: "proxy_retry"
+    priority: "P2"
+    expected_path_to_usable: "proxy_then_scheduled"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "SSL/connection failure from macOS direct; may need proxy"
+    evidence_basis: "M3C-6A reaudit; BofA Global Research SSL failure"
+    notes: "BofA Global Research main site; SSL/connection failure; needs proxy retry"
+
+  - source_id: "texas_instruments_ir"
+    current_layer: "tls_or_proxy_backlog"
+    current_status: "content_reject"
+    usable_state: "needs_proxy_retry"
+    recommended_next_action: "proxy_retry"
+    priority: "P1"
+    expected_path_to_usable: "proxy_then_low_frequency"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "small"
+    expected_value: "medium"
+    failure_or_gap_reason: "timeout/connection failure from macOS direct"
+    evidence_basis: "M3C-6A reaudit; Texas Instruments IR connection failure"
+    notes: "Texas Instruments Investor Relations; timeout/connection failure; needs proxy"
+
+  - source_id: "bofa_must_read_research"
+    current_layer: "tls_or_proxy_backlog"
+    current_status: "content_reject"
+    usable_state: "needs_proxy_retry"
+    recommended_next_action: "proxy_retry"
+    priority: "P2"
+    expected_path_to_usable: "proxy_then_scheduled"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "medium"
+    expected_value: "medium"
+    failure_or_gap_reason: "research.bofa.com DNS resolution failed"
+    evidence_basis: "M3C-6A reaudit; BofA Must Read Research DNS failure"
+    notes: "BofA Must Read Research; DNS resolution failed; needs proxy"
+
+  # --- L9: cloudflare_or_anti_bot_backlog (1) ---
+  - source_id: "benzinga_analyst_ratings"
+    current_layer: "cloudflare_or_anti_bot_backlog"
+    current_status: "content_reject"
+    usable_state: "blocked_or_low_value"
+    recommended_next_action: "cloudflare_backlog"
+    priority: "P2"
+    expected_path_to_usable: "cloudflare_challenge_solve"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: true
+    needs_browser_like: true
+    needs_wechat_archive: false
+    estimated_effort: "large"
+    expected_value: "medium"
+    failure_or_gap_reason: "Cloudflare anti-bot challenge (HTTP 403); not solvable with simple proxy"
+    evidence_basis: "M3C-6A reaudit; Benzinga Cloudflare anti-bot blocking"
+    notes: "Benzinga analyst ratings; Cloudflare challenge page; needs both proxy and browser-like; deprioritized"
+
+  # --- L10: excluded_or_low_value (5) ---
+  - source_id: "telegram_groups"
+    current_layer: "excluded_or_low_value"
+    current_status: "blocked"
+    usable_state: "blocked_or_low_value"
+    recommended_next_action: "exclude_from_default_ops"
+    priority: "P3"
+    expected_path_to_usable: "not_applicable"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "not_worth_it"
+    expected_value: "low"
+    failure_or_gap_reason: "Telegram API access requires authenticated bot; outside project scope"
+    evidence_basis: "M3C-6A reaudit; Telegram requires bot API key"
+    notes: "Telegram groups/channels; requires authenticated bot; excluded from default operations"
+
+  - source_id: "cloud_drive_share"
+    current_layer: "excluded_or_low_value"
+    current_status: "blocked"
+    usable_state: "blocked_or_low_value"
+    recommended_next_action: "exclude_from_default_ops"
+    priority: "P3"
+    expected_path_to_usable: "not_applicable"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "not_worth_it"
+    expected_value: "low"
+    failure_or_gap_reason: "Cloud drive shares (Google Drive, Baidu Wangpan, etc.) require authentication"
+    evidence_basis: "M3C-6A reaudit; cloud drive requires user authentication"
+    notes: "Cloud drive shared files; requires user authentication; excluded from default operations"
+
+  - source_id: "pdf_download_sites"
+    current_layer: "excluded_or_low_value"
+    current_status: "blocked"
+    usable_state: "blocked_or_low_value"
+    recommended_next_action: "exclude_from_default_ops"
+    priority: "P3"
+    expected_path_to_usable: "not_applicable"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "not_worth_it"
+    expected_value: "low"
+    failure_or_gap_reason: "PDF download sites are heterogeneous, low-value, and legally ambiguous"
+    evidence_basis: "M3C-6A reaudit; PDF aggregation sites excluded"
+    notes: "Generic PDF download sites; heterogeneous and legally ambiguous; excluded"
+
+  - source_id: "unknown_wechat_pdf"
+    current_layer: "excluded_or_low_value"
+    current_status: "blocked"
+    usable_state: "blocked_or_low_value"
+    recommended_next_action: "exclude_from_default_ops"
+    priority: "P3"
+    expected_path_to_usable: "not_applicable"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "not_worth_it"
+    expected_value: "low"
+    failure_or_gap_reason: "Unidentified WeChat PDF sharing accounts; no stable entry point"
+    evidence_basis: "M3C-6A reaudit; unknown WeChat PDF sources excluded"
+    notes: "Unknown WeChat PDF sharing accounts; no stable entry point; excluded"
+
+  - source_id: "report_download_proxy"
+    current_layer: "excluded_or_low_value"
+    current_status: "blocked"
+    usable_state: "blocked_or_low_value"
+    recommended_next_action: "exclude_from_default_ops"
+    priority: "P3"
+    expected_path_to_usable: "not_applicable"
+    scheduling_allowed_now: false
+    low_frequency_allowed: false
+    on_demand_allowed: false
+    needs_proxy: false
+    needs_browser_like: false
+    needs_wechat_archive: false
+    estimated_effort: "not_worth_it"
+    expected_value: "low"
+    failure_or_gap_reason: "Third-party report download proxy sites; unreliable and low-value"
+    evidence_basis: "M3C-6A reaudit; report download proxy sites excluded"
+    notes: "Third-party report download proxy/aggregator sites; unreliable; excluded"
