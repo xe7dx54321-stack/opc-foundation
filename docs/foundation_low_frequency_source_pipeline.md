@@ -102,7 +102,81 @@ manual_approval_required_before_scheduling: true
 3. 逐步纳入更多 L3/L4 低频候选源
 4. 评估是否需要 on-demand registry（M3C-6E）
 
-## 10. 后续扩展路径
+## 10. M3C-6C.1 Observation Harness（2026-07-05 新增）
+
+M3C-6C.1 在 pipeline v1 基础上建立 7 天 observation harness，验证 `merck_ir` 低频 runner 是否可连续稳定运行。
+
+### 10.1 新增能力
+
+- 7 天 observation 状态机：`pending -> active -> completed_7d | partial_observation | failed`
+- Daily run 记录：source_id, run_id, run_date, valid_item_count, dated_item_count, missing_date_count, navigation_rejected_count, timestamp_confidence_distribution, sample_items, risk_flags, status
+- 7-day summary：observed_days, successful_days, partial_days, failed_days, total_runs, navigation_regression_count, blocking_error_count, final_observation_status
+- Navigation regression 检测：连续 2 次 navigation-only run 触发 `failed`
+- Blocking error 检测：login_required / paywall_observed / captcha_or_antibot_observed 任一出现即 `failed`
+- Runtime data：`data/foundation_low_frequency_observation/`（gitignored）
+
+### 10.2 新增脚本
+
+```bash
+# Dry-run（不写 runtime data）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --dry-run
+
+# Run once（写 runtime data，gitignored）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --run-once
+
+# Summarize（输出 7-day summary）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --summarize
+
+# Boundary check
+python scripts/check_foundation_low_frequency_observation.py
+```
+
+### 10.3 merck_ir observation 当前结果
+
+| 字段 | 值 |
+|---|---|
+| source_id | merck_ir |
+| target_days | 7 |
+| observed_days | 1 |
+| successful_days | 1 |
+| partial_days | 0 |
+| failed_days | 0 |
+| total_runs | 1 |
+| min/max_valid_items_per_run | 15 / 15 |
+| timestamp_confidence_distribution | `{"HIGH": 0, "MEDIUM": 0, "LOW": 15, "NONE": 0}` |
+| navigation_regression_count | 0 |
+| blocking_error_count | 0 |
+| final_observation_status | partial_observation |
+| recommended_next_action | continue_observation |
+| completed_7d | false |
+| missing_to_complete | 6 more days of observation |
+
+### 10.4 与 trial_v2 的隔离
+
+- 不修改 trial_v2 allowlist（仍为 9 源）
+- 不修改 TRAE scheduling 时间
+- 不修改 TRAE scheduling 命令
+- 不修改 TRAE local config
+- 不创建永久自动化任务
+- production_enabled = false
+
+### 10.5 后续 gate
+
+```
+Gate 1: M3C-6C pipeline v1 完成（已完成）
+Gate 2: M3C-6C.1 7-day observation harness（当前，需连续观察 6 天）
+Gate 3: 人工审核 observation 结果（completed_7d 必要条件）
+Gate 4: 人工创建 TRAE scheduled task（手动操作）
+Gate 5: 纳入更多低频候选源
+```
+
+### 10.6 相关文档
+
+- [Low-frequency Observation Harness](foundation_low_frequency_observation_harness.md)
+- [M3C-6C.1 Observation Report](foundation_m3c_6c1_merck_ir_low_frequency_observation_report.md)
+- [M3C-6C.1 TRAE Observation Proposal](foundation_m3c_6c1_trae_low_frequency_observation_proposal.md)
+
+## 11. 后续扩展路径
 
 ### 候选低频源（未来，不本阶段处理）
 
