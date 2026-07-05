@@ -57,3 +57,9 @@ configs/foundation_source_inventory.local.yaml
 
 # Trial V2 Content-Ready Scheduling 归档数据（严禁提交）
 data/foundation_trial_v2_content_ready/
+
+# M3C-6F Proxy Retry Batch runtime data（严禁提交）
+data/foundation_m3c_6f_proxy_retry_batch/
+
+# M3C-6F.1 Merck IR Dedicated Preflight runtime data（严禁提交）
+data/foundation_m3c_6f1_merck_ir_dedicated_preflight/
