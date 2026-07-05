@@ -1,0 +1,44 @@
+version: 1
+
+scope:
+  name: "m3c_6f1_merck_ir_dedicated_preflight"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  candidate_sources:
+    - merck_ir
+
+policy:
+  public_pages_only: true
+  no_login: true
+  no_paywall_bypass: true
+  no_captcha_solving: true
+  no_cloudflare_bypass: true
+  no_antibot_bypass: true
+  no_cookie_commit: true
+  no_raw_html_commit: true
+  no_screenshot_commit: true
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+
+merck_ir:
+  prior_findings:
+    m3c_5b1_status: "content_ready"
+    m3c_5b1_score: 90
+    m3c_6f_status: "http_200_but_generic_navigation"
+  target_entry_types:
+    - investor_news
+    - press_releases
+    - news_releases
+    - events_presentations
+    - rss_atom
+    - sitemap_investor_urls
+    - json_ld_metadata
+  reject_title_patterns:
+    - "Who we are"
+    - "What we do"
+    - "Sustainability"
+    - "Careers"
+    - "About us"
+    - "Company overview"

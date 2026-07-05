@@ -254,3 +254,48 @@ Removing these from default ops prevents noise in run logs, reduces wasted compu
 - No TRAE scheduling modifications
 - No production configuration
 - No Playwright/Selenium introduced
+
+---
+
+## 11. M3C-6F.1 Merck IR Dedicated Extraction Preflight Update (2026-07-05)
+
+**Stage:** M3C-6F.1 — Merck IR Dedicated Extraction Preflight
+**Scope:** merck_ir only
+**Method:** Dedicated IR entry-point discovery + content extraction using M3C-5B1 validated path patterns
+
+### 11.1 Results Summary
+
+| Source ID | M3C-6F Status | M3C-6F.1 Status | HTTP | Valid Items | Dated Items | New Status |
+|-----------|---------------|-----------------|------|-------------|-------------|------------|
+| `merck_ir` | manual_review_only | low_frequency_candidate | 200 | 15 | 0 | low_frequency_candidate |
+
+### 11.2 Per-Source Details
+
+**merck_ir:**
+- Direct mode returns HTTP 200 (site reachable)
+- Used M3C-5B1 validated IR path patterns (/news/, /events/, /presentations/) instead of generic homepage crawl
+- Extracted 15 valid IR items: Q3 2026 Earnings Call, Q2 2026 Earnings Call, 47th Annual Goldman Sachs Global Healthcare Conference, Jefferies Global Healthcare Conference, Q1 2026 Earnings Call, etc.
+- No login/paywall/captcha blockers detected
+- dated_item_count=0: dates not extractable from listing page HTML (likely JS-rendered or on detail pages)
+- Improved from M3C-6F's manual_review_only to low_frequency_candidate
+- Recommendation: Enter low_frequency evaluation; dates may require individual event detail page fetches
+
+### 11.3 Updated Backlog Counts
+
+| Category | Count | Change |
+|----------|-------|--------|
+| scheduled_observation | 8 | Unchanged |
+| p0_repaired_ready | 1 | Unchanged (gelonghui only) |
+| low_frequency_candidate | — | merck_ir new entry |
+| tls_or_proxy_backlog | — | the_fly confirmed (still) |
+| login_or_paywall_blocked | — | yahoo_finance confirmed (pending verification) |
+
+### 11.4 Boundary Compliance
+
+- No proxy URL committed
+- No cookie/token committed
+- No raw HTML committed
+- No trial_v2 allowlist modifications
+- No TRAE scheduling modifications
+- No production configuration
+- No Playwright/Selenium introduced

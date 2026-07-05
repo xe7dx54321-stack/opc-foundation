@@ -74,6 +74,20 @@ from .proxy_retry_assessment import (
     NETWORK_STATUS_VALUES,
     ERROR_TYPE_VALUES,
 )
+from .merck_ir_dedicated_preflight import (
+    MerckIrCandidateUrl,
+    MerckIrExtractionItem,
+    MerckIrDedicatedDecision,
+    MerckIrDedicatedPreflightResult,
+    validate_merck_ir_preflight_result,
+    compute_merck_ir_decision,
+    apply_merck_ir_decision,
+    is_merck_ir_source,
+    make_default_merck_ir_result,
+    is_rejected_navigation_title,
+    M3C_6F1_ALLOWED_SOURCE,
+    MERCK_IR_FINAL_DECISIONS,
+)
 
 __all__ = [
     "LiveSmokeStatus",
@@ -126,4 +140,16 @@ __all__ = [
     "PROXY_FINAL_DECISIONS",
     "NETWORK_STATUS_VALUES",
     "ERROR_TYPE_VALUES",
+    "MerckIrCandidateUrl",
+    "MerckIrExtractionItem",
+    "MerckIrDedicatedDecision",
+    "MerckIrDedicatedPreflightResult",
+    "validate_merck_ir_preflight_result",
+    "compute_merck_ir_decision",
+    "apply_merck_ir_decision",
+    "is_merck_ir_source",
+    "make_default_merck_ir_result",
+    "is_rejected_navigation_title",
+    "M3C_6F1_ALLOWED_SOURCE",
+    "MERCK_IR_FINAL_DECISIONS",
 ]
