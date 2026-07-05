@@ -195,3 +195,24 @@
 ---
 
 *路线图结束*
+
+---
+
+## 附录 A：M3C-6F 更新（2026-07-04）
+
+**阶段:** M3C-6F — Proxy Retry Batch  
+**结论:** 无新增 scheduled_candidate，无新增 low_frequency
+
+| source_id | prior_status | M3C-6F 结果 | 去向 | 说明 |
+|---|---|---|---|---|
+| merck_ir | content_ready_then_network_unreachable | manual_review_only | 需要专门提取路径重做 preflight | Direct 可达但首页通用抓取只能拿到导航链接，不是新闻/事件条目；历史上 M3C-5B1 曾达 content_ready（score 90），应使用专门提取路径 |
+| the_fly | tls_or_proxy_backlog | timeout | 继续 tls_or_proxy_backlog | Direct 模式超时，当前网络环境不可达；待代理环境重试 |
+| yahoo_finance | tls_or_proxy_backlog | login_or_paywall_blocked | 待人工确认 | Direct 可达但检测到 login/paywall 提示，且通用首页抓取内容质量低；需人工确认阻断程度及 RSS/API 替代入口 |
+
+**覆盖率影响:** 无变化（scheduled 仍为 9）
+
+**核心教训:**
+1. 通用首页锚点提取不等于内容就绪，需专门的新闻/事件提取路径
+2. merck_ir 历史上曾通过专门提取路径达到 content_ready，应复用而非从零开始
+3. the_fly 需代理环境进一步验证
+4. yahoo_finance 需人工确认 login/paywall 实际阻断程度

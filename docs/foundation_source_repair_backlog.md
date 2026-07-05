@@ -196,3 +196,61 @@ Removing these from default ops prevents noise in run logs, reduces wasted compu
 ---
 
 *Generated for stage M3C-5B1. No browser runtime, no proxy URLs, no secrets.*
+
+---
+
+## 10. M3C-6F Proxy Retry Batch Update (2026-07-04)
+
+**Stage:** M3C-6F — Proxy Retry Batch  
+**Scope:** merck_ir, yahoo_finance, the_fly  
+**Method:** Direct HTTP fetch + simple anchor extraction  
+**Proxy env:** Not configured (local environment)
+
+### 10.1 Results Summary
+
+| Source ID | Prior Status | Direct Status | Proxy Status | Valid Items | Dated Items | New Status |
+|-----------|-------------|---------------|--------------|-------------|-------------|------------|
+| `merck_ir` | p0_repaired_ready (score 90) | HTTP 200 | Not configured | 20 (nav only) | 0 | manual_review_only |
+| `the_fly` | technical_only (TLS/proxy backlog) | Timeout | Not configured | 0 | 0 | tls_or_proxy_backlog |
+| `yahoo_finance` | technical_only (TLS/proxy backlog) | HTTP 200 | Not configured | 20 (nav only) | 0 | login_or_paywall_blocked |
+
+### 10.2 Per-Source Details
+
+**merck_ir:**
+- Direct mode returns HTTP 200 (site reachable)
+- Generic homepage anchor extraction yields only navigation links (Who we are, What we do, Sustainability, etc.)
+- No news/event items extracted, no dated items
+- Historical note: M3C-5B1 repair achieved content_ready (score 90) with specialized extraction path (investor relations news/events)
+- Recommendation: Re-run preflight using the previously validated specialized extraction path, not generic homepage crawl
+
+**the_fly:**
+- Direct mode: timeout_read (site unreachable from current network)
+- Proxy mode: not tested (no proxy env configured)
+- Recommendation: Remain in tls_or_proxy_backlog; retry with proxy environment when available
+
+**yahoo_finance:**
+- Direct mode returns HTTP 200 (site reachable)
+- Generic homepage anchor extraction yields mostly yahoo.com main site navigation
+- No dated news items extracted
+- Login/paywall blocker hints detected in page content
+- Recommendation: Flag as login_or_paywall_blocked pending manual verification of actual blocking severity and RSS/API alternative entry points
+
+### 10.3 Updated Backlog Counts
+
+| Category | Count | Change |
+|----------|-------|--------|
+| scheduled_observation | 8 | Unchanged |
+| p0_repaired_ready | 2 → 1 | merck_ir moved to manual_review (needs re-validation with correct path) |
+| tls_or_proxy_backlog | — | the_fly confirmed (still) |
+| login_or_paywall_blocked | — | yahoo_finance new entry (pending verification) |
+| manual_review_only | — | merck_ir new entry (specialized extraction path needed) |
+
+### 10.4 Boundary Compliance
+
+- No proxy URL committed
+- No cookie/token committed
+- No raw HTML committed
+- No trial_v2 allowlist modifications
+- No TRAE scheduling modifications
+- No production configuration
+- No Playwright/Selenium introduced

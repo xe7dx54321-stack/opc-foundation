@@ -57,6 +57,23 @@ from .trae_execution_assessment import (
     TRAE_FINAL_DECISIONS,
     TRAE_AUTOMATION_ALLOWED_VALUES,
 )
+from .proxy_retry_assessment import (
+    ProxyRetrySampleItem,
+    ProxyRetryAttempt,
+    ProxyRetryDecision,
+    ProxyRetrySourceResult,
+    ProxyRetryBatchReport,
+    validate_proxy_retry_result,
+    compute_proxy_retry_decision,
+    apply_proxy_retry_decision,
+    is_m3c_6f_candidate,
+    make_default_proxy_result,
+    check_proxy_env_configured,
+    M3C_6F_ALLOWED_CANDIDATES,
+    PROXY_FINAL_DECISIONS,
+    NETWORK_STATUS_VALUES,
+    ERROR_TYPE_VALUES,
+)
 
 __all__ = [
     "LiveSmokeStatus",
@@ -94,4 +111,19 @@ __all__ = [
     "M3C_6G_ALLOWED_CANDIDATES",
     "TRAE_FINAL_DECISIONS",
     "TRAE_AUTOMATION_ALLOWED_VALUES",
+    "ProxyRetrySampleItem",
+    "ProxyRetryAttempt",
+    "ProxyRetryDecision",
+    "ProxyRetrySourceResult",
+    "ProxyRetryBatchReport",
+    "validate_proxy_retry_result",
+    "compute_proxy_retry_decision",
+    "apply_proxy_retry_decision",
+    "is_m3c_6f_candidate",
+    "make_default_proxy_result",
+    "check_proxy_env_configured",
+    "M3C_6F_ALLOWED_CANDIDATES",
+    "PROXY_FINAL_DECISIONS",
+    "NETWORK_STATUS_VALUES",
+    "ERROR_TYPE_VALUES",
 ]

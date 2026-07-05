@@ -1,0 +1,143 @@
+# OPC Foundation M3C-6F Proxy Retry Batch Configuration
+# Phase: M3C-6F
+# Purpose: Retry merck_ir / yahoo_finance / the_fly under both direct and
+#          proxy-env modes to determine if inaccessibility is due to local
+#          network / DNS / TLS issues, and assess eligibility for
+#          scheduled_candidate / low_frequency / on_demand.
+# Note:
+#   - production_enabled must be false
+#   - affects_trial_v2_allowlist must be false (no allowlist change)
+#   - affects_trae_scheduling must be false (no TRAE scheduling change)
+#   - proxy URL values must NOT be committed
+#   - No login / paywall / captcha / Cloudflare bypass allowed
+#   - Only environment variable names are documented here, not real values
+
+version: 1
+
+scope:
+  name: "m3c_6f_proxy_retry_batch"
+  description: "Proxy retry batch for 3 tls_or_proxy_backlog sources to assess network-level vs content-level blocking"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  creates_permanent_automation: false
+  base_trial_v2_content_ready_count: 9
+  candidate_count: 3
+  candidate_sources:
+    - merck_ir
+    - yahoo_finance
+    - the_fly
+
+base_allowlist:
+  - barclays_our_insights
+  - markets_insider
+  - china_fund_news
+  - wind_public
+  - goldman_sachs_insights
+  - business_insider
+  - cls_cn
+  - zhitong_caijing
+  - gelonghui
+
+policy:
+  proxy_retry_allowed: true
+  proxy_url_must_not_be_committed: true
+  public_pages_only: true
+  no_login: true
+  no_paywall_bypass: true
+  no_captcha_solving: true
+  no_cloudflare_bypass: true
+  no_antibot_bypass: true
+  no_cookie_commit: true
+  no_raw_html_commit: true
+  no_screenshot_commit: true
+  no_production_dependency: true
+  no_permanent_automation: true
+  no_tag: true
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+
+network_modes:
+  direct:
+    enabled: true
+    description: "Direct connection without proxy"
+    no_proxy_env: true
+  proxy_env:
+    enabled: true
+    source: "environment_variables_only"
+    description: "Use proxy from environment variables if configured"
+    allowed_env_names:
+      - HTTP_PROXY
+      - HTTPS_PROXY
+      - ALL_PROXY
+      - NO_PROXY
+      - http_proxy
+      - https_proxy
+      - all_proxy
+      - no_proxy
+    commit_values: false
+    record_only_configured_flag: true
+
+disallowed_promotions:
+  promote_to_trial_v2_allowlist: true
+  promote_to_production: true
+  create_trae_scheduled_task: true
+
+candidates:
+  - source_id: merck_ir
+    source_name: "Merck Investor Relations"
+    expected_value: high
+    prior_status: "content_ready_then_network_unreachable"
+    prior_score: 90
+    preferred_outcome: "scheduled_candidate_if_proxy_preflight_passes"
+    test_urls:
+      - "https://www.merck.com/investor-relations/"
+    inventory_url: "https://www.merck.com/investor-relations/"
+
+  - source_id: yahoo_finance
+    source_name: "Yahoo Finance"
+    expected_value: medium
+    prior_status: "tls_or_proxy_backlog"
+    preferred_outcome: "low_frequency_or_on_demand_if_stable"
+    test_urls:
+      - "https://finance.yahoo.com/"
+    inventory_url: "https://finance.yahoo.com/"
+
+  - source_id: the_fly
+    source_name: "The Fly"
+    expected_value: medium
+    prior_status: "tls_or_proxy_backlog"
+    preferred_outcome: "low_frequency_or_on_demand_if_stable"
+    test_urls:
+      - "https://thefly.com/"
+    inventory_url: "https://thefly.com/"
+
+assessment:
+  max_sample_items_per_source: 3
+  record_only_structured_fields: true
+  forbidden_artifacts:
+    - raw_html
+    - cookies
+    - session_id
+    - tokens
+    - proxy_url
+    - login_state
+    - bypass_procedure
+
+# Final decision values allowed for M3C-6F
+allowed_final_decisions:
+  - scheduled_candidate
+  - low_frequency_candidate
+  - on_demand_candidate
+  - tls_or_proxy_backlog
+  - captcha_or_antibot_blocked
+  - login_or_paywall_blocked
+  - manual_review_only
+  - not_worth_it
+
+# Thresholds for scheduled_candidate
+candidate_thresholds:
+  min_valid_items: 3
+  min_dated_items: 2
+  max_sample_items_recorded: 3
