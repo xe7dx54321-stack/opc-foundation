@@ -1,0 +1,59 @@
+version: 1
+
+scope:
+  name: "m3c_6c1_low_frequency_observation"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  creates_permanent_automation: false
+  observation_stage: "harness_only"
+
+policy:
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+  do_not_create_permanent_automation: true
+  public_pages_only: true
+  no_login: true
+  no_paywall_bypass: true
+  no_captcha_solving: true
+  no_cloudflare_bypass: true
+  no_antibot_bypass: true
+  no_cookie_commit: true
+  no_raw_html_commit: true
+  no_screenshot_commit: true
+
+observation:
+  target_days: 7
+  minimum_runs_per_day: 1
+  current_stage: "proposal_and_harness"
+  status: "pending"
+  source_id: "merck_ir"
+  recommended_frequency: "weekly_or_daily_observation"
+  create_trae_task_now: false
+  manual_approval_required_before_scheduling: true
+
+success_criteria:
+  min_observation_days: 7
+  min_valid_items_per_run: 3
+  allow_missing_date_text: true
+  required_timestamp_confidence_when_missing_date: "LOW"
+  reject_navigation_items: true
+
+failure_criteria:
+  max_consecutive_zero_item_runs: 2
+  max_consecutive_navigation_only_runs: 2
+  fail_on_login_required: true
+  fail_on_paywall_observed: true
+  fail_on_captcha_or_antibot: true
+
+sources:
+  - source_id: merck_ir
+    source_layer: low_frequency_candidate
+    low_frequency_allowed_now: true
+    trial_v2_allowlist_allowed_now: false
+    production_enabled: false
+    prior_stage: "M3C-6C"
+    prior_valid_items: 15
+    prior_dated_items: 0
+    timestamp_confidence_when_missing: "LOW"

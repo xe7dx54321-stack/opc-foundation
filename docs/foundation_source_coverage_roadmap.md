@@ -276,3 +276,70 @@ Layer 3: on_demand_sources — 未实现
 3. **dry-run / run-once:** 两种运行模式
 4. **check script:** 自动验证配置和 runtime data 合规性
 5. **TRAE task proposal:** 只生成文档，不创建真实任务
+
+---
+
+## 附录 D：M3C-6C.1 更新（2026-07-05）
+
+**阶段:** M3C-6C.1 — Merck IR Low-frequency 7-Day Observation Harness
+**结论:** 建立 observation harness，验证 merck_ir 是否可连续稳定运行
+
+### Observation 状态机
+
+```
+pending -> active -> completed_7d | partial_observation | failed
+```
+
+### merck_ir observation 当前结果
+
+| 指标 | 值 |
+|---|---|
+| target_days | 7 |
+| observed_days | 1 |
+| successful_days | 1 |
+| partial_days | 0 |
+| failed_days | 0 |
+| total_runs | 1 |
+| min/max_valid_items_per_run | 15 / 15 |
+| timestamp_confidence_distribution | `{"HIGH": 0, "MEDIUM": 0, "LOW": 15, "NONE": 0}` |
+| navigation_regression_count | 0 |
+| blocking_error_count | 0 |
+| final_observation_status | partial_observation |
+| recommended_next_action | continue_observation |
+| completed_7d | false |
+| missing_to_complete | 6 more days of observation |
+
+### 新增能力
+
+1. **7 天 observation 状态机**：pending / active / completed_7d / partial_observation / failed
+2. **Daily run 记录**：source_id, run_id, run_date, valid_item_count, dated_item_count, missing_date_count, navigation_rejected_count, timestamp_confidence_distribution, sample_items, risk_flags, status
+3. **7-day summary**：observed_days, successful_days, partial_days, failed_days, total_runs, navigation_regression_count, blocking_error_count, final_observation_status
+4. **Navigation regression 检测**：连续 2 次 navigation-only run 触发 `failed`
+5. **Blocking error 检测**：login_required / paywall_observed / captcha_or_antibot_observed 任一出现即 `failed`
+6. **Runtime data 隔离**：`data/foundation_low_frequency_observation/`（gitignored）
+7. **TRAE task proposal only**：`create_trae_task_now = false`，需人工批准后才创建真实 TRAE scheduled task
+
+### 覆盖率影响
+
+- scheduled (high-frequency): 9 — 不变
+- low_frequency: 1 (merck_ir) — 不变（harness 阶段，未新增源）
+- TRAE task: proposal only, not created
+
+### 后续 gate
+
+```
+Gate 1: M3C-6C pipeline v1 完成（已完成）
+Gate 2: M3C-6C.1 7-day observation harness（当前，需连续观察 6 天）
+Gate 3: 人工审核 observation 结果（completed_7d 必要条件）
+Gate 4: 人工创建 TRAE scheduled task（手动操作）
+Gate 5: 纳入更多低频候选源
+```
+
+### 相关文档
+
+- [Low-frequency Observation Harness](foundation_low_frequency_observation_harness.md)
+- [M3C-6C.1 Observation Report](foundation_m3c_6c1_merck_ir_low_frequency_observation_report.md)
+- [M3C-6C.1 TRAE Observation Proposal](foundation_m3c_6c1_trae_low_frequency_observation_proposal.md)
+- [Low-frequency Source Pipeline](foundation_low_frequency_source_pipeline.md)
+- [TRAE Low-frequency Task Proposal](foundation_low_frequency_trae_task_proposal.md)
+- [TRAE Operations - Section 16](foundation_trae_operations.md)

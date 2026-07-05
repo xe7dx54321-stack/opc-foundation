@@ -66,3 +66,6 @@ data/foundation_m3c_6f1_merck_ir_dedicated_preflight/
 
 # M3C-6C Low-frequency Source Pipeline runtime data（严禁提交）
 data/foundation_low_frequency_sources/
+
+# M3C-6C.1 Low-frequency Observation runtime data（严禁提交）
+data/foundation_low_frequency_observation/

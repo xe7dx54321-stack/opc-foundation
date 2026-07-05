@@ -653,3 +653,108 @@ Layer 3: on_demand_sources — 未实现
 | 是否引入 Playwright/Selenium | 否 |
 | 是否恢复已删除 Dashboard 页面 | 否 |
 | 是否打 tag | 否 |
+
+---
+
+## 16. M3C-6C.1 Merck IR Low-frequency Observation Harness (2026-07-05)
+
+**阶段:** M3C-6C.1 — Merck IR Low-frequency 7-Day Observation Harness
+**状态:** Harness 完成，连续观察进行中（partial_observation）
+**TRAE task 创建:** 否（proposal only）
+
+### 16.1 新增能力
+
+- 7 天 observation 状态机：`pending -> active -> completed_7d | partial_observation | failed`
+- Daily run 记录：source_id, run_id, run_date, valid_item_count, dated_item_count, missing_date_count, navigation_rejected_count, timestamp_confidence_distribution, sample_items, risk_flags, status
+- 7-day summary：observed_days, successful_days, partial_days, failed_days, total_runs, navigation_regression_count, blocking_error_count, final_observation_status
+- Navigation regression 检测：连续 2 次 navigation-only run 触发 `failed`
+- Blocking error 检测：login_required / paywall_observed / captcha_or_antibot_observed 任一出现即 `failed`
+- Runtime data：`data/foundation_low_frequency_observation/`（gitignored）
+
+### 16.2 新增脚本
+
+| 脚本 | 用途 |
+|---|---|
+| `scripts/run_foundation_low_frequency_observation.py` | Observation runner（dry-run / run-once / summarize） |
+| `scripts/check_foundation_low_frequency_observation.py` | Boundary checker |
+
+### 16.3 命令
+
+```bash
+# Dry-run（不写 runtime data）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --dry-run
+
+# Run once（写 runtime data，gitignored）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --run-once
+
+# Summarize（输出 7-day summary）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --summarize
+
+# Boundary check
+python scripts/check_foundation_low_frequency_observation.py
+```
+
+注意：脚本为 command-only shell，不允许自然语言 prompt。真实启用只发生在本地 TRAE，不提交 local config。
+
+### 16.4 merck_ir observation 当前结果
+
+| 字段 | 值 |
+|---|---|
+| target_days | 7 |
+| observed_days | 1 |
+| successful_days | 1 |
+| partial_days | 0 |
+| failed_days | 0 |
+| total_runs | 1 |
+| min/max_valid_items_per_run | 15 / 15 |
+| timestamp_confidence_distribution | `{"HIGH": 0, "MEDIUM": 0, "LOW": 15, "NONE": 0}` |
+| navigation_regression_count | 0 |
+| blocking_error_count | 0 |
+| final_observation_status | partial_observation |
+| recommended_next_action | continue_observation |
+| completed_7d | false |
+| missing_to_complete | 6 more days of observation |
+
+### 16.5 与 trial_v2 的隔离
+
+| 维度 | trial_v2 高频任务 | M3C-6C.1 observation |
+|---|---|---|
+| 源数 | 9 | 1 (merck_ir) |
+| 频率 | 每日 3 批 | 每日 1 次（observation 阶段） |
+| allowlist | trial_v2 allowlist（9 源） | low_frequency_sources（仅 merck_ir） |
+| runtime data | `data/foundation_trial_v2/` | `data/foundation_low_frequency_observation/` |
+| script | `scripts/run_foundation_trial_v2_content_ready.ps1` | `scripts/run_foundation_low_frequency_observation.py` |
+| production_enabled | false | false |
+
+### 16.6 后续 gate
+
+```
+Gate 1: M3C-6C pipeline v1 完成（已完成）
+Gate 2: M3C-6C.1 7-day observation harness（当前，需连续观察 6 天）
+Gate 3: 人工审核 observation 结果（completed_7d 必要条件）
+Gate 4: 人工创建 TRAE scheduled task（手动操作）
+Gate 5: 纳入更多低频候选源
+```
+
+### 16.7 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 TRAE scheduling | 否 |
+| 是否修改 TRAE local config | 否 |
+| 是否创建永久自动化任务 | 否 |
+| 是否修改 trial_v2 allowlist | 否 |
+| 是否配置 production | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否提交 proxy URL/cookie/token | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否打 tag | 否 |
+
+### 16.8 相关文档
+
+- [Low-frequency Observation Harness](foundation_low_frequency_observation_harness.md)
+- [M3C-6C.1 Observation Report](foundation_m3c_6c1_merck_ir_low_frequency_observation_report.md)
+- [M3C-6C.1 TRAE Observation Proposal](foundation_m3c_6c1_trae_low_frequency_observation_proposal.md)
+- [Low-frequency Source Pipeline](foundation_low_frequency_source_pipeline.md)
+- [TRAE Low-frequency Task Proposal](foundation_low_frequency_trae_task_proposal.md)

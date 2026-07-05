@@ -66,12 +66,58 @@ python scripts/run_foundation_low_frequency_sources.py --source merck_ir --run-o
 ## 7. 后续人工批准 gate
 
 ```
-Gate 1: M3C-6C pipeline v1 完成（本阶段）
-Gate 2: M3C-6C.1 24h/7d observation（连续观察一周）
-Gate 3: 人工审核 observation 结果
+Gate 1: M3C-6C pipeline v1 完成（已完成，2026-07-05）
+Gate 2: M3C-6C.1 7-day observation harness（harness 已完成，连续观察进行中）
+       - 当前状态：partial_observation（observed_days=1, successful_days=1）
+       - 缺失：6 more days of observation
+Gate 3: 人工审核 observation 结果（待 completed_7d 后）
 Gate 4: 人工创建 TRAE scheduled task（手动操作）
 Gate 5: 纳入更多低频候选源
 ```
+
+### 7.1 M3C-6C.1 Observation Harness 概述
+
+M3C-6C.1 在 M3C-6C pipeline v1 基础上建立 7 天 observation harness：
+
+- 7 天 observation 状态机：`pending -> active -> completed_7d | partial_observation | failed`
+- Daily run 记录 + 7-day summary
+- Navigation regression 检测（连续 2 次 navigation-only run 触发 `failed`）
+- Blocking error 检测（login/paywall/captcha/anti-bot 任一出现即 `failed`）
+- Runtime data：`data/foundation_low_frequency_observation/`（gitignored）
+
+详细说明见：
+- [Low-frequency Observation Harness](foundation_low_frequency_observation_harness.md)
+- [M3C-6C.1 TRAE Observation Proposal](foundation_m3c_6c1_trae_low_frequency_observation_proposal.md)
+- [M3C-6C.1 Observation Report](foundation_m3c_6c1_merck_ir_low_frequency_observation_report.md)
+
+### 7.2 Observation 命令（人工触发）
+
+```bash
+# Dry-run（不写 runtime data）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --dry-run
+
+# Run once（写 runtime data，gitignored）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --run-once
+
+# Summarize（输出 7-day summary）
+python scripts/run_foundation_low_frequency_observation.py --source merck_ir --summarize
+
+# Boundary check
+python scripts/check_foundation_low_frequency_observation.py
+```
+
+### 7.3 merck_ir observation 当前结果
+
+| 字段 | 值 |
+|---|---|
+| target_days | 7 |
+| observed_days | 1 |
+| successful_days | 1 |
+| failed_days | 0 |
+| final_observation_status | partial_observation |
+| recommended_next_action | continue_observation |
+| completed_7d | false |
+| missing_to_complete | 6 more days of observation |
 
 ## 8. production_enabled
 
