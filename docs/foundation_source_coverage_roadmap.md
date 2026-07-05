@@ -216,3 +216,22 @@
 2. merck_ir 历史上曾通过专门提取路径达到 content_ready，应复用而非从零开始
 3. the_fly 需代理环境进一步验证
 4. yahoo_finance 需人工确认 login/paywall 实际阻断程度
+
+---
+
+## 附录 B：M3C-6F.1 更新（2026-07-05）
+
+**阶段:** M3C-6F.1 — Merck IR Dedicated Extraction Preflight
+**结论:** merck_ir 从 manual_review_only 提升为 low_frequency_candidate
+
+| source_id | M3C-6F 结果 | M3C-6F.1 结果 | 去向 | 说明 |
+|---|---|---|---|---|
+| merck_ir | manual_review_only | low_frequency_candidate | 评估低频调度 | 使用专门 IR 路径过滤后提取到 15 个真实 IR items（财报电话会议、医疗健康会议），无 login/paywall/captcha 阻断，但无法从列表页 HTML 提取日期（dated=0） |
+
+**覆盖率影响:** low_freq 候选 +1（merck_ir），scheduled 仍为 9
+
+**关键改进:**
+1. 使用 M3C-5B1 验证过的 IR 路径模式（/news/, /events/, /presentations/）替代通用首页抓取
+2. 扩展噪音过滤从 13 到 20 个 pattern
+3. 精确化 login/paywall/captcha 检测，避免 false positive
+4. 多入口发现：IR 首页 + 新闻页 + 事件页 + sitemap + RSS + JSON-LD
