@@ -63,3 +63,6 @@ data/foundation_m3c_6f_proxy_retry_batch/
 
 # M3C-6F.1 Merck IR Dedicated Preflight runtime data（严禁提交）
 data/foundation_m3c_6f1_merck_ir_dedicated_preflight/
+
+# M3C-6C Low-frequency Source Pipeline runtime data（严禁提交）
+data/foundation_low_frequency_sources/

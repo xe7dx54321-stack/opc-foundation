@@ -606,3 +606,50 @@ M3C-5B1.3 将 trial_v2 allowlist 从 8 源扩容到 9 源：
 | 是否恢复已删除 Dashboard 页面 | 否 |
 | 是否引入 Playwright/Selenium | 否 |
 | 是否打 tag | 否 |
+
+---
+
+## 15. M3C-6C Low-frequency Source Pipeline (2026-07-05)
+
+**阶段:** M3C-6C — Low-frequency Source Pipeline
+**状态:** Pipeline v1 完成，TRAE task proposal only
+
+### 15.1 新增 source layer
+
+```
+Layer 1: trial_v2_high_frequency (9 sources, daily 3 batches) — 不变
+Layer 2: low_frequency_sources (merck_ir, weekly) — 新增
+Layer 3: on_demand_sources — 未实现
+```
+
+### 15.2 TRAE low-frequency task proposal
+
+- **source_id:** merck_ir
+- **proposed_frequency:** weekly
+- **proposed_command:** `python scripts/run_foundation_low_frequency_sources.py --source merck_ir --run-once`
+- **create_trae_task_now:** false
+- **manual_approval_required:** true
+- **production_enabled:** false
+- **不影响现有 4 个 trial_v2 task**
+
+### 15.3 后续 gate
+
+1. M3C-6C pipeline v1 完成（本阶段）
+2. M3C-6C.1 24h/7d observation（连续观察一周）
+3. 人工审核 observation 结果
+4. 人工创建 TRAE scheduled task（手动操作）
+5. 纳入更多低频候选源
+
+### 15.4 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 TRAE scheduling | 否 |
+| 是否修改 TRAE local config | 否 |
+| 是否创建永久自动化任务 | 否 |
+| 是否修改 trial_v2 allowlist | 否 |
+| 是否配置 production | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否打 tag | 否 |

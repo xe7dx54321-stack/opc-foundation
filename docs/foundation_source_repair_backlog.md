@@ -299,3 +299,49 @@ Removing these from default ops prevents noise in run logs, reduces wasted compu
 - No TRAE scheduling modifications
 - No production configuration
 - No Playwright/Selenium introduced
+
+---
+
+## 12. M3C-6C Low-frequency Source Pipeline Update (2026-07-05)
+
+**Stage:** M3C-6C — Low-frequency Source Pipeline
+**Scope:** merck_ir only (as sample low-frequency source)
+**Method:** Low-frequency pipeline runner with discovered_at fallback and timestamp_confidence
+
+### 12.1 Results Summary
+
+| Source ID | M3C-6F.1 Status | M3C-6C Status | Valid Items | Dated Items | Missing Date | Timestamp Confidence | Recommended Frequency |
+|-----------|-----------------|---------------|-------------|-------------|--------------|-----------------------|----------------------|
+| `merck_ir` | low_frequency_candidate | low_frequency_active (weekly) | 15 | 0 | 15 | LOW | weekly |
+
+### 12.2 Per-Source Details
+
+**merck_ir:**
+- Low-frequency pipeline runner successfully executed in both dry-run and run-once modes
+- 15 valid IR items extracted (same as M3C-6F.1)
+- 0 dated items — all items use discovered_at fallback with timestamp_confidence=LOW
+- No navigation items in sample (all are real IR content)
+- Recommended frequency: weekly
+- TRAE task proposal generated (not a real task)
+- Runtime data written to gitignored `data/foundation_low_frequency_sources/`
+
+### 12.3 Updated Backlog Counts
+
+| Category | Count | Change |
+|----------|-------|--------|
+| scheduled_observation | 8 | Unchanged |
+| p0_repaired_ready | 1 | Unchanged (gelonghui only) |
+| low_frequency_active | 1 | merck_ir upgraded from candidate to active (weekly) |
+| tls_or_proxy_backlog | — | the_fly confirmed (still) |
+| login_or_paywall_blocked | — | yahoo_finance confirmed (pending verification) |
+
+### 12.4 Boundary Compliance
+
+- No proxy URL committed
+- No cookie/token committed
+- No raw HTML committed
+- No trial_v2 allowlist modifications
+- No TRAE scheduling modifications
+- No production configuration
+- No permanent automation created
+- No Playwright/Selenium introduced

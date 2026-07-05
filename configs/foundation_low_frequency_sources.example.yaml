@@ -1,0 +1,50 @@
+version: 1
+
+scope:
+  name: "foundation_low_frequency_sources"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  creates_permanent_automation: false
+
+policy:
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_configure_production: true
+  public_pages_only: true
+  no_login: true
+  no_paywall_bypass: true
+  no_captcha_solving: true
+  no_cloudflare_bypass: true
+  no_antibot_bypass: true
+  no_cookie_commit: true
+  no_raw_html_commit: true
+  no_screenshot_commit: true
+
+scheduling_policy:
+  default_frequency: "daily_or_weekly"
+  current_stage: "proposal_only"
+  create_trae_task_now: false
+  manual_approval_required_before_scheduling: true
+
+timestamp_policy:
+  date_text_required_for_high_frequency: true
+  date_text_optional_for_low_frequency: true
+  fallback_to_discovered_at: true
+  missing_date_confidence: "LOW"
+
+sources:
+  - source_id: merck_ir
+    source_layer: low_frequency_candidate
+    expected_value: high
+    prior_stage: "M3C-6F.1"
+    prior_valid_items: 15
+    prior_dated_items: 0
+    preferred_frequency: "daily_or_weekly"
+    recommended_initial_frequency: "weekly"
+    date_text_required: false
+    timestamp_confidence_when_missing: "LOW"
+    trial_v2_allowlist_allowed_now: false
+    low_frequency_allowed_now: true
+    production_enabled: false
+    notes: "Real IR/events content found, but list HTML does not expose date_text reliably."

@@ -235,3 +235,44 @@
 2. 扩展噪音过滤从 13 到 20 个 pattern
 3. 精确化 login/paywall/captcha 检测，避免 false positive
 4. 多入口发现：IR 首页 + 新闻页 + 事件页 + sitemap + RSS + JSON-LD
+
+---
+
+## 附录 C：M3C-6C 更新（2026-07-05）
+
+**阶段:** M3C-6C — Low-frequency Source Pipeline
+**结论:** 建立 low-frequency pipeline v1，merck_ir 作为第一个样板源
+
+### 新增 source layer
+
+```
+Layer 1: trial_v2_high_frequency (9 sources, daily 3 batches) — 不变
+Layer 2: low_frequency_sources (merck_ir, weekly) — 新增
+Layer 3: on_demand_sources — 未实现
+```
+
+### merck_ir 低频 pipeline 结果
+
+| 指标 | 值 |
+|---|---|
+| valid_item_count | 15 |
+| dated_item_count | 0 |
+| missing_date_count | 15 |
+| timestamp_confidence | LOW |
+| recommended_frequency | weekly |
+| low_frequency_allowed_now | true |
+| trial_v2_allowlist_allowed_now | false |
+
+### 覆盖率影响
+
+- scheduled (high-frequency): 9 — 不变
+- low_frequency: 1 (merck_ir) — 新增
+- TRAE task: proposal only, not created
+
+### 核心能力
+
+1. **discovered_at fallback:** date_text 缺失时使用 discovered_at 作为时间戳
+2. **timestamp_confidence:** LOW/MEDIUM/HIGH/NONE 四级置信度
+3. **dry-run / run-once:** 两种运行模式
+4. **check script:** 自动验证配置和 runtime data 合规性
+5. **TRAE task proposal:** 只生成文档，不创建真实任务
