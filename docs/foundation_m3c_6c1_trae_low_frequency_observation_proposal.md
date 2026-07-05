@@ -237,9 +237,9 @@ production_enabled: false
 | completed_7d | false |
 | missing_to_complete | 6 more days of observation |
 
-## 12. 不创建真实 TRAE scheduled task
+## 12. 不创建真实 TRAE scheduled task（harness 阶段）
 
-本阶段：
+本阶段（harness 建立）：
 - `create_trae_task_now: false`
 - `manual_approval_required_before_scheduling: true`
 - 不在 TRAE 中创建任何定时任务
@@ -247,7 +247,45 @@ production_enabled: false
 - 不修改 TRAE scheduling 时间
 - 不修改 TRAE scheduling 命令
 
-人工批准后由用户手动在本地 TRAE 中创建。
+## 12a. Observation Start（2026-07-05，M3C-6C.1 merge 后）
+
+M3C-6C.1 harness 合并到 master（merge commit: 45438b4）后，进入 observation start 阶段：
+
+### 12a.1 Baseline
+
+```
+target_days = 7
+already_observed_days = 1
+remaining_days = 6
+expected_final_status_after_completion = completed_7d
+```
+
+### 12a.2 本地 TRAE command-only observation task
+
+在本地 TRAE 中创建 command-only observation task（不提交 TRAE local config）：
+
+- **task name:** `foundation_low_frequency_merck_ir_observation_daily`
+- **command (command-only):**
+  ```bash
+  cd "/Users/apple/Documents/一人公司OPC/opc-foundation" && \
+  python3 scripts/run_foundation_low_frequency_observation.py --source merck_ir --run-once && \
+  python3 scripts/check_foundation_low_frequency_observation.py
+  ```
+- **frequency:** daily 1 次
+- **count:** 6 次（补齐到 7 天）
+- **suggested_time:** 10:30 本地时间
+- **is_production:** false
+- **stop_condition:** 第 6 次运行后人工关闭，或由 M3C-6C.2 close 阶段处理
+
+### 12a.3 边界
+
+- 不修改 trial_v2 allowlist（仍 9 源）
+- 不修改 trial_v2 scheduling
+- 不配置 production
+- 不提交 TRAE local config
+- 不提交 data/local/secrets
+
+详细记录见 [M3C-6C.1 Observation Start Report](foundation_m3c_6c1_observation_start_report.md)。
 
 ## 13. 边界确认
 
@@ -255,7 +293,7 @@ production_enabled: false
 |---|---|
 | 是否修改 TRAE scheduling | 否 |
 | 是否修改 TRAE local config | 否 |
-| 是否创建永久自动化任务 | 否 |
+| 是否创建永久自动化任务 | 否（本地 command-only observation task，非永久，6 次后关闭） |
 | 是否修改 trial_v2 allowlist | 否 |
 | 是否配置 production | 否 |
 | 是否提交 data/local/secrets | 否 |
@@ -266,6 +304,7 @@ production_enabled: false
 
 ## 14. 相关文档
 
+- [M3C-6C.1 Observation Start Report](foundation_m3c_6c1_observation_start_report.md)
 - [Low-frequency Observation Harness](foundation_low_frequency_observation_harness.md)
 - [M3C-6C.1 Observation Report](foundation_m3c_6c1_merck_ir_low_frequency_observation_report.md)
 - [Low-frequency Source Pipeline](foundation_low_frequency_source_pipeline.md)

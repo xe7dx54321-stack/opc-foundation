@@ -753,8 +753,85 @@ Gate 5: 纳入更多低频候选源
 
 ### 16.8 相关文档
 
+- [M3C-6C.1 Observation Start Report](foundation_m3c_6c1_observation_start_report.md)
 - [Low-frequency Observation Harness](foundation_low_frequency_observation_harness.md)
 - [M3C-6C.1 Observation Report](foundation_m3c_6c1_merck_ir_low_frequency_observation_report.md)
 - [M3C-6C.1 TRAE Observation Proposal](foundation_m3c_6c1_trae_low_frequency_observation_proposal.md)
 - [Low-frequency Source Pipeline](foundation_low_frequency_source_pipeline.md)
 - [TRAE Low-frequency Task Proposal](foundation_low_frequency_trae_task_proposal.md)
+
+---
+
+## 17. M3C-6C.1 Merge + Observation Start (2026-07-05)
+
+**阶段:** M3C-6C.1 Merge + Merck IR Low-frequency 7-Day Observation Start
+**状态:** Harness 已合并到 master，observation 启动
+**TRAE task 创建:** 本地 command-only observation task（不提交 TRAE local config）
+
+### 17.1 Merge 结果
+
+| 项 | 值 |
+|---|---|
+| starting master commit | a5b7f06 |
+| 6C.1 branch commit | 8e963c4 |
+| 6C.1 merge commit | 45438b4 |
+| origin/master latest | 45438b4 |
+| full pytest | 2483 passed, 0 failed |
+| low-frequency check | PASS |
+| observation check | PASS |
+| trial_v2 allowlist | 仍 9 源（未变化） |
+| production_enabled | false（未变化） |
+
+### 17.2 Observation Baseline
+
+| 字段 | 值 |
+|---|---|
+| source_id | merck_ir |
+| target_days | 7 |
+| observed_days | 1 |
+| successful_days | 1 |
+| final_observation_status | partial_observation |
+| recommended_next_action | continue_observation |
+| completed_7d | false |
+| missing_to_complete | 6 days |
+
+### 17.3 本地 TRAE command-only observation task
+
+在本地 TRAE 中创建 command-only observation task（不提交 TRAE local config）：
+
+- **task name:** `foundation_low_frequency_merck_ir_observation_daily`
+- **command (command-only):**
+  ```bash
+  cd "/Users/apple/Documents/一人公司OPC/opc-foundation" && \
+  python3 scripts/run_foundation_low_frequency_observation.py --source merck_ir --run-once && \
+  python3 scripts/check_foundation_low_frequency_observation.py
+  ```
+- **frequency:** daily 1 次
+- **count:** 6 次（补齐到 7 天）
+- **suggested_time:** 10:30 本地时间
+- **is_production:** false
+- **stop_condition:** 第 6 次运行后人工关闭，或由 M3C-6C.2 close 阶段处理
+
+### 17.4 边界确认
+
+| 检查项 | 结果 |
+|---|---|
+| 是否修改 trial_v2 scheduling | 否 |
+| 是否修改 trial_v2 allowlist | 否（仍 9 源） |
+| 是否配置 production | 否 |
+| 是否提交 TRAE local config | 否 |
+| 是否提交 data/local/secrets | 否 |
+| 是否提交 proxy URL/cookie/token | 否 |
+| 是否引入 Playwright/Selenium | 否 |
+| 是否恢复已删除 Dashboard 页面 | 否 |
+| 是否打 tag | 否 |
+
+### 17.5 后续 close 标准
+
+第 7 天 observation 完成后，进入 M3C-6C.2 阶段：
+
+```
+M3C-6C.2: Merck IR 7-Day Observation Close
+```
+
+详细记录见 [M3C-6C.1 Observation Start Report](foundation_m3c_6c1_observation_start_report.md)。

@@ -259,13 +259,73 @@ python scripts/check_foundation_low_frequency_observation.py
 正式 low-frequency: weekly 或 daily low-priority，待 7 天结果后决定
 ```
 
+## 12a. Observation Start（2026-07-05，M3C-6C.1 merge 后）
+
+M3C-6C.1 harness 合并到 master（merge commit: 45438b4）后，进入 observation start 阶段。
+
+### 12a.1 Baseline
+
+| 字段 | 值 |
+|---|---|
+| target_days | 7 |
+| already_observed_days | 1 |
+| remaining_days | 6 |
+| expected_final_status_after_completion | completed_7d |
+
+### 12a.2 本地 TRAE command-only observation task
+
+在本地 TRAE 中创建 command-only observation task（不提交 TRAE local config）：
+
+- **task name:** `foundation_low_frequency_merck_ir_observation_daily`
+- **command (command-only):**
+  ```bash
+  cd "/Users/apple/Documents/一人公司OPC/opc-foundation" && \
+  python3 scripts/run_foundation_low_frequency_observation.py --source merck_ir --run-once && \
+  python3 scripts/check_foundation_low_frequency_observation.py
+  ```
+- **frequency:** daily 1 次
+- **count:** 6 次（补齐到 7 天）
+- **suggested_time:** 10:30 本地时间
+- **is_production:** false
+- **stop_condition:** 第 6 次运行后人工关闭，或由 M3C-6C.2 close 阶段处理
+
+### 12a.3 每日检查清单
+
+后续每天 TRAE 自动执行后，检查以下内容：
+
+```bash
+cd "/Users/apple/Documents/一人公司OPC/opc-foundation"
+python3 scripts/run_foundation_low_frequency_observation.py --source merck_ir --summarize
+python3 scripts/check_foundation_low_frequency_observation.py
+```
+
+每天需要记录：
+
+1. run 是否成功
+2. valid_items 是否 >= 3
+3. 是否仍是 IR / events / presentations 内容
+4. 是否退化成导航页
+5. timestamp_confidence 是否 LOW
+6. runtime data 是否 gitignored
+7. 是否有 blocking error
+
+### 12a.4 第 7 天结束后
+
+第 7 天 observation 完成后，进入 M3C-6C.2 阶段：
+
+```
+M3C-6C.2: Merck IR 7-Day Observation Close
+```
+
+详细记录见 [M3C-6C.1 Observation Start Report](foundation_m3c_6c1_observation_start_report.md)。
+
 ## 13. 边界确认
 
 | 检查项 | 结果 |
 |---|---|
 | 是否修改 TRAE scheduling | 否 |
 | 是否修改 TRAE local config | 否 |
-| 是否创建永久自动化任务 | 否 |
+| 是否创建永久自动化任务 | 否（本地 command-only observation task，非永久，6 次后关闭） |
 | 是否修改 trial_v2 allowlist | 否 |
 | 是否配置 production | 否 |
 | 是否提交 data/local/secrets | 否 |
