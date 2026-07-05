@@ -1,0 +1,92 @@
+version: 1
+
+scope:
+  name: "foundation_investment_on_demand_registry"
+  production_enabled: false
+  affects_trial_v2_allowlist: false
+  affects_trae_scheduling: false
+  creates_permanent_automation: false
+  performs_real_fetch: false
+  dry_run_only: true
+
+policy:
+  do_not_modify_trial_v2_allowlist: true
+  do_not_modify_trae_scheduling: true
+  do_not_modify_merck_ir_observation_task: true
+  do_not_configure_production: true
+  no_real_network_fetch_in_m3c_6e1: true
+  no_paid_research_bypass: true
+  no_login_bypass: true
+  no_paywall_bypass: true
+  no_captcha_solving: true
+  no_antibot_bypass: true
+  no_cookie_commit: true
+  no_raw_html_commit: true
+  no_pdf_dump_commit: true
+
+source_taxonomy:
+  official_filing:
+    description: "Company filings, official disclosures, exchange filings."
+    foundation_allowed: true
+  company_ir:
+    description: "Investor relations pages, press releases, events, presentations."
+    foundation_allowed: true
+  sellside_research_public:
+    description: "Public insights, podcasts, conference notes, public research summaries."
+    foundation_allowed: true
+  sellside_research_paid_or_entitled:
+    description: "Paid or permissioned broker research."
+    foundation_allowed: false
+    reason: "Do not bypass entitlement or licensing."
+  public_news:
+    description: "Public news and media recap sources."
+    foundation_allowed: true
+  transcript:
+    description: "Public earnings call, conference, or interview transcript."
+    foundation_allowed: true
+  market_data:
+    description: "Pricing / bars / factor data."
+    foundation_allowed: false
+    reason: "Downstream th_capital_stock owns market-data business logic."
+  macro:
+    description: "Macro data and commentary."
+    foundation_allowed: true
+  industry_report:
+    description: "Public industry reports, whitepapers, conference materials."
+    foundation_allowed: true
+
+default_banks:
+  - Goldman Sachs
+  - Morgan Stanley
+  - J.P. Morgan
+  - BofA
+  - Citi
+  - UBS
+  - Barclays
+  - Deutsche Bank
+  - Bernstein
+  - Jefferies
+
+example_query_pack:
+  request_id: "example_ai_optical_interconnect"
+  time_window:
+    lookback_days: 30
+  entities:
+    companies:
+      - name: "NVIDIA"
+        tickers: ["NVDA"]
+      - name: "Broadcom"
+        tickers: ["AVGO"]
+    industries:
+      - "AI optical interconnect"
+      - "silicon photonics"
+      - "optical circuit switching"
+      - "AI data center networking"
+    banks:
+      - "Goldman Sachs"
+      - "Morgan Stanley"
+      - "J.P. Morgan"
+  research_questions:
+    - "What are top sell-side views on AI data center networking demand?"
+    - "What changed in optical interconnect expectations?"
+  output_mode: "evidence_packet_skeleton_only"

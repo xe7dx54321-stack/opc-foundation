@@ -539,3 +539,44 @@ M3C-6E1 完成标志：
 - `smr_phase92_ticker_entity_resolver.py` — 实体解析设计
 - `smr_blocker_source_router.py` — 源路由 + 降级设计
 - `source_registry.md` — 40+ 投资源的分类体系
+
+---
+
+## 13. M3C-6E1 实现状态
+
+M3C-6E1 已实现以下内容（dry-run only）：
+
+### 13.1 已实现
+
+| 模块 | 文件 | 状态 |
+|---|---|---|
+| Query Pack Schema | `src/opc_foundation/source_inventory/investment_on_demand.py` | ✅ |
+| Source Routing Metadata | 同上 | ✅ |
+| Base Evidence Packet Schema | 同上 | ✅ |
+| Investment Source Taxonomy | 同上 | ✅ |
+| Dry-run Runner | `scripts/run_investment_on_demand_registry.py` | ✅ |
+| Check Script | `scripts/check_investment_on_demand_registry.py` | ✅ |
+| Example Config | `configs/foundation_investment_on_demand_registry.example.yaml` | ✅ |
+| Tests | `tests/source_inventory/test_investment_on_demand.py` | ✅ |
+| Tests | `tests/scripts/test_investment_on_demand_registry.py` | ✅ |
+
+### 13.2 Dry-run 结果
+
+- route_plan_count: 7（9 类源中 7 类 foundation_allowed）
+- skipped_route_count: 2（付费研报 + 市场数据）
+- evidence_packet_skeleton_count: 7
+- real_fetch: false
+- production_enabled: false
+- forbidden_fields_absent: true
+
+### 13.3 边界验证
+
+- ✅ 9 个禁止投资字段全部不存在
+- ✅ 16 个敏感关键词模式全部未检测到
+- ✅ runner 脚本无 forbidden network imports
+- ✅ runner 脚本无 forbidden network calls
+- ✅ 无 Playwright/Selenium
+- ✅ 不修改 trial_v2 allowlist
+- ✅ 不修改 TRAE scheduling
+- ✅ 不修改 merck_ir observation task
+- ✅ 不配置 production
